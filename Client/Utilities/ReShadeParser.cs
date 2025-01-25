@@ -1,4 +1,7 @@
 using Bundlingway.Model;
+using ICSharpCode.SharpZipLib.Zip;
+using SharpCompress.Archives;
+using SharpCompress.Common;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
@@ -86,6 +89,79 @@ namespace Bundlingway.Utilities
                     var rfvi = FileVersionInfo.GetVersionInfo(reShadeProbe);
                     Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion = rfvi.ProductVersion;
                 }
+            }
+        }
+
+        internal static async Task Update()
+        {
+            var remoteLink = Instances.LocalConfigProvider.Configuration.ReShade.RemoteLink;
+            var tempFolder = Path.Combine(Instances.LocalConfigProvider.localAppDataPath, "temp", "ReShade");
+            var gameFolder = Instances.LocalConfigProvider.Configuration.GameFolder;
+
+            if (string.IsNullOrEmpty(remoteLink) || string.IsNullOrEmpty(tempFolder) || string.IsNullOrEmpty(gameFolder))
+            {
+                Console.WriteLine("Invalid configuration settings.");
+                return;
+            }
+
+            try
+            {
+                // Ensure cache folder exists
+                Directory.CreateDirectory(tempFolder);
+
+                // Download the file
+                //var fileName = Path.Combine(tempFolder, Path.GetFileName(Instances.LocalConfigProvider.Configuration.ReShade.RemoteLink));
+                var fileName = Path.Combine(tempFolder, "temp.zip");
+
+                using (var response = await client.GetAsync(remoteLink, HttpCompletionOption.ResponseHeadersRead))
+                {
+                    response.EnsureSuccessStatusCode();
+                    await using var fs = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None);
+                    await using var stream = await response.Content.ReadAsStreamAsync();
+                    await stream.CopyToAsync(fs);
+                }
+
+                // Unzip the file using SharpZipLib
+                var extractPath = Path.Combine(tempFolder, "Extracted");
+                if (Directory.Exists(extractPath))
+                {
+                    Directory.Delete(extractPath, true);
+                }
+                Directory.CreateDirectory(extractPath);
+
+                using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+                using (var zf = new ZipFile(fs))
+                {
+                    foreach (ZipEntry entry in zf)
+                    {
+                        if (!entry.IsFile) continue;
+
+                        var entryFileName = entry.Name;
+                        var fullZipToPath = Path.Combine(extractPath, entryFileName);
+                        var directoryName = Path.GetDirectoryName(fullZipToPath);
+
+                        if (directoryName.Length > 0)
+                            Directory.CreateDirectory(directoryName);
+
+                        using (var zipStream = zf.GetInputStream(entry))
+                        using (var streamWriter = File.Create(fullZipToPath))
+                        {
+                            zipStream.CopyTo(streamWriter);
+                        }
+                    }
+                }
+
+                // Rename and copy the DLL
+                var sourceDll = Path.Combine(extractPath, "ReShade64.dll");
+                var destinationDll = Path.Combine(gameFolder, "dxgi.dll");
+                if (File.Exists(sourceDll))
+                {
+                    File.Copy(sourceDll, destinationDll, true);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error during update: {ex.Message}");
             }
         }
     }
