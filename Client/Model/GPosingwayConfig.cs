@@ -23,8 +23,5 @@
         public ReShadeStatus ReShade { get; set; } = new ReShadeStatus();
         public GPosingwayStatus GPosingway { get; set; } = new GPosingwayStatus();
         public string? GameFolder { get; internal set; }
-
-        public List<ResourcePackage> ResourcePackages { get; set; }
-
     }
 }

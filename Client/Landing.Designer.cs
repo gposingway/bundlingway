@@ -34,7 +34,6 @@
             flpSideMenu = new FlowLayoutPanel();
             btnSettings = new Button();
             btnDownloads = new Button();
-            btnBackup = new Button();
             btnAbout = new Button();
             pnlAbout = new Panel();
             tableLayoutPanel4 = new TableLayoutPanel();
@@ -46,25 +45,20 @@
             lblGPosingwayVersion = new Label();
             linkLabel3 = new LinkLabel();
             label25 = new Label();
-            pnlBackup = new Panel();
-            tableLayoutPanel3 = new TableLayoutPanel();
-            button5 = new Button();
-            button4 = new Button();
-            label12 = new Label();
-            label13 = new Label();
-            label18 = new Label();
             pnlPackages = new Panel();
-            dgvPackages = new DataGridView();
-            typeDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            NameDataGridViewTextBox = new DataGridViewTextBoxColumn();
-            statusDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            localBasePathDataGridViewTextBoxColumn = new DataGridViewTextBoxColumn();
-            mainSource = new BindingSource(components);
-            label8 = new Label();
+            flpPackageOptions = new FlowLayoutPanel();
+            button1 = new Button();
+            button2 = new Button();
             btnInstallPackage = new Button();
+            dgvPackages = new DataGridView();
+            TypeCol = new DataGridViewTextBoxColumn();
+            NameCol = new DataGridViewTextBoxColumn();
+            StatusCol = new DataGridViewTextBoxColumn();
+            label8 = new Label();
             pnlSettings = new Panel();
             tableLayoutPanel1 = new TableLayoutPanel();
             button3 = new Button();
+            mainSource = new BindingSource(components);
             textBox3 = new TextBox();
             label4 = new Label();
             btnInstallReShade = new Button();
@@ -77,8 +71,6 @@
             resourcePackageBindingSource = new BindingSource(components);
             instancesBindingSource = new BindingSource(components);
             instancesBindingSource1 = new BindingSource(components);
-            stsFootnote = new StatusStrip();
-            tssMessage = new ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
@@ -86,17 +78,15 @@
             flpSideMenu.SuspendLayout();
             pnlAbout.SuspendLayout();
             tableLayoutPanel4.SuspendLayout();
-            pnlBackup.SuspendLayout();
-            tableLayoutPanel3.SuspendLayout();
             pnlPackages.SuspendLayout();
+            flpPackageOptions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvPackages).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)mainSource).BeginInit();
             pnlSettings.SuspendLayout();
             tableLayoutPanel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)mainSource).BeginInit();
             ((System.ComponentModel.ISupportInitialize)resourcePackageBindingSource).BeginInit();
             ((System.ComponentModel.ISupportInitialize)instancesBindingSource).BeginInit();
             ((System.ComponentModel.ISupportInitialize)instancesBindingSource1).BeginInit();
-            stsFootnote.SuspendLayout();
             SuspendLayout();
             // 
             // contextMenuStrip1
@@ -119,10 +109,9 @@
             // 
             splitContainer1.Panel2.AutoScroll = true;
             splitContainer1.Panel2.Controls.Add(pnlAbout);
-            splitContainer1.Panel2.Controls.Add(pnlBackup);
             splitContainer1.Panel2.Controls.Add(pnlPackages);
             splitContainer1.Panel2.Controls.Add(pnlSettings);
-            splitContainer1.Size = new Size(772, 684);
+            splitContainer1.Size = new Size(747, 482);
             splitContainer1.SplitterDistance = 153;
             splitContainer1.TabIndex = 1;
             // 
@@ -133,12 +122,11 @@
             flpSideMenu.BackColor = SystemColors.ControlLight;
             flpSideMenu.Controls.Add(btnSettings);
             flpSideMenu.Controls.Add(btnDownloads);
-            flpSideMenu.Controls.Add(btnBackup);
             flpSideMenu.Controls.Add(btnAbout);
             flpSideMenu.Dock = DockStyle.Fill;
             flpSideMenu.Location = new Point(0, 0);
             flpSideMenu.Name = "flpSideMenu";
-            flpSideMenu.Size = new Size(153, 684);
+            flpSideMenu.Size = new Size(153, 482);
             flpSideMenu.TabIndex = 0;
             flpSideMenu.DragDrop += Generic_DragDrop;
             flpSideMenu.DragEnter += Generic_DragEnter;
@@ -169,25 +157,12 @@
             btnDownloads.UseVisualStyleBackColor = true;
             btnDownloads.Click += btnDownloads_Click;
             // 
-            // btnBackup
-            // 
-            btnBackup.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            btnBackup.FlatAppearance.BorderSize = 0;
-            btnBackup.FlatStyle = FlatStyle.Flat;
-            btnBackup.Location = new Point(3, 61);
-            btnBackup.Name = "btnBackup";
-            btnBackup.Size = new Size(145, 23);
-            btnBackup.TabIndex = 2;
-            btnBackup.Text = "Backup and Restore";
-            btnBackup.UseVisualStyleBackColor = true;
-            btnBackup.Click += btnBackup_Click;
-            // 
             // btnAbout
             // 
             btnAbout.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             btnAbout.FlatAppearance.BorderSize = 0;
             btnAbout.FlatStyle = FlatStyle.Flat;
-            btnAbout.Location = new Point(3, 90);
+            btnAbout.Location = new Point(3, 61);
             btnAbout.Name = "btnAbout";
             btnAbout.Size = new Size(145, 23);
             btnAbout.TabIndex = 5;
@@ -199,11 +174,11 @@
             // 
             pnlAbout.Controls.Add(tableLayoutPanel4);
             pnlAbout.Controls.Add(label25);
-            pnlAbout.Dock = DockStyle.Top;
-            pnlAbout.Location = new Point(0, 487);
+            pnlAbout.Dock = DockStyle.Bottom;
+            pnlAbout.Location = new Point(0, 308);
             pnlAbout.Name = "pnlAbout";
             pnlAbout.Padding = new Padding(5);
-            pnlAbout.Size = new Size(615, 174);
+            pnlAbout.Size = new Size(590, 174);
             pnlAbout.TabIndex = 3;
             // 
             // tableLayoutPanel4
@@ -231,7 +206,7 @@
             tableLayoutPanel4.RowStyles.Add(new RowStyle());
             tableLayoutPanel4.RowStyles.Add(new RowStyle());
             tableLayoutPanel4.RowStyles.Add(new RowStyle());
-            tableLayoutPanel4.Size = new Size(605, 139);
+            tableLayoutPanel4.Size = new Size(580, 139);
             tableLayoutPanel4.TabIndex = 1;
             // 
             // label19
@@ -252,7 +227,7 @@
             lblCopyright.Location = new Point(148, 56);
             lblCopyright.Margin = new Padding(3, 0, 3, 5);
             lblCopyright.Name = "lblCopyright";
-            lblCopyright.Size = new Size(389, 15);
+            lblCopyright.Size = new Size(364, 15);
             lblCopyright.TabIndex = 12;
             lblCopyright.Text = "2023-2024 GPosingway Development Team";
             // 
@@ -275,7 +250,7 @@
             label22.Location = new Point(148, 76);
             label22.Margin = new Padding(3, 0, 3, 5);
             label22.Name = "label22";
-            label22.Size = new Size(389, 15);
+            label22.Size = new Size(364, 15);
             label22.TabIndex = 9;
             label22.Text = "Creative Commons Attribution 4.0 International License (CC BY 4.0)";
             // 
@@ -298,7 +273,7 @@
             lblGPosingwayVersion.Location = new Point(148, 5);
             lblGPosingwayVersion.Name = "lblGPosingwayVersion";
             lblGPosingwayVersion.Padding = new Padding(0, 10, 0, 20);
-            lblGPosingwayVersion.Size = new Size(389, 51);
+            lblGPosingwayVersion.Size = new Size(364, 51);
             lblGPosingwayVersion.TabIndex = 0;
             lblGPosingwayVersion.Text = "GPosingway 0.0.0.1 (prototype)";
             lblGPosingwayVersion.TextAlign = ContentAlignment.MiddleLeft;
@@ -322,168 +297,106 @@
             label25.Location = new Point(5, 5);
             label25.Name = "label25";
             label25.Padding = new Padding(3);
-            label25.Size = new Size(605, 25);
+            label25.Size = new Size(580, 25);
             label25.TabIndex = 0;
             label25.Text = "About";
             // 
-            // pnlBackup
-            // 
-            pnlBackup.Controls.Add(tableLayoutPanel3);
-            pnlBackup.Controls.Add(label18);
-            pnlBackup.Dock = DockStyle.Top;
-            pnlBackup.Location = new Point(0, 382);
-            pnlBackup.Name = "pnlBackup";
-            pnlBackup.Padding = new Padding(5);
-            pnlBackup.Size = new Size(615, 105);
-            pnlBackup.TabIndex = 2;
-            // 
-            // tableLayoutPanel3
-            // 
-            tableLayoutPanel3.ColumnCount = 3;
-            tableLayoutPanel3.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140F));
-            tableLayoutPanel3.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tableLayoutPanel3.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60F));
-            tableLayoutPanel3.Controls.Add(button5, 2, 1);
-            tableLayoutPanel3.Controls.Add(button4, 2, 0);
-            tableLayoutPanel3.Controls.Add(label12, 0, 0);
-            tableLayoutPanel3.Controls.Add(label13, 1, 0);
-            tableLayoutPanel3.Dock = DockStyle.Fill;
-            tableLayoutPanel3.Location = new Point(5, 30);
-            tableLayoutPanel3.Margin = new Padding(3, 10, 3, 3);
-            tableLayoutPanel3.Name = "tableLayoutPanel3";
-            tableLayoutPanel3.Padding = new Padding(5);
-            tableLayoutPanel3.RowCount = 6;
-            tableLayoutPanel3.RowStyles.Add(new RowStyle());
-            tableLayoutPanel3.RowStyles.Add(new RowStyle());
-            tableLayoutPanel3.RowStyles.Add(new RowStyle());
-            tableLayoutPanel3.RowStyles.Add(new RowStyle());
-            tableLayoutPanel3.RowStyles.Add(new RowStyle());
-            tableLayoutPanel3.RowStyles.Add(new RowStyle());
-            tableLayoutPanel3.Size = new Size(605, 70);
-            tableLayoutPanel3.TabIndex = 1;
-            // 
-            // button5
-            // 
-            button5.Dock = DockStyle.Fill;
-            button5.Location = new Point(543, 37);
-            button5.Name = "button5";
-            button5.Size = new Size(54, 23);
-            button5.TabIndex = 15;
-            button5.Text = "Restore";
-            button5.UseVisualStyleBackColor = true;
-            // 
-            // button4
-            // 
-            button4.Dock = DockStyle.Fill;
-            button4.Location = new Point(543, 8);
-            button4.Name = "button4";
-            button4.Size = new Size(54, 23);
-            button4.TabIndex = 14;
-            button4.Text = "Backup";
-            button4.UseVisualStyleBackColor = true;
-            // 
-            // label12
-            // 
-            label12.AutoSize = true;
-            label12.Dock = DockStyle.Fill;
-            label12.Location = new Point(8, 5);
-            label12.Name = "label12";
-            label12.Size = new Size(134, 29);
-            label12.TabIndex = 13;
-            label12.Text = "Last Backup";
-            label12.TextAlign = ContentAlignment.TopRight;
-            // 
-            // label13
-            // 
-            label13.AutoSize = true;
-            label13.Dock = DockStyle.Fill;
-            label13.Location = new Point(148, 5);
-            label13.Margin = new Padding(3, 0, 3, 5);
-            label13.Name = "label13";
-            label13.Size = new Size(389, 24);
-            label13.TabIndex = 12;
-            label13.Text = "Never";
-            // 
-            // label18
-            // 
-            label18.BackColor = SystemColors.ControlDark;
-            label18.Dock = DockStyle.Top;
-            label18.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label18.ForeColor = SystemColors.ButtonHighlight;
-            label18.Location = new Point(5, 5);
-            label18.Name = "label18";
-            label18.Padding = new Padding(3);
-            label18.Size = new Size(605, 25);
-            label18.TabIndex = 0;
-            label18.Text = "Backup and Restore";
-            // 
             // pnlPackages
             // 
+            pnlPackages.Controls.Add(flpPackageOptions);
             pnlPackages.Controls.Add(dgvPackages);
             pnlPackages.Controls.Add(label8);
-            pnlPackages.Controls.Add(btnInstallPackage);
-            pnlPackages.Dock = DockStyle.Top;
+            pnlPackages.Dock = DockStyle.Fill;
             pnlPackages.Location = new Point(0, 132);
             pnlPackages.Name = "pnlPackages";
-            pnlPackages.Padding = new Padding(5);
-            pnlPackages.Size = new Size(615, 250);
+            pnlPackages.Padding = new Padding(5, 5, 5, 178);
+            pnlPackages.Size = new Size(590, 350);
             pnlPackages.TabIndex = 1;
+            // 
+            // flpPackageOptions
+            // 
+            flpPackageOptions.Controls.Add(button1);
+            flpPackageOptions.Controls.Add(button2);
+            flpPackageOptions.Controls.Add(btnInstallPackage);
+            flpPackageOptions.Dock = DockStyle.Bottom;
+            flpPackageOptions.FlowDirection = FlowDirection.RightToLeft;
+            flpPackageOptions.Location = new Point(5, 146);
+            flpPackageOptions.Name = "flpPackageOptions";
+            flpPackageOptions.Size = new Size(580, 26);
+            flpPackageOptions.TabIndex = 4;
+            // 
+            // button1
+            // 
+            button1.Location = new Point(486, 3);
+            button1.Name = "button1";
+            button1.Size = new Size(91, 23);
+            button1.TabIndex = 5;
+            button1.Text = "Remove";
+            button1.UseVisualStyleBackColor = true;
+            // 
+            // button2
+            // 
+            button2.Location = new Point(389, 3);
+            button2.Name = "button2";
+            button2.Size = new Size(91, 23);
+            button2.TabIndex = 6;
+            button2.Text = "Reinstall";
+            button2.UseVisualStyleBackColor = true;
+            // 
+            // btnInstallPackage
+            // 
+            btnInstallPackage.Location = new Point(292, 3);
+            btnInstallPackage.Name = "btnInstallPackage";
+            btnInstallPackage.Size = new Size(91, 23);
+            btnInstallPackage.TabIndex = 4;
+            btnInstallPackage.Text = "Add Package";
+            btnInstallPackage.UseVisualStyleBackColor = true;
+            btnInstallPackage.Click += btnInstallPackage_Click;
             // 
             // dgvPackages
             // 
             dgvPackages.AllowDrop = true;
             dgvPackages.AllowUserToAddRows = false;
             dgvPackages.AllowUserToDeleteRows = false;
-            dgvPackages.AutoGenerateColumns = false;
             dgvPackages.BackgroundColor = SystemColors.Control;
             dgvPackages.BorderStyle = BorderStyle.Fixed3D;
+            dgvPackages.CausesValidation = false;
             dgvPackages.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvPackages.Columns.AddRange(new DataGridViewColumn[] { typeDataGridViewTextBoxColumn, NameDataGridViewTextBox, statusDataGridViewTextBoxColumn, localBasePathDataGridViewTextBoxColumn });
+            dgvPackages.Columns.AddRange(new DataGridViewColumn[] { TypeCol, NameCol, StatusCol });
             dgvPackages.ContextMenuStrip = contextMenuStrip1;
-            dgvPackages.DataMember = "ResourcePackages";
-            dgvPackages.DataSource = mainSource;
             dgvPackages.Dock = DockStyle.Fill;
             dgvPackages.Location = new Point(5, 30);
             dgvPackages.Name = "dgvPackages";
             dgvPackages.ReadOnly = true;
-            dgvPackages.Size = new Size(605, 192);
+            dgvPackages.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvPackages.Size = new Size(580, 142);
             dgvPackages.TabIndex = 1;
             dgvPackages.DragDrop += Generic_DragDrop;
             dgvPackages.DragEnter += Generic_DragEnter;
             dgvPackages.DragOver += Generic_DragOver;
             // 
-            // typeDataGridViewTextBoxColumn
+            // TypeCol
             // 
-            typeDataGridViewTextBoxColumn.DataPropertyName = "Type";
-            typeDataGridViewTextBoxColumn.HeaderText = "Type";
-            typeDataGridViewTextBoxColumn.Name = "typeDataGridViewTextBoxColumn";
-            typeDataGridViewTextBoxColumn.ReadOnly = true;
+            TypeCol.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            TypeCol.HeaderText = "Type";
+            TypeCol.Name = "TypeCol";
+            TypeCol.ReadOnly = true;
+            TypeCol.Width = 57;
             // 
-            // NameDataGridViewTextBox
+            // NameCol
             // 
-            NameDataGridViewTextBox.DataPropertyName = "Name";
-            NameDataGridViewTextBox.HeaderText = "Name";
-            NameDataGridViewTextBox.Name = "NameDataGridViewTextBox";
-            NameDataGridViewTextBox.ReadOnly = true;
-            NameDataGridViewTextBox.Width = 235;
+            NameCol.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            NameCol.HeaderText = "Name";
+            NameCol.Name = "NameCol";
+            NameCol.ReadOnly = true;
             // 
-            // statusDataGridViewTextBoxColumn
+            // StatusCol
             // 
-            statusDataGridViewTextBoxColumn.DataPropertyName = "Status";
-            statusDataGridViewTextBoxColumn.HeaderText = "Status";
-            statusDataGridViewTextBoxColumn.Name = "statusDataGridViewTextBoxColumn";
-            statusDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // localBasePathDataGridViewTextBoxColumn
-            // 
-            localBasePathDataGridViewTextBoxColumn.DataPropertyName = "LocalBasePath";
-            localBasePathDataGridViewTextBoxColumn.HeaderText = "Path";
-            localBasePathDataGridViewTextBoxColumn.Name = "localBasePathDataGridViewTextBoxColumn";
-            localBasePathDataGridViewTextBoxColumn.ReadOnly = true;
-            // 
-            // mainSource
-            // 
-            mainSource.DataSource = typeof(Model.GPosingwayConfig);
+            StatusCol.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+            StatusCol.HeaderText = "Status";
+            StatusCol.Name = "StatusCol";
+            StatusCol.ReadOnly = true;
+            StatusCol.Width = 64;
             // 
             // label8
             // 
@@ -494,20 +407,9 @@
             label8.Location = new Point(5, 5);
             label8.Name = "label8";
             label8.Padding = new Padding(3);
-            label8.Size = new Size(605, 25);
+            label8.Size = new Size(580, 25);
             label8.TabIndex = 0;
             label8.Text = "Packages";
-            // 
-            // btnInstallPackage
-            // 
-            btnInstallPackage.Dock = DockStyle.Bottom;
-            btnInstallPackage.Location = new Point(5, 222);
-            btnInstallPackage.Name = "btnInstallPackage";
-            btnInstallPackage.Size = new Size(605, 23);
-            btnInstallPackage.TabIndex = 3;
-            btnInstallPackage.Text = "Add Package";
-            btnInstallPackage.UseVisualStyleBackColor = true;
-            btnInstallPackage.Click += btnInstallPackage_Click;
             // 
             // pnlSettings
             // 
@@ -517,7 +419,7 @@
             pnlSettings.Location = new Point(0, 0);
             pnlSettings.Name = "pnlSettings";
             pnlSettings.Padding = new Padding(5);
-            pnlSettings.Size = new Size(615, 132);
+            pnlSettings.Size = new Size(590, 132);
             pnlSettings.TabIndex = 0;
             // 
             // tableLayoutPanel1
@@ -547,19 +449,23 @@
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
-            tableLayoutPanel1.Size = new Size(605, 101);
+            tableLayoutPanel1.Size = new Size(580, 101);
             tableLayoutPanel1.TabIndex = 1;
             // 
             // button3
             // 
             button3.DataBindings.Add(new Binding("Visible", mainSource, "GPosingway.Missing", true));
             button3.Dock = DockStyle.Fill;
-            button3.Location = new Point(543, 66);
+            button3.Location = new Point(518, 66);
             button3.Name = "button3";
             button3.Size = new Size(54, 23);
             button3.TabIndex = 8;
             button3.Text = "Install";
             button3.UseVisualStyleBackColor = true;
+            // 
+            // mainSource
+            // 
+            mainSource.DataSource = typeof(Model.GPosingwayConfig);
             // 
             // textBox3
             // 
@@ -570,7 +476,7 @@
             textBox3.Margin = new Padding(3, 7, 3, 3);
             textBox3.Name = "textBox3";
             textBox3.ReadOnly = true;
-            textBox3.Size = new Size(389, 16);
+            textBox3.Size = new Size(364, 16);
             textBox3.TabIndex = 7;
             textBox3.Text = "Not Installed";
             // 
@@ -589,7 +495,7 @@
             // 
             btnInstallReShade.DataBindings.Add(new Binding("Visible", mainSource, "ReShade.IsMissing", true));
             btnInstallReShade.Dock = DockStyle.Fill;
-            btnInstallReShade.Location = new Point(543, 37);
+            btnInstallReShade.Location = new Point(518, 37);
             btnInstallReShade.Name = "btnInstallReShade";
             btnInstallReShade.Size = new Size(54, 23);
             btnInstallReShade.TabIndex = 5;
@@ -606,7 +512,7 @@
             textBox2.Margin = new Padding(3, 7, 3, 3);
             textBox2.Name = "textBox2";
             textBox2.ReadOnly = true;
-            textBox2.Size = new Size(389, 16);
+            textBox2.Size = new Size(364, 16);
             textBox2.TabIndex = 4;
             textBox2.Text = "Not Installed";
             // 
@@ -641,12 +547,12 @@
             txtXivPath.Dock = DockStyle.Fill;
             txtXivPath.Location = new Point(148, 8);
             txtXivPath.Name = "txtXivPath";
-            txtXivPath.Size = new Size(389, 23);
+            txtXivPath.Size = new Size(364, 23);
             txtXivPath.TabIndex = 1;
             // 
             // btnDetectSettings
             // 
-            btnDetectSettings.Location = new Point(543, 8);
+            btnDetectSettings.Location = new Point(518, 8);
             btnDetectSettings.Name = "btnDetectSettings";
             btnDetectSettings.Size = new Size(54, 23);
             btnDetectSettings.TabIndex = 2;
@@ -663,7 +569,7 @@
             label1.Location = new Point(5, 5);
             label1.Name = "label1";
             label1.Padding = new Padding(3);
-            label1.Size = new Size(605, 25);
+            label1.Size = new Size(580, 25);
             label1.TabIndex = 0;
             label1.Text = "Settings";
             // 
@@ -679,31 +585,13 @@
             // 
             instancesBindingSource1.DataSource = typeof(Model.Instances);
             // 
-            // stsFootnote
-            // 
-            stsFootnote.Items.AddRange(new ToolStripItem[] { tssMessage });
-            stsFootnote.Location = new Point(0, 662);
-            stsFootnote.Name = "stsFootnote";
-            stsFootnote.RightToLeft = RightToLeft.Yes;
-            stsFootnote.Size = new Size(772, 22);
-            stsFootnote.TabIndex = 2;
-            stsFootnote.Text = "statusStrip1";
-            // 
-            // tssMessage
-            // 
-            tssMessage.Name = "tssMessage";
-            tssMessage.Size = new Size(42, 17);
-            tssMessage.Text = "Ready.";
-            // 
             // Landing
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(772, 684);
-            Controls.Add(stsFootnote);
+            ClientSize = new Size(747, 482);
             Controls.Add(splitContainer1);
-            MaximumSize = new Size(788, 723);
-            MinimumSize = new Size(788, 723);
+            MinimumSize = new Size(763, 521);
             Name = "Landing";
             Text = "GPosingway Package Manager";
             Load += Landing_Load;
@@ -715,22 +603,17 @@
             pnlAbout.ResumeLayout(false);
             tableLayoutPanel4.ResumeLayout(false);
             tableLayoutPanel4.PerformLayout();
-            pnlBackup.ResumeLayout(false);
-            tableLayoutPanel3.ResumeLayout(false);
-            tableLayoutPanel3.PerformLayout();
             pnlPackages.ResumeLayout(false);
+            flpPackageOptions.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvPackages).EndInit();
-            ((System.ComponentModel.ISupportInitialize)mainSource).EndInit();
             pnlSettings.ResumeLayout(false);
             tableLayoutPanel1.ResumeLayout(false);
             tableLayoutPanel1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)mainSource).EndInit();
             ((System.ComponentModel.ISupportInitialize)resourcePackageBindingSource).EndInit();
             ((System.ComponentModel.ISupportInitialize)instancesBindingSource).EndInit();
             ((System.ComponentModel.ISupportInitialize)instancesBindingSource1).EndInit();
-            stsFootnote.ResumeLayout(false);
-            stsFootnote.PerformLayout();
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
@@ -739,7 +622,6 @@
         private SplitContainer splitContainer1;
         private FlowLayoutPanel flpSideMenu;
         private Button btnDownloads;
-        private Button btnBackup;
         private Button btnSettings;
         private Button btnAbout;
         private Panel pnlSettings;
@@ -766,27 +648,21 @@
         private Label lblGPosingwayVersion;
         private LinkLabel linkLabel3;
         private Label label25;
-        private Panel pnlBackup;
-        private TableLayoutPanel tableLayoutPanel3;
-        private Button button4;
-        private Label label12;
-        private Label label13;
-        private Label label18;
-        private Button button5;
         private DataGridView dgvPackages;
         private BindingSource instancesBindingSource;
         private BindingSource resourcePackageBindingSource;
         private BindingSource instancesBindingSource1;
         private DataGridViewTextBoxColumn urlDataGridViewTextBoxColumn;
         private BindingSource mainSource;
-        private Button btnInstallPackage;
         private DataGridViewTextBoxColumn NameDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn xIVPathDataGridViewTextBoxColumn;
-        private StatusStrip stsFootnote;
-        private ToolStripStatusLabel tssMessage;
+        private FlowLayoutPanel flpPackageOptions;
+        private Button btnInstallPackage;
+        private Button button1;
+        private Button button2;
         private DataGridViewTextBoxColumn typeDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn NameDataGridViewTextBox;
         private DataGridViewTextBoxColumn statusDataGridViewTextBoxColumn;
-        private DataGridViewTextBoxColumn localBasePathDataGridViewTextBoxColumn;
+        private DataGridViewTextBoxColumn TypeCol;
+        private DataGridViewTextBoxColumn NameCol;
+        private DataGridViewTextBoxColumn StatusCol;
     }
 }

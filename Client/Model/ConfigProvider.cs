@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using Bundlingway.Utilities;
+using System.Reflection;
 using System.Text.Json;
 
 namespace Bundlingway.Model
@@ -33,8 +34,7 @@ namespace Bundlingway.Model
         {
             try
             {
-                string json = JsonSerializer.Serialize(Configuration);
-                File.WriteAllText(configFilePath, json);
+                Configuration.ToJsonFile(configFilePath);
             }
             catch (Exception ex)
             {
@@ -48,8 +48,7 @@ namespace Bundlingway.Model
             {
                 try
                 {
-                    string json = File.ReadAllText(configFilePath);
-                    Configuration = JsonSerializer.Deserialize<T>(json) ?? new T();
+                    Configuration = Serialization.FromJsonFile<T>(configFilePath);
                 }
                 catch (Exception ex)
                 {

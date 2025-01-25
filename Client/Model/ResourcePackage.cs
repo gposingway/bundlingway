@@ -9,5 +9,7 @@
         public string Status { get; set; }
         public bool Default { get; set; }
         public bool Installed { get; set; }
+        public string LocalPresetFolder { get; set; }
+        public string LocalTextureFolder { get; internal set; }
     }
 }
