@@ -22,7 +22,9 @@ namespace Bundlingway.Utilities
             newCatalogEntry.Status = "Unzipping...";
             Instances.MainDataSource.ResetBindings(false);
 
-            string tempFolderPath = Path.Combine(Instances.AppDataFolder, "cache", "presetUnpack.tmp");
+            string originalTempFolderPath = Path.Combine(Instances.AppDataFolder, "cache", "presetUnpack.tmp");
+
+            string tempFolderPath = originalTempFolderPath;
 
             // Drop then recreate the temp folder.
 
@@ -41,15 +43,36 @@ namespace Bundlingway.Utilities
                 archive.WriteToDirectory(tempFolderPath, new SharpCompress.Common.ExtractionOptions() { ExtractFullPath = true });
             }
 
-            // If the temp folder contains only one folder, use it as reference for the collection name.
-            if (Directory.GetDirectories(tempFolderPath).Length == 1 && Directory.GetFiles(tempFolderPath).Length == 0)
-            {
-                var singleFolderPath = Directory.GetDirectories(tempFolderPath).First();
-                collectionName = Path.GetFileName(singleFolderPath);
-                tempFolderPath = Path.Combine(tempFolderPath, collectionName);
+            var changeEval = false;
 
-                newCatalogEntry.Name = collectionName;
-            }
+            do
+            {
+                changeEval = false;
+
+                // If one of the subdirectories of the temp folder is named 'reshade-presets' (case-insensitive), use it as tempFolderPath.
+                var reshadePresetsDir = Directory.GetDirectories(tempFolderPath, "reshade-presets", SearchOption.AllDirectories).FirstOrDefault();
+                if (reshadePresetsDir != null)
+                {
+                    tempFolderPath = reshadePresetsDir;
+                    changeEval = true;
+                }
+
+                // If the temp folder contains only one folder, use it as reference for the collection name.
+                if (Directory.GetDirectories(tempFolderPath).Length == 1 && Directory.GetFiles(tempFolderPath).Length == 0)
+                {
+                    var singleFolderPath = Directory.GetDirectories(tempFolderPath).First();
+                    collectionName = Path.GetFileName(singleFolderPath);
+                    tempFolderPath = Path.Combine(tempFolderPath, collectionName);
+
+                    newCatalogEntry.Name = collectionName;
+
+                    changeEval = true;
+                }
+
+
+
+            } while (changeEval);
+
 
             newCatalogEntry.Status = "Installing...";
             Instances.MainDataSource.ResetBindings(false);
@@ -74,7 +97,7 @@ namespace Bundlingway.Utilities
             foreach (var file in Directory.GetFiles(tempFolderPath, "*.ini", SearchOption.AllDirectories))
             {
                 var relativePath = Path.GetRelativePath(tempFolderPath, file);
-                var targetPath = Path.Combine(presetsFolder,  relativePath);
+                var targetPath = Path.Combine(presetsFolder, relativePath);
                 Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
                 File.Copy(file, targetPath, true);
             }
@@ -84,8 +107,48 @@ namespace Bundlingway.Utilities
             if (Directory.Exists(shadersFolder)) Directory.Delete(shadersFolder, true);
             Directory.CreateDirectory(shadersFolder);
 
-            // Copy all .jpg, .jpeg and .png files to the Textures folder, under the same folder name as the presets and preserving the folder structure.
 
+            // Reset the temp folder path.
+            tempFolderPath = originalTempFolderPath;
+
+            do
+            {
+                changeEval = false;
+
+                // If one of the subdirectories of the temp folder is named 'reshade-shaders', use it as tempFolderPath.
+                var reshadeShadersDir = Directory.GetDirectories(tempFolderPath, "reshade-shaders", SearchOption.AllDirectories).FirstOrDefault();
+                if (reshadeShadersDir != null)
+                {
+                    tempFolderPath = reshadeShadersDir;
+                    changeEval = true;
+                }
+
+                // If one of the subdirectories of the temp folder is named 'textures', use it as tempFolderPath.
+                reshadeShadersDir = Directory.GetDirectories(tempFolderPath, "textures", SearchOption.AllDirectories).FirstOrDefault();
+                if (reshadeShadersDir != null)
+                {
+                    tempFolderPath = reshadeShadersDir;
+                    changeEval = true;
+                }
+
+                // If the temp folder contains only one folder, use it as reference for the collection name.
+                if (Directory.GetDirectories(tempFolderPath).Length == 1 && Directory.GetFiles(tempFolderPath).Length == 0)
+                {
+                    var singleFolderPath = Directory.GetDirectories(tempFolderPath).First();
+                    collectionName = Path.GetFileName(singleFolderPath);
+                    tempFolderPath = Path.Combine(tempFolderPath, collectionName);
+
+                    newCatalogEntry.Name = collectionName;
+
+                    changeEval = true;
+                }
+
+
+
+            } while (changeEval);
+
+
+            // Copy all .jpg, .jpeg and .png files to the Textures folder, under the same folder name as the presets and preserving the folder structure.
 
             foreach (var file in Directory.GetFiles(tempFolderPath, "*.*", SearchOption.AllDirectories))
             {
@@ -108,13 +171,11 @@ namespace Bundlingway.Utilities
                 }
             }
 
-
-
             // Step 3: Copy the content from the presets folder to the game folder
 
             string gamePresetsFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, "reshade-presets", collectionName);
 
-            newCatalogEntry.LocalBasePath = gamePresetsFolder;  
+            newCatalogEntry.LocalBasePath = gamePresetsFolder;
 
             Directory.CreateDirectory(gamePresetsFolder);
 
