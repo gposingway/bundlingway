@@ -12,11 +12,39 @@ namespace Bundlingway
         {
             InitializeComponent();
 
-            Bootstrap.Initialize();
+            Bootstrap.Initialize().ContinueWith(a => EvaluateButtonStates());
+
 
             dgvPackages.DataSource = Instances.LocalConfigProvider.Configuration;
             mainSource.DataSource = Instances.LocalConfigProvider.Configuration;
             Instances.MainDataSource = mainSource;
+        }
+
+        private void EvaluateButtonStates()
+        {
+            if (btnInstallReShade.InvokeRequired)
+            {
+                Invoke(new MethodInvoker(delegate { btnInstallReShade.Visible = false; }));
+            }
+            else
+            {
+                btnInstallReShade.Visible = false;
+            }
+
+            if (Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion != null &&
+                Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion != "N/A" &&
+                Instances.LocalConfigProvider.Configuration.ReShade.RemoteVersion != null &&
+                Instances.LocalConfigProvider.Configuration.ReShade.RemoteVersion != "N/A" &&
+                Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion != Instances.LocalConfigProvider.Configuration.ReShade.RemoteVersion)
+
+                if (btnInstallReShade.InvokeRequired)
+                {
+                    Invoke(new MethodInvoker(delegate { btnInstallReShade.Visible = true; }));
+                }
+                else
+                {
+                    btnInstallReShade.Visible = true;
+                }
         }
 
         private void Landing_Load(object sender, EventArgs e)
@@ -47,18 +75,11 @@ namespace Bundlingway
 
         private void btnDetectSettings_Click(object sender, EventArgs e)
         {
-            Bootstrap.DetectSettings().Wait();
-        }
+            Bootstrap.DetectSettings().ContinueWith(a =>
+            {
 
-        private void Landing_DragDrop(object sender, DragEventArgs e)
-        {
-            TryInstalPackages(e);
-        }
-
-        private void dgvPackages_DragDrop(object sender, DragEventArgs e)
-        {
-            this.Name = "dgvPackages_DragDrop";
-            TryInstalPackages(e);
+                EvaluateButtonStates();
+            });
         }
 
         private void TryInstalPackages(DragEventArgs e)
@@ -84,16 +105,7 @@ namespace Bundlingway
             }
         }
 
-        private void dgvPackages_DragEnter(object sender, DragEventArgs e)
-        {
-            this.Name = "dgvPackages_DragEnter";
-            e.Effect = DragDropEffects.Copy;
-        }
 
-        private void Landing_DragEnter(object sender, DragEventArgs e)
-        {
-            e.Effect = DragDropEffects.Copy;
-        }
 
         private void btnInstallPackage_Click(object sender, EventArgs e)
         {
@@ -122,18 +134,43 @@ namespace Bundlingway
             }
         }
 
-        private void flowLayoutPanel1_DragDrop(object sender, DragEventArgs e)
+        private void Generic_DragDrop(object sender, DragEventArgs e)
         {
-            this.Name = "flowLayoutPanel1_DragDrop";
+            Name = "flowLayoutPanel1_DragDrop";
             TryInstalPackages(e);
         }
 
-        private void flowLayoutPanel1_DragEnter(object sender, DragEventArgs e)
+        private void Generic_DragEnter(object sender, DragEventArgs e)
         {
-            this.Name = "flowLayoutPanel1_DragEnter";
-            e.Effect = DragDropEffects.Copy;
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy; // You can set this to another effect if needed
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+
+        private void Generic_DragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+            {
+                e.Effect = DragDropEffects.Copy; // You can set this to another effect if needed
+            }
+            else
+            {
+                e.Effect = DragDropEffects.None;
+            }
+        }
+
+        private void btnInstallReShade_Click(object sender, EventArgs e)
+        {
+            ReShadeParser.Update().ContinueWith(a =>
+            {
+                Bootstrap.DetectSettings().ContinueWith(a => EvaluateButtonStates());
+            }); ;
+
         }
     }
-
-   
 }
