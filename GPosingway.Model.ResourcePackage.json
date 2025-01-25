@@ -1,0 +1,18 @@
+[
+  {
+    "Name": "iMMERSE",
+    "Source": "https://github.com/martymcmodding/iMMERSE/archive/refs/heads/main.zip",
+    "LocalBasePath": "reshade-shaders",
+    "Type": "Shader",
+    "Default": true,
+    "Installed": false
+  },
+  {
+    "Name": "METEOR",
+    "Source": "https://github.com/martymcmodding/METEOR/archive/refs/heads/main.zip",
+    "LocalBasePath": "reshade-shaders",
+    "Type": "Shader",
+    "Default": true,
+    "Installed": false
+  }
+]
