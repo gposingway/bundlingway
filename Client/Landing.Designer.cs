@@ -29,15 +29,13 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Landing));
             contextMenuStrip1 = new ContextMenuStrip(components);
             splitContainer1 = new SplitContainer();
-            flowLayoutPanel1 = new FlowLayoutPanel();
+            flpSideMenu = new FlowLayoutPanel();
             btnSettings = new Button();
             btnDownloads = new Button();
             btnBackup = new Button();
             btnAbout = new Button();
-            picGPosingway = new PictureBox();
             pnlAbout = new Panel();
             tableLayoutPanel4 = new TableLayoutPanel();
             label19 = new Label();
@@ -85,8 +83,7 @@
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
-            flowLayoutPanel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)picGPosingway).BeginInit();
+            flpSideMenu.SuspendLayout();
             pnlAbout.SuspendLayout();
             tableLayoutPanel4.SuspendLayout();
             pnlBackup.SuspendLayout();
@@ -116,7 +113,7 @@
             // 
             // splitContainer1.Panel1
             // 
-            splitContainer1.Panel1.Controls.Add(flowLayoutPanel1);
+            splitContainer1.Panel1.Controls.Add(flpSideMenu);
             // 
             // splitContainer1.Panel2
             // 
@@ -129,23 +126,22 @@
             splitContainer1.SplitterDistance = 153;
             splitContainer1.TabIndex = 1;
             // 
-            // flowLayoutPanel1
+            // flpSideMenu
             // 
-            flowLayoutPanel1.AllowDrop = true;
-            flowLayoutPanel1.AutoScroll = true;
-            flowLayoutPanel1.BackColor = SystemColors.ControlLight;
-            flowLayoutPanel1.Controls.Add(btnSettings);
-            flowLayoutPanel1.Controls.Add(btnDownloads);
-            flowLayoutPanel1.Controls.Add(btnBackup);
-            flowLayoutPanel1.Controls.Add(btnAbout);
-            flowLayoutPanel1.Controls.Add(picGPosingway);
-            flowLayoutPanel1.Dock = DockStyle.Fill;
-            flowLayoutPanel1.Location = new Point(0, 0);
-            flowLayoutPanel1.Name = "flowLayoutPanel1";
-            flowLayoutPanel1.Size = new Size(153, 684);
-            flowLayoutPanel1.TabIndex = 0;
-            flowLayoutPanel1.DragDrop += flowLayoutPanel1_DragDrop;
-            flowLayoutPanel1.DragEnter += flowLayoutPanel1_DragEnter;
+            flpSideMenu.AllowDrop = true;
+            flpSideMenu.AutoScroll = true;
+            flpSideMenu.BackColor = SystemColors.ControlLight;
+            flpSideMenu.Controls.Add(btnSettings);
+            flpSideMenu.Controls.Add(btnDownloads);
+            flpSideMenu.Controls.Add(btnBackup);
+            flpSideMenu.Controls.Add(btnAbout);
+            flpSideMenu.Dock = DockStyle.Fill;
+            flpSideMenu.Location = new Point(0, 0);
+            flpSideMenu.Name = "flpSideMenu";
+            flpSideMenu.Size = new Size(153, 684);
+            flpSideMenu.TabIndex = 0;
+            flpSideMenu.DragDrop += Generic_DragDrop;
+            flpSideMenu.DragEnter += Generic_DragEnter;
             // 
             // btnSettings
             // 
@@ -198,17 +194,6 @@
             btnAbout.Text = "About";
             btnAbout.UseVisualStyleBackColor = true;
             btnAbout.Click += btnAbout_Click;
-            // 
-            // picGPosingway
-            // 
-            picGPosingway.BackgroundImage = (Image)resources.GetObject("picGPosingway.BackgroundImage");
-            picGPosingway.BackgroundImageLayout = ImageLayout.Center;
-            picGPosingway.InitialImage = null;
-            picGPosingway.Location = new Point(3, 119);
-            picGPosingway.Name = "picGPosingway";
-            picGPosingway.Size = new Size(145, 542);
-            picGPosingway.TabIndex = 6;
-            picGPosingway.TabStop = false;
             // 
             // pnlAbout
             // 
@@ -463,8 +448,9 @@
             dgvPackages.ReadOnly = true;
             dgvPackages.Size = new Size(605, 192);
             dgvPackages.TabIndex = 1;
-            dgvPackages.DragDrop += dgvPackages_DragDrop;
-            dgvPackages.DragEnter += dgvPackages_DragEnter;
+            dgvPackages.DragDrop += Generic_DragDrop;
+            dgvPackages.DragEnter += Generic_DragEnter;
+            dgvPackages.DragOver += Generic_DragOver;
             // 
             // typeDataGridViewTextBoxColumn
             // 
@@ -609,6 +595,7 @@
             btnInstallReShade.TabIndex = 5;
             btnInstallReShade.Text = "Install";
             btnInstallReShade.UseVisualStyleBackColor = true;
+            btnInstallReShade.Click += btnInstallReShade_Click;
             // 
             // textBox2
             // 
@@ -710,7 +697,6 @@
             // 
             // Landing
             // 
-            AllowDrop = true;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(772, 684);
@@ -721,14 +707,11 @@
             Name = "Landing";
             Text = "GPosingway Package Manager";
             Load += Landing_Load;
-            DragDrop += Landing_DragDrop;
-            DragEnter += Landing_DragEnter;
             splitContainer1.Panel1.ResumeLayout(false);
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
-            flowLayoutPanel1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)picGPosingway).EndInit();
+            flpSideMenu.ResumeLayout(false);
             pnlAbout.ResumeLayout(false);
             tableLayoutPanel4.ResumeLayout(false);
             tableLayoutPanel4.PerformLayout();
@@ -754,7 +737,7 @@
 
         private ContextMenuStrip contextMenuStrip1;
         private SplitContainer splitContainer1;
-        private FlowLayoutPanel flowLayoutPanel1;
+        private FlowLayoutPanel flpSideMenu;
         private Button btnDownloads;
         private Button btnBackup;
         private Button btnSettings;
@@ -799,7 +782,6 @@
         private Button btnInstallPackage;
         private DataGridViewTextBoxColumn NameDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn xIVPathDataGridViewTextBoxColumn;
-        private PictureBox picGPosingway;
         private StatusStrip stsFootnote;
         private ToolStripStatusLabel tssMessage;
         private DataGridViewTextBoxColumn typeDataGridViewTextBoxColumn;
