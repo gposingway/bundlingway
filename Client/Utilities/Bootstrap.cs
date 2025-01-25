@@ -4,7 +4,7 @@ namespace Bundlingway.Utilities
 {
     public class Bootstrap
     {
-        public static void Initialize()
+        public static async Task Initialize()
         {
             try
             {
@@ -13,7 +13,7 @@ namespace Bundlingway.Utilities
                 Instances.VersionedAppDataFolder = Instances.LocalConfigProvider.versionedLocalAppDataPath;
                 Instances.AppDataFolder = Instances.LocalConfigProvider.localAppDataPath;
 
-                DetectSettings();
+                await DetectSettings();
             }
             catch (Exception ex)
             {
