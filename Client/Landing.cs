@@ -6,8 +6,6 @@ namespace Bundlingway
 {
     public partial class Landing : Form
     {
-        private readonly ILogger<Instances> _logger;
-
         public Landing()
         {
             Console.WriteLine("Landing: Constructor - Initializing components");
