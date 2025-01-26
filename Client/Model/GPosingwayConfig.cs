@@ -17,6 +17,7 @@
             public string LocalVersion { get; set; }
             public string RemoteVersion { get; set; }
             public bool IsMissing { get; set; }
+            public string RemoteLink { get; set; }
         }
 
         public string XIVPath { get; set; }
