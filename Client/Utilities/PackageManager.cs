@@ -64,10 +64,7 @@ namespace Bundlingway.Utilities
                 }
             }
 
-            string targetPackagePath = Path.Combine(Instances.AppDataFolder, "Packages", newCatalogEntry.Name);
-            if (Directory.Exists(targetPackagePath)) Directory.Delete(targetPackagePath, true);
-            Directory.CreateDirectory(targetPackagePath);
-            Console.WriteLine($"PackageManager.PreparePackageCatalog: Target package path created at: {targetPackagePath}");
+            string targetPackagePath = "";
 
             if (!isValidCatalogPayload)
             {
@@ -97,6 +94,14 @@ namespace Bundlingway.Utilities
                     }
 
                 } while (changeEval);
+
+
+                targetPackagePath = Path.Combine(Instances.AppDataFolder, "Packages", newCatalogEntry.Name);
+
+                if (Directory.Exists(targetPackagePath)) Directory.Delete(targetPackagePath, true);
+                Directory.CreateDirectory(targetPackagePath);
+                Console.WriteLine($"PackageManager.PreparePackageCatalog: Target package path created at: {targetPackagePath}");
+
 
                 var target = Path.Combine(targetPackagePath, "Source", Path.GetFileName(filePath));
                 Directory.CreateDirectory(Path.Combine(targetPackagePath, "Source"));
@@ -282,6 +287,51 @@ namespace Bundlingway.Utilities
         {
             Console.WriteLine("PackageManager.ValidatePackageCatalog: Start");
             return true;
+        }
+
+        internal static void RemovePackage(ResourcePackage package)
+        {
+            Console.WriteLine("PackageManager.RemovePackage: Start");
+            Console.WriteLine($"PackageManager.RemovePackage: Removing package: {package.Name}");
+
+            UninstallPackage(package);
+
+            string targetPackagePath = Path.Combine(Instances.AppDataFolder, "Packages", package.Name);
+            if (Directory.Exists(targetPackagePath))
+            {
+                Directory.Delete(targetPackagePath, true);
+                Console.WriteLine($"PackageManager.RemovePackage: Package {package.Name} removed successfully.");
+            }
+            else
+            {
+                Console.WriteLine($"PackageManager.RemovePackage: Package {package.Name} not found.");
+            }
+            if (Directory.Exists(Instances.AppDataTempFolder)) Directory.Delete(Instances.AppDataTempFolder, true);
+
+        }
+
+        internal static void UninstallPackage(ResourcePackage package)
+        {
+            Console.WriteLine("PackageManager.UninstallPackage: Start");
+            Console.WriteLine($"PackageManager.UninstallPackage: Uninstalling package: {package.Name}");
+
+            if (Directory.Exists(package.LocalPresetFolder))
+                Directory.Delete(package.LocalPresetFolder, true);
+            if (Directory.Exists(package.LocalTextureFolder))
+                Directory.Delete(package.LocalTextureFolder, true);
+
+            package.Status = "Uninstalled";
+            package.Installed = false;
+
+            string localCatalogFilePath = Path.Combine(Instances.AppDataFolder, "Packages", package.Name, "catalog-entry.json");
+            package.ToJsonFile(localCatalogFilePath);
+
+        }
+
+        internal static void ReinstallPackage(ResourcePackage? package)
+        {
+            string localCatalogFilePath = Path.Combine(Instances.AppDataFolder, "Packages", package.Name);
+            InstallPackage(localCatalogFilePath);
         }
     }
 }

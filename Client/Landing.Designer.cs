@@ -47,8 +47,9 @@
             label25 = new Label();
             pnlPackages = new Panel();
             flpPackageOptions = new FlowLayoutPanel();
-            button1 = new Button();
-            button2 = new Button();
+            btnRemove = new Button();
+            btnUninstall = new Button();
+            btnReinstall = new Button();
             btnInstallPackage = new Button();
             dgvPackages = new DataGridView();
             TypeCol = new DataGridViewTextBoxColumn();
@@ -57,9 +58,9 @@
             label8 = new Label();
             pnlSettings = new Panel();
             tableLayoutPanel1 = new TableLayoutPanel();
-            button3 = new Button();
-            mainSource = new BindingSource(components);
+            btnInstallGPosingway = new Button();
             textBox3 = new TextBox();
+            mainSource = new BindingSource(components);
             label4 = new Label();
             btnInstallReShade = new Button();
             textBox2 = new TextBox();
@@ -315,8 +316,9 @@
             // 
             // flpPackageOptions
             // 
-            flpPackageOptions.Controls.Add(button1);
-            flpPackageOptions.Controls.Add(button2);
+            flpPackageOptions.Controls.Add(btnRemove);
+            flpPackageOptions.Controls.Add(btnUninstall);
+            flpPackageOptions.Controls.Add(btnReinstall);
             flpPackageOptions.Controls.Add(btnInstallPackage);
             flpPackageOptions.Dock = DockStyle.Bottom;
             flpPackageOptions.FlowDirection = FlowDirection.RightToLeft;
@@ -325,27 +327,39 @@
             flpPackageOptions.Size = new Size(580, 26);
             flpPackageOptions.TabIndex = 4;
             // 
-            // button1
+            // btnRemove
             // 
-            button1.Location = new Point(486, 3);
-            button1.Name = "button1";
-            button1.Size = new Size(91, 23);
-            button1.TabIndex = 5;
-            button1.Text = "Remove";
-            button1.UseVisualStyleBackColor = true;
+            btnRemove.Location = new Point(486, 3);
+            btnRemove.Name = "btnRemove";
+            btnRemove.Size = new Size(91, 23);
+            btnRemove.TabIndex = 5;
+            btnRemove.Text = "Remove";
+            btnRemove.UseVisualStyleBackColor = true;
+            btnRemove.Click += btnRemove_Click;
             // 
-            // button2
+            // btnUninstall
             // 
-            button2.Location = new Point(389, 3);
-            button2.Name = "button2";
-            button2.Size = new Size(91, 23);
-            button2.TabIndex = 6;
-            button2.Text = "Reinstall";
-            button2.UseVisualStyleBackColor = true;
+            btnUninstall.Location = new Point(389, 3);
+            btnUninstall.Name = "btnUninstall";
+            btnUninstall.Size = new Size(91, 23);
+            btnUninstall.TabIndex = 7;
+            btnUninstall.Text = "Uninstall";
+            btnUninstall.UseVisualStyleBackColor = true;
+            btnUninstall.Click += btnUninstall_Click;
+            // 
+            // btnReinstall
+            // 
+            btnReinstall.Location = new Point(292, 3);
+            btnReinstall.Name = "btnReinstall";
+            btnReinstall.Size = new Size(91, 23);
+            btnReinstall.TabIndex = 6;
+            btnReinstall.Text = "Reinstall";
+            btnReinstall.UseVisualStyleBackColor = true;
+            btnReinstall.Click += btnReinstall_Click;
             // 
             // btnInstallPackage
             // 
-            btnInstallPackage.Location = new Point(292, 3);
+            btnInstallPackage.Location = new Point(195, 3);
             btnInstallPackage.Name = "btnInstallPackage";
             btnInstallPackage.Size = new Size(91, 23);
             btnInstallPackage.TabIndex = 4;
@@ -428,7 +442,7 @@
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60F));
-            tableLayoutPanel1.Controls.Add(button3, 2, 2);
+            tableLayoutPanel1.Controls.Add(btnInstallGPosingway, 2, 2);
             tableLayoutPanel1.Controls.Add(textBox3, 1, 2);
             tableLayoutPanel1.Controls.Add(label4, 0, 2);
             tableLayoutPanel1.Controls.Add(btnInstallReShade, 2, 1);
@@ -452,20 +466,16 @@
             tableLayoutPanel1.Size = new Size(580, 101);
             tableLayoutPanel1.TabIndex = 1;
             // 
-            // button3
+            // btnInstallGPosingway
             // 
-            button3.DataBindings.Add(new Binding("Visible", mainSource, "GPosingway.Missing", true));
-            button3.Dock = DockStyle.Fill;
-            button3.Location = new Point(518, 66);
-            button3.Name = "button3";
-            button3.Size = new Size(54, 23);
-            button3.TabIndex = 8;
-            button3.Text = "Install";
-            button3.UseVisualStyleBackColor = true;
-            // 
-            // mainSource
-            // 
-            mainSource.DataSource = typeof(Model.GPosingwayConfig);
+            btnInstallGPosingway.Dock = DockStyle.Fill;
+            btnInstallGPosingway.Location = new Point(518, 66);
+            btnInstallGPosingway.Name = "btnInstallGPosingway";
+            btnInstallGPosingway.Size = new Size(54, 23);
+            btnInstallGPosingway.TabIndex = 8;
+            btnInstallGPosingway.Text = "Install";
+            btnInstallGPosingway.UseVisualStyleBackColor = true;
+            btnInstallGPosingway.Visible = false;
             // 
             // textBox3
             // 
@@ -479,6 +489,10 @@
             textBox3.Size = new Size(364, 16);
             textBox3.TabIndex = 7;
             textBox3.Text = "Not Installed";
+            // 
+            // mainSource
+            // 
+            mainSource.DataSource = typeof(Model.GPosingwayConfig);
             // 
             // label4
             // 
@@ -501,6 +515,7 @@
             btnInstallReShade.TabIndex = 5;
             btnInstallReShade.Text = "Install";
             btnInstallReShade.UseVisualStyleBackColor = true;
+            btnInstallReShade.Visible = false;
             btnInstallReShade.Click += btnInstallReShade_Click;
             // 
             // textBox2
@@ -632,7 +647,7 @@
         private Button btnInstallReShade;
         private TextBox textBox2;
         private Button btnDetectSettings;
-        private Button button3;
+        private Button btnInstallGPosingway;
         private TextBox textBox3;
         private Label label4;
         private Label label3;
@@ -657,12 +672,13 @@
         private DataGridViewTextBoxColumn NameDataGridViewTextBoxColumn;
         private FlowLayoutPanel flpPackageOptions;
         private Button btnInstallPackage;
-        private Button button1;
-        private Button button2;
+        private Button btnRemove;
+        private Button btnReinstall;
         private DataGridViewTextBoxColumn typeDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn statusDataGridViewTextBoxColumn;
         private DataGridViewTextBoxColumn TypeCol;
         private DataGridViewTextBoxColumn NameCol;
         private DataGridViewTextBoxColumn StatusCol;
+        private Button btnUninstall;
     }
 }

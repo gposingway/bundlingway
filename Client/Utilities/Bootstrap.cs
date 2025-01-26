@@ -15,7 +15,6 @@ namespace Bundlingway.Utilities
                 Instances.AppDataFolder = Instances.LocalConfigProvider.localAppDataPath;
                 Instances.AppDataCacheFolder = Path.Combine(Instances.AppDataFolder, "cache");
                 Instances.AppDataTempFolder = Path.Combine(Instances.AppDataFolder, "temp");
-                await PackageManager.ScanPackages();
 
                 await DetectSettings();
 
@@ -41,10 +40,10 @@ namespace Bundlingway.Utilities
                 await CheckGameClient();
                 await CheckReShade();
                 await CheckGPosingway();
-                await PackageManager.ScanPackages();
 
                 Instances.LocalConfigProvider.Save();
                 Instances.MainDataSource.ResetBindings(true);
+
                 Console.WriteLine("Bootstrap.DetectSettings: Settings detection completed.");
             }
             catch (Exception ex)

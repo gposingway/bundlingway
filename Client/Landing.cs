@@ -1,7 +1,6 @@
 using Bundlingway.Model;
 using Bundlingway.Utilities;
 using Microsoft.Extensions.Logging;
-using Microsoft.VisualBasic;
 
 namespace Bundlingway
 {
@@ -17,6 +16,8 @@ namespace Bundlingway
             Bootstrap.Initialize().ContinueWith(a => EvaluateButtonStates());
             mainSource.DataSource = Instances.LocalConfigProvider.Configuration;
             Instances.MainDataSource = mainSource;
+            
+            PopulateGrid();
         }
 
         private void EvaluateButtonStates()
@@ -24,7 +25,11 @@ namespace Bundlingway
             Console.WriteLine("Landing: EvaluateButtonStates - Evaluating button states");
             if (btnInstallReShade.InvokeRequired)
             {
-                Invoke(new MethodInvoker(delegate { btnInstallReShade.Visible = false; }));
+                Invoke(new MethodInvoker(delegate
+                {
+                    btnInstallReShade.Visible = false;
+                    btnInstallGPosingway.Visible = false;
+                }));
             }
             else
             {
@@ -44,6 +49,22 @@ namespace Bundlingway
                 else
                 {
                     btnInstallReShade.Visible = true;
+                }
+            }
+
+            if (Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion != null &&
+                Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion != "N/A" &&
+                Instances.LocalConfigProvider.Configuration.GPosingway.RemoteVersion != null &&
+                Instances.LocalConfigProvider.Configuration.GPosingway.RemoteVersion != "N/A" &&
+                Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion != Instances.LocalConfigProvider.Configuration.GPosingway.RemoteVersion)
+            {
+                if (btnInstallGPosingway.InvokeRequired)
+                {
+                    Invoke(new MethodInvoker(delegate { btnInstallGPosingway.Visible = true; }));
+                }
+                else
+                {
+                    btnInstallGPosingway.Visible = true;
                 }
             }
         }
@@ -119,7 +140,6 @@ namespace Bundlingway
                             PackageManager.PreparePackageCatalog(selectedFile);
                     }
 
-                    PackageManager.ScanPackages().Wait();
                     Instances.LocalConfigProvider.Save();
                     mainSource.ResetBindings(true);
 
@@ -131,15 +151,19 @@ namespace Bundlingway
         private void PopulateGrid()
         {
             Console.WriteLine("Landing: PopulateGrid - Populating the grid with resource packages");
+            PackageManager.ScanPackages().Wait();
             dgvPackages.Rows.Clear();
 
             foreach (var package in Instances.ResourcePackages)
             {
-                dgvPackages.Rows.Add(
+                var index = dgvPackages.Rows.Add(
                     package.Type,
                     package.Name,
                     package.Status
                 );
+
+                // Set the row data as the package object
+                dgvPackages.Rows[index].Tag = package;
             }
         }
 
@@ -183,6 +207,41 @@ namespace Bundlingway
             {
                 Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
             });
+        }
+
+        private void btnRemove_Click(object sender, EventArgs e)
+        {
+            Console.WriteLine("Landing: btnRemoveSelectedPackages_Click - Remove selected packages button clicked");
+            foreach (DataGridViewRow row in dgvPackages.SelectedRows)
+            {
+                var package = (ResourcePackage)row.Tag;
+                PackageManager.RemovePackage(package);
+            }
+            PopulateGrid();
+
+        }
+
+        private void btnUninstall_Click(object sender, EventArgs e)
+        {
+            Console.WriteLine("Landing: btnRemoveSelectedPackages_Click - Remove selected packages button clicked");
+            foreach (DataGridViewRow row in dgvPackages.SelectedRows)
+            {
+                PackageManager.UninstallPackage((ResourcePackage)row.Tag);
+            }
+            PopulateGrid();
+        }
+
+        private void btnReinstall_Click(object sender, EventArgs e)
+        {
+            Console.WriteLine("Landing: btnReinstall_Click - Reinstall button clicked");
+            foreach (DataGridViewRow row in dgvPackages.SelectedRows)
+            {
+                var package = (ResourcePackage)row.Tag;
+                PackageManager.ReinstallPackage(package);
+            }
+
+            PopulateGrid();
+
         }
     }
 }
