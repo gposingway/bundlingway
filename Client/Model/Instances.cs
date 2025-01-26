@@ -1,5 +1,6 @@
 ﻿
 using Microsoft.Extensions.Logging;
+using static System.Net.WebRequestMethods;
 
 namespace Bundlingway.Model
 {
@@ -14,7 +15,8 @@ namespace Bundlingway.Model
 
         public static List<ResourcePackage> ResourcePackages { get; set; } = [];
 
-        public static string ConfigFileName = "gposingway-definitions.json";
+        public static string GPosingwayConfigFileName = "gposingway-definitions.json";
+        public static string GPosingwayConfigFileUrl = "https://github.com/gposingway/gposingway/releases/latest/download/gposingway-definitions.json";
     }
 
 }
