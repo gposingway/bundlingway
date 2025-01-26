@@ -10,6 +10,6 @@
         public bool Default { get; set; }
         public bool Installed { get; set; }
         public string LocalPresetFolder { get; set; }
-        public string LocalTextureFolder { get; internal set; }
+        public string LocalTextureFolder { get; set; }
     }
 }
