@@ -14,7 +14,7 @@ namespace Bundlingway
             Bootstrap.Initialize().ContinueWith(a => EvaluateButtonStates());
             mainSource.DataSource = Instances.LocalConfigProvider.Configuration;
             Instances.MainDataSource = mainSource;
-            
+
             PopulateGrid();
         }
 
@@ -71,7 +71,6 @@ namespace Bundlingway
         {
             Console.WriteLine("Landing: Landing_Load - Loading landing form");
             lblGPosingwayVersion.Text = $"GPosingway {Instances.LocalConfigProvider.appVersion}";
-            lblCopyright.Text = $"2023-{DateTime.Now.Year} GPosingway Development Team";
         }
 
         private void btnSettings_Click(object sender, EventArgs e)
@@ -198,15 +197,6 @@ namespace Bundlingway
             }
         }
 
-        private void btnInstallReShade_Click(object sender, EventArgs e)
-        {
-            Console.WriteLine("Landing: btnInstallReShade_Click - Install ReShade button clicked");
-            ReShadeParser.Update().ContinueWith(a =>
-            {
-                Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
-            });
-        }
-
         private void btnRemove_Click(object sender, EventArgs e)
         {
             Console.WriteLine("Landing: btnRemoveSelectedPackages_Click - Remove selected packages button clicked");
@@ -240,6 +230,24 @@ namespace Bundlingway
 
             PopulateGrid();
 
+        }
+
+        private void btnInstallReShade_Click(object sender, EventArgs e)
+        {
+            Console.WriteLine("Landing: btnInstallReShade_Click - Install ReShade button clicked");
+            ReShadeParser.Update().ContinueWith(a =>
+            {
+                Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
+            });
+        }
+
+        private void btnInstallGPosingway_Click(object sender, EventArgs e)
+        {
+            Console.WriteLine("Landing: btnInstallGPosingway_Click - Install GPosingway button clicked");
+            GPosingwayParser.Update().ContinueWith(a =>
+            {
+                Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
+            });
         }
     }
 }
