@@ -19,7 +19,16 @@ namespace Bundlingway.Utilities
         public static void ToJsonFile<T>(this T obj, string filePath)
         {
             var json = JsonSerializer.Serialize(obj, _options);
-            File.WriteAllText(filePath, json);
+            try
+            {
+                File.WriteAllText(filePath, json);
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error writing to file {filePath}: {e.Message}");
+
+            }
         }
 
         public static T FromJsonFile<T>(string filePath)
