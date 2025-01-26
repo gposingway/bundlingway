@@ -122,6 +122,8 @@ namespace Bundlingway.Utilities
                 }
                 Console.WriteLine("PackageManager.PreparePackageCatalog: INI files copied to presets folder.");
 
+
+                // Now, handle Textures.
                 var shadersFolder = Path.Combine(targetPackagePath, "Shaders", "Textures");
                 if (Directory.Exists(shadersFolder)) Directory.Delete(shadersFolder, true);
                 Directory.CreateDirectory(shadersFolder);
@@ -133,7 +135,7 @@ namespace Bundlingway.Utilities
                 {
                     changeEval = false;
 
-                    var reshadeShadersDir = Directory.GetDirectories(tempFolderPath, "reshade-shaders", SearchOption.AllDirectories).FirstOrDefault();
+                    var reshadeShadersDir = Directory.GetDirectories(tempFolderPath, "*", SearchOption.AllDirectories).FirstOrDefault(d => Path.GetFileName(d).Equals("reshade-shaders", StringComparison.OrdinalIgnoreCase));
                     if (reshadeShadersDir != null)
                     {
                         tempFolderPath = reshadeShadersDir;
@@ -141,7 +143,7 @@ namespace Bundlingway.Utilities
                         Console.WriteLine("PackageManager.PreparePackageCatalog: Found 'reshade-shaders' directory.");
                     }
 
-                    reshadeShadersDir = Directory.GetDirectories(tempFolderPath, "textures", SearchOption.AllDirectories).FirstOrDefault();
+                    reshadeShadersDir = Directory.GetDirectories(tempFolderPath, "*", SearchOption.AllDirectories).FirstOrDefault(d => Path.GetFileName(d).Equals("textures", StringComparison.OrdinalIgnoreCase));
                     if (reshadeShadersDir != null)
                     {
                         tempFolderPath = reshadeShadersDir;
@@ -152,13 +154,15 @@ namespace Bundlingway.Utilities
                     if (Directory.GetDirectories(tempFolderPath).Length == 1 && Directory.GetFiles(tempFolderPath).Length == 0)
                     {
                         var singleFolderPath = Directory.GetDirectories(tempFolderPath).First();
-                        collectionName = Path.GetFileName(singleFolderPath);
-                        tempFolderPath = Path.Combine(tempFolderPath, collectionName);
 
-                        newCatalogEntry.Name = collectionName;
-                        changeEval = true;
-                        Console.WriteLine($"PackageManager.PreparePackageCatalog: Single folder found, updated collection name to: {collectionName}");
+                        if (Path.GetFileName(singleFolderPath).ToLower() != "shaders")
+                        {
+
+                            tempFolderPath = singleFolderPath;
+                            changeEval = true;
+                        }
                     }
+
                 } while (changeEval);
 
                 foreach (var file in Directory.GetFiles(tempFolderPath, "*.*", SearchOption.AllDirectories))
@@ -183,6 +187,8 @@ namespace Bundlingway.Utilities
                     }
                 }
 
+
+
                 string localCatalogFilePath = Path.Combine(targetPackagePath, "catalog-entry.json");
                 newCatalogEntry.ToJsonFile(localCatalogFilePath);
                 Console.WriteLine("PackageManager.PreparePackageCatalog: Catalog entry saved locally.");
@@ -198,6 +204,12 @@ namespace Bundlingway.Utilities
             Console.WriteLine($"PackageManager.InstallPackage: Installing package at: {targetPackagePath}");
 
             string localCatalogFilePath = Path.Combine(targetPackagePath, "catalog-entry.json");
+
+            if (!File.Exists(localCatalogFilePath))
+            {
+                Console.WriteLine("PackageManager.InstallPackage: catalog-entry.json not found. Exiting.");
+                return;
+            }
 
             ResourcePackage catalogEntry = new ResourcePackage();
             catalogEntry = Serialization.FromJsonFile<ResourcePackage>(localCatalogFilePath);
@@ -261,11 +273,7 @@ namespace Bundlingway.Utilities
 
                 foreach (var packageFile in packageFiles)
                 {
-                    Console.WriteLine($"PackageManager.ScanPackages: Reading file: {packageFile}");
-
                     var package = Serialization.FromJsonFile<ResourcePackage>(packageFile);
-
-                    Console.WriteLine($"PackageManager.ScanPackages: Streaming finished.");
 
                     if (package != null && ValidatePackageCatalog(package))
                     {
@@ -278,14 +286,11 @@ namespace Bundlingway.Utilities
             {
                 MessageBox.Show($"Error in ScanPackages: {ex.Message}");
             }
-
             Instances.ResourcePackages = Instances.ResourcePackages.OrderBy(p => p.Name).ToList();
-            Console.WriteLine("PackageManager.ScanPackages: Completed");
         }
 
         private static bool ValidatePackageCatalog(ResourcePackage package)
         {
-            Console.WriteLine("PackageManager.ValidatePackageCatalog: Start");
             return true;
         }
 
