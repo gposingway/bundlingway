@@ -1,6 +1,6 @@
 ﻿using Microsoft.Win32;
 
-namespace GPosingway.Utilities
+namespace Bundlingway.Utilities
 {
     public static class CustomProtocolHandler
     {

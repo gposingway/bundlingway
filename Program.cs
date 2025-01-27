@@ -1,4 +1,6 @@
-namespace GPosingway
+using Bundlingway;
+
+namespace Bundlingway
 {
     internal static class Program
     {
@@ -12,7 +14,6 @@ namespace GPosingway
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
 
-            Utilities.Bootstrap.Initialize();
 
             Application.Run(new Landing());
         }

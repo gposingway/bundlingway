@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 
-namespace GPosingway.Utilities
+namespace Bundlingway.Utilities
 {
     public class ProcessHelper
     {

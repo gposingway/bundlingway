@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.9.34728.123
+VisualStudioVersion = 17.12.35707.178 d17.12
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bundlingway", "Client\Bundlingway.csproj", "{A0D86BB3-F54F-4D90-9702-53EE4378CC2D}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bundlingway", "Bundlingway.csproj", "{FB9E2028-4AA7-4BB3-AAA9-552448BC433A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,12 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{A0D86BB3-F54F-4D90-9702-53EE4378CC2D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A0D86BB3-F54F-4D90-9702-53EE4378CC2D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A0D86BB3-F54F-4D90-9702-53EE4378CC2D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A0D86BB3-F54F-4D90-9702-53EE4378CC2D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB9E2028-4AA7-4BB3-AAA9-552448BC433A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB9E2028-4AA7-4BB3-AAA9-552448BC433A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB9E2028-4AA7-4BB3-AAA9-552448BC433A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB9E2028-4AA7-4BB3-AAA9-552448BC433A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {C53149E6-AB19-494B-830C-DA0513721ABE}
 	EndGlobalSection
 EndGlobal
