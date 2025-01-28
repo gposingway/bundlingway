@@ -1,6 +1,5 @@
 ﻿using Bundlingway.Model;
-using IniParser.Parser;
-using IniParser;
+using Bundlingway.Utilities;
 using System.Text.RegularExpressions;
 
 namespace Bundlingway.PostProcess.RawFile
@@ -15,7 +14,7 @@ namespace Bundlingway.PostProcess.RawFile
             throw new NotImplementedException();
         }
 
-        public Dictionary<string, string> ReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath)
+        public Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, InstallLogger _logger)
         {
             var result = new Dictionary<string, string>();
 
@@ -35,11 +34,21 @@ namespace Bundlingway.PostProcess.RawFile
                 {
                     if (!result.ContainsKey(kvp.Key))
                     {
+                        _logger.Log("Adjusted Presets", Path.GetFileName(ini), "FixInvalidINIGroupHeaders");
                         result.Add(kvp.Key, kvp.Value);
                     }
                 }
 
             }
+
+            if (result.Count > 0)
+            {
+                foreach (var kvp in result)
+                {
+                    _logger.Log("FixInvalidINIGroupHeaders", kvp.Key, kvp.Value);
+                }
+            }
+
 
             return result;
         }
@@ -74,6 +83,5 @@ namespace Bundlingway.PostProcess.RawFile
 
             return replacementMap;
         }
-
     }
 }
