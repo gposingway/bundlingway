@@ -30,6 +30,8 @@ namespace Bundlingway.Utilities
         {
             try
             {
+                UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.DetectingSettings));
+
                 Console.WriteLine("Bootstrap.DetectSettings: Starting settings detection.");
                 Instances.LocalConfigProvider.Load();
 
@@ -44,6 +46,8 @@ namespace Bundlingway.Utilities
                 Instances.MainDataSource.ResetBindings(true);
 
                 Console.WriteLine("Bootstrap.DetectSettings: Settings detection completed.");
+                UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.Ready));
+
             }
             catch (Exception ex)
             {
