@@ -50,7 +50,7 @@ namespace Bundlingway.Utilities.Handler
             var changeEval = false;
             var isValidCatalogPayload = false;
 
-            string catalogFilePath = Path.Combine(tempFolderPath, "catalog-entry.json");
+            string catalogFilePath = Path.Combine(tempFolderPath, Constants.WellKnown.CatalogEntryFile);
             if (File.Exists(catalogFilePath))
             {
                 try
@@ -125,7 +125,7 @@ namespace Bundlingway.Utilities.Handler
                 Console.WriteLine("Package.Onboard: INI files copied to presets folder.");
 
                 // Now, handle Textures.
-                var shadersFolder = Path.Combine(targetPackagePath, "Shaders", "Textures");
+                var shadersFolder = Path.Combine(targetPackagePath, Constants.WellKnown.ShaderFolder, Constants.WellKnown.TextureFolder);
                 if (Directory.Exists(shadersFolder)) Directory.Delete(shadersFolder, true);
                 Directory.CreateDirectory(shadersFolder);
                 Console.WriteLine("Package.Onboard: Shaders/Textures folder created.");
@@ -189,10 +189,26 @@ namespace Bundlingway.Utilities.Handler
                     }
                 }
 
-                string localCatalogFilePath = Path.Combine(targetPackagePath, "catalog-entry.json");
+                string localCatalogFilePath = Path.Combine(targetPackagePath, Constants.WellKnown.CatalogEntryFile);
                 newCatalogEntry.ToJsonFile(localCatalogFilePath);
                 Console.WriteLine("Package.Onboard: Catalog entry saved locally.");
             }
+
+            // Clean all empty directories under targetPackagePath
+            bool emptyDirFound = false;
+            do
+            {
+                emptyDirFound = false;
+
+                foreach (var dir in Directory.GetDirectories(targetPackagePath, "*", SearchOption.AllDirectories))
+                {
+                    if (Directory.GetFiles(dir).Length == 0 && Directory.GetDirectories(dir).Length == 0)
+                    {
+                        Directory.Delete(dir, false);
+                        emptyDirFound = true;
+                    }
+                }
+            } while (emptyDirFound);
 
             await Task.Run(() => PostProcessor.RunPipeline(newCatalogEntry));
 
@@ -205,7 +221,7 @@ namespace Bundlingway.Utilities.Handler
             Console.WriteLine("Package.Install: Start");
             Console.WriteLine($"Package.Install: Installing package at: {targetPackagePath}");
 
-            string localCatalogFilePath = Path.Combine(targetPackagePath, "catalog-entry.json");
+            string localCatalogFilePath = Path.Combine(targetPackagePath, Constants.WellKnown.CatalogEntryFile);
 
             if (!File.Exists(localCatalogFilePath))
             {
@@ -217,8 +233,8 @@ namespace Bundlingway.Utilities.Handler
             catalogEntry = Serialization.FromJsonFile<ResourcePackage>(localCatalogFilePath);
 
             var collectionName = catalogEntry.Name;
-            var presetsFolder = Path.Combine(targetPackagePath, "Presets");
-            var shadersFolder = Path.Combine(targetPackagePath, "Shaders", "Textures");
+            var presetsFolder = Path.Combine(targetPackagePath, Constants.WellKnown.PresetFolder);
+            var shadersFolder = Path.Combine(targetPackagePath, Constants.WellKnown.ShaderFolder, Constants.WellKnown.TextureFolder);
 
             string gamePresetsFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, "reshade-presets", collectionName);
             string gameTexturesFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, "reshade-shaders", "Textures", collectionName);
@@ -236,18 +252,19 @@ namespace Bundlingway.Utilities.Handler
                 File.Copy(file, targetPath, true);
             }
 
-            if (Directory.EnumerateFileSystemEntries(shadersFolder).ToList().Count != 0)
-            {
-                Directory.CreateDirectory(gameTexturesFolder);
-
-                foreach (var file in Directory.GetFiles(shadersFolder, "*.*", SearchOption.AllDirectories))
+            if (Directory.Exists(shadersFolder))
+                if (Directory.EnumerateFileSystemEntries(shadersFolder).ToList().Count != 0)
                 {
-                    var relativePath = Path.GetRelativePath(shadersFolder, file);
-                    var targetPath = Path.Combine(gameTexturesFolder, relativePath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
-                    File.Copy(file, targetPath, true);
+                    Directory.CreateDirectory(gameTexturesFolder);
+
+                    foreach (var file in Directory.GetFiles(shadersFolder, "*.*", SearchOption.AllDirectories))
+                    {
+                        var relativePath = Path.GetRelativePath(shadersFolder, file);
+                        var targetPath = Path.Combine(gameTexturesFolder, relativePath);
+                        Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                        File.Copy(file, targetPath, true);
+                    }
                 }
-            }
 
             catalogEntry.Status = "Installed";
             catalogEntry.Installed = true;
@@ -267,7 +284,7 @@ namespace Bundlingway.Utilities.Handler
 
                 Instances.ResourcePackages = [];
 
-                var packageFiles = Directory.GetFiles(Instances.PackageFolder, "catalog-entry.json", SearchOption.AllDirectories);
+                var packageFiles = Directory.GetFiles(Instances.PackageFolder, Constants.WellKnown.CatalogEntryFile, SearchOption.AllDirectories);
                 Console.WriteLine($"Package.Scan: Found {packageFiles.Length} package files.");
 
                 foreach (var packageFile in packageFiles)
@@ -327,7 +344,7 @@ namespace Bundlingway.Utilities.Handler
             package.Status = "Uninstalled";
             package.Installed = false;
 
-            string localCatalogFilePath = Path.Combine(Instances.PackageFolder, package.Name, "catalog-entry.json");
+            string localCatalogFilePath = Path.Combine(Instances.PackageFolder, package.Name, Constants.WellKnown.CatalogEntryFile);
             package.ToJsonFile(localCatalogFilePath);
         }
 
@@ -340,8 +357,14 @@ namespace Bundlingway.Utilities.Handler
 
         internal static async Task Onboard(List<string> selectedFiles)
         {
+            var count = selectedFiles.Count;
+            int current = 0;
+
             foreach (var file in selectedFiles)
             {
+                current++;
+                UI.Announce(Constants.MessageCategory.AddPackage, count.ToString(), current.ToString(), Path.GetFileName(file));
+
                 await Onboard(file);
             }
         }

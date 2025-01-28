@@ -73,18 +73,19 @@ namespace Bundlingway.Utilities
             {
                 if (Instances.LocalConfigProvider.Configuration.XIVPath != null)
                 {
-                    var appDataGposingwayConfigProbe = Path.Combine(Instances.DataFolder, Instances.GPosingwayConfigFileName);
+                    var appDataGposingwayConfigProbe = Path.Combine(Instances.DataFolder, Constants.WellKnown.GPosingwayConfigFileName);
                     var appDataGposingwayConfigExists = File.Exists(appDataGposingwayConfigProbe);
 
                     if (!appDataGposingwayConfigExists)
                     {
-                        var gameGposingwayConfigProbe = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, ".gposingway", Instances.GPosingwayConfigFileName);
+
+                        var gameGposingwayConfigProbe = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, ".gposingway", Constants.WellKnown.GPosingwayConfigFileName);
                         var gameGposingwayConfigExists = File.Exists(gameGposingwayConfigProbe);
 
                         if (gameGposingwayConfigExists)
                         {
                             File.Copy(gameGposingwayConfigProbe, appDataGposingwayConfigProbe);
-                            appDataGposingwayConfigProbe = Path.Combine(Instances.DataFolder, Instances.GPosingwayConfigFileName);
+                            appDataGposingwayConfigProbe = Path.Combine(Instances.DataFolder, Constants.WellKnown.GPosingwayConfigFileName);
                             appDataGposingwayConfigExists = File.Exists(appDataGposingwayConfigProbe);
                         }
                     }
@@ -98,7 +99,10 @@ namespace Bundlingway.Utilities
                     else
                     {
                         Instances.LocalConfigProvider.Configuration.GPosingway.Status = "Found";
-                        Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion = JObject.Parse(File.ReadAllText(appDataGposingwayConfigProbe)).SelectToken("version")?.ToString() ?? "";
+                        Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion = 
+                            JObject.Parse(File.ReadAllText(appDataGposingwayConfigProbe))
+                            .SelectToken("version")?.ToString() ?? "";
+
                         Console.WriteLine($"GPosingwayParser.GetLocalInfo: Local version found: {Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion}");
                     }
                 }

@@ -39,11 +39,10 @@
             btnPackagesFolder = new FontAwesome.Sharp.IconButton();
             btnGameFolder = new FontAwesome.Sharp.IconButton();
             pnlAbout = new Panel();
-            tableLayoutPanel4 = new TableLayoutPanel();
-            label21 = new Label();
-            lblGPosingwayVersion = new Label();
-            linkLabel3 = new LinkLabel();
+            lblAnnouncement = new Label();
+            pictureBox1 = new PictureBox();
             label25 = new Label();
+            pictureBox2 = new PictureBox();
             pnlPackages = new Panel();
             flpPackageOptions = new FlowLayoutPanel();
             btnRemove = new Button();
@@ -77,7 +76,8 @@
             splitContainer1.SuspendLayout();
             flpSideMenu.SuspendLayout();
             pnlAbout.SuspendLayout();
-            tableLayoutPanel4.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             pnlPackages.SuspendLayout();
             flpPackageOptions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvPackages).BeginInit();
@@ -231,73 +231,39 @@
             // 
             // pnlAbout
             // 
-            pnlAbout.Controls.Add(tableLayoutPanel4);
+            pnlAbout.Controls.Add(lblAnnouncement);
+            pnlAbout.Controls.Add(pictureBox1);
             pnlAbout.Controls.Add(label25);
+            pnlAbout.Controls.Add(pictureBox2);
             pnlAbout.Dock = DockStyle.Bottom;
-            pnlAbout.Location = new Point(0, 558);
+            pnlAbout.Location = new Point(0, 524);
             pnlAbout.Name = "pnlAbout";
             pnlAbout.Padding = new Padding(5);
-            pnlAbout.Size = new Size(565, 116);
+            pnlAbout.Size = new Size(565, 150);
             pnlAbout.TabIndex = 3;
             // 
-            // tableLayoutPanel4
+            // lblAnnouncement
             // 
-            tableLayoutPanel4.ColumnCount = 3;
-            tableLayoutPanel4.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 110F));
-            tableLayoutPanel4.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            tableLayoutPanel4.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 15F));
-            tableLayoutPanel4.Controls.Add(label21, 0, 4);
-            tableLayoutPanel4.Controls.Add(lblGPosingwayVersion, 1, 0);
-            tableLayoutPanel4.Controls.Add(linkLabel3, 1, 4);
-            tableLayoutPanel4.Dock = DockStyle.Fill;
-            tableLayoutPanel4.Location = new Point(5, 30);
-            tableLayoutPanel4.Margin = new Padding(3, 10, 3, 3);
-            tableLayoutPanel4.Name = "tableLayoutPanel4";
-            tableLayoutPanel4.Padding = new Padding(5);
-            tableLayoutPanel4.RowCount = 6;
-            tableLayoutPanel4.RowStyles.Add(new RowStyle());
-            tableLayoutPanel4.RowStyles.Add(new RowStyle());
-            tableLayoutPanel4.RowStyles.Add(new RowStyle());
-            tableLayoutPanel4.RowStyles.Add(new RowStyle());
-            tableLayoutPanel4.RowStyles.Add(new RowStyle());
-            tableLayoutPanel4.RowStyles.Add(new RowStyle());
-            tableLayoutPanel4.Size = new Size(555, 81);
-            tableLayoutPanel4.TabIndex = 1;
+            lblAnnouncement.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            lblAnnouncement.BackColor = Color.White;
+            lblAnnouncement.FlatStyle = FlatStyle.Flat;
+            lblAnnouncement.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblAnnouncement.Location = new Point(26, 55);
+            lblAnnouncement.Name = "lblAnnouncement";
+            lblAnnouncement.Size = new Size(397, 70);
+            lblAnnouncement.TabIndex = 2;
+            lblAnnouncement.Text = "Gathering my tools, one sec...";
+            lblAnnouncement.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // label21
+            // pictureBox1
             // 
-            label21.AutoSize = true;
-            label21.Dock = DockStyle.Fill;
-            label21.Location = new Point(8, 56);
-            label21.Margin = new Padding(3, 0, 3, 5);
-            label21.Name = "label21";
-            label21.Size = new Size(104, 15);
-            label21.TabIndex = 11;
-            label21.Text = "Project Repository";
-            label21.TextAlign = ContentAlignment.TopRight;
-            // 
-            // lblGPosingwayVersion
-            // 
-            lblGPosingwayVersion.AutoSize = true;
-            lblGPosingwayVersion.Dock = DockStyle.Fill;
-            lblGPosingwayVersion.Font = new Font("Segoe UI", 12F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            lblGPosingwayVersion.Location = new Point(118, 5);
-            lblGPosingwayVersion.Name = "lblGPosingwayVersion";
-            lblGPosingwayVersion.Padding = new Padding(0, 10, 0, 20);
-            lblGPosingwayVersion.Size = new Size(414, 51);
-            lblGPosingwayVersion.TabIndex = 0;
-            lblGPosingwayVersion.Text = "GPosingway 0.0.0.1 (prototype)";
-            lblGPosingwayVersion.TextAlign = ContentAlignment.MiddleLeft;
-            // 
-            // linkLabel3
-            // 
-            linkLabel3.AutoSize = true;
-            linkLabel3.Location = new Point(118, 56);
-            linkLabel3.Name = "linkLabel3";
-            linkLabel3.Size = new Size(247, 15);
-            linkLabel3.TabIndex = 10;
-            linkLabel3.TabStop = true;
-            linkLabel3.Text = "https://github.com/gposingway/gposingway";
+            pictureBox1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            pictureBox1.Image = Properties.Resources.ffxiv_dx11_OkamiClarity_2024_02_18_16_07_46_icon;
+            pictureBox1.Location = new Point(448, 33);
+            pictureBox1.Name = "pictureBox1";
+            pictureBox1.Size = new Size(117, 117);
+            pictureBox1.TabIndex = 1;
+            pictureBox1.TabStop = false;
             // 
             // label25
             // 
@@ -310,7 +276,17 @@
             label25.Padding = new Padding(3);
             label25.Size = new Size(555, 25);
             label25.TabIndex = 0;
-            label25.Text = "About";
+            label25.Text = "GPosingway Says...";
+            // 
+            // pictureBox2
+            // 
+            pictureBox2.Anchor = AnchorStyles.Right;
+            pictureBox2.Image = Properties.Resources.ffxiv_dx11_OkamiClarity_2024_02_18_16_07_46_icon_tip;
+            pictureBox2.Location = new Point(409, 87);
+            pictureBox2.Name = "pictureBox2";
+            pictureBox2.Size = new Size(31, 25);
+            pictureBox2.TabIndex = 3;
+            pictureBox2.TabStop = false;
             // 
             // pnlPackages
             // 
@@ -320,7 +296,7 @@
             pnlPackages.Dock = DockStyle.Fill;
             pnlPackages.Location = new Point(0, 132);
             pnlPackages.Name = "pnlPackages";
-            pnlPackages.Padding = new Padding(5, 5, 5, 115);
+            pnlPackages.Padding = new Padding(5, 5, 5, 150);
             pnlPackages.Size = new Size(565, 542);
             pnlPackages.TabIndex = 1;
             // 
@@ -332,7 +308,7 @@
             flpPackageOptions.Controls.Add(btnInstallPackage);
             flpPackageOptions.Dock = DockStyle.Bottom;
             flpPackageOptions.FlowDirection = FlowDirection.RightToLeft;
-            flpPackageOptions.Location = new Point(5, 401);
+            flpPackageOptions.Location = new Point(5, 366);
             flpPackageOptions.Name = "flpPackageOptions";
             flpPackageOptions.Size = new Size(555, 26);
             flpPackageOptions.TabIndex = 4;
@@ -393,7 +369,7 @@
             dgvPackages.Name = "dgvPackages";
             dgvPackages.ReadOnly = true;
             dgvPackages.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvPackages.Size = new Size(555, 397);
+            dgvPackages.Size = new Size(555, 362);
             dgvPackages.TabIndex = 1;
             dgvPackages.DragDrop += Generic_DragDrop;
             dgvPackages.DragEnter += Generic_DragEnter;
@@ -620,8 +596,8 @@
             flpSideMenu.ResumeLayout(false);
             flpSideMenu.PerformLayout();
             pnlAbout.ResumeLayout(false);
-            tableLayoutPanel4.ResumeLayout(false);
-            tableLayoutPanel4.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
             pnlPackages.ResumeLayout(false);
             flpPackageOptions.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvPackages).EndInit();
@@ -655,10 +631,6 @@
         private Panel pnlPackages;
         private Label label8;
         private Panel pnlAbout;
-        private TableLayoutPanel tableLayoutPanel4;
-        private Label label21;
-        private Label lblGPosingwayVersion;
-        private LinkLabel linkLabel3;
         private Label label25;
         private DataGridView dgvPackages;
         private BindingSource instancesBindingSource;
@@ -679,5 +651,8 @@
         private FontAwesome.Sharp.IconButton btnSettings;
         private FontAwesome.Sharp.IconButton btnPackages;
         private FontAwesome.Sharp.IconButton btnAbout;
+        private Label lblAnnouncement;
+        private PictureBox pictureBox1;
+        private PictureBox pictureBox2;
     }
 }

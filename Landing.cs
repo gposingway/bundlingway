@@ -8,7 +8,12 @@ namespace Bundlingway
     {
         public Landing()
         {
+            UI._landing = this;
+
             Console.WriteLine("Landing: Constructor - Initializing components");
+
+            UI.Announce(Constants.MessageCategory.ApplicationStart);
+
             InitializeComponent();
 
             Bootstrap.Initialize().ContinueWith(a => EvaluateButtonStates());
@@ -16,6 +21,8 @@ namespace Bundlingway
             Instances.MainDataSource = mainSource;
 
             PopulateGrid();
+
+            UI.Announce(Constants.MessageCategory.Ready);
         }
 
         private void EvaluateButtonStates()
@@ -70,7 +77,7 @@ namespace Bundlingway
         private void Landing_Load(object sender, EventArgs e)
         {
             Console.WriteLine("Landing: Landing_Load - Loading landing form");
-            lblGPosingwayVersion.Text = $"GPosingway {Instances.LocalConfigProvider.appVersion}";
+            //lblGPosingwayVersion.Text = $"GPosingway {Instances.LocalConfigProvider.appVersion}";
         }
 
         private void btnSettings_Click(object sender, EventArgs e)
@@ -104,9 +111,9 @@ namespace Bundlingway
                 {
                     string fileExtension = Path.GetExtension(file).ToLower();
 
-                    if (fileExtension == ".rar" || fileExtension == ".zip")
+                    if (Constants.ValidCompressedExtensions.Contains(fileExtension))
                     {
-                        Utilities.Handler.Package.Onboard(file);
+                        Package.Onboard(file);
                     }
                 }
             }
@@ -114,7 +121,12 @@ namespace Bundlingway
 
         private void btnInstallPackage_Click(object sender, EventArgs e)
         {
+
+
+
             Console.WriteLine("Landing: btnInstallPackage_Click - Install package button clicked");
+            UI.Announce(Constants.MessageCategory.BeforeAddPackageSelection);
+
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
                 openFileDialog.Filter = "Archive files (*.zip;*.rar)|*.zip;*.rar";
@@ -123,7 +135,6 @@ namespace Bundlingway
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-
                     var validExtensions = new HashSet<string> { ".zip", ".rar", ".7z" };
                     var selectedFiles = openFileDialog.FileNames
                         .Where(file => validExtensions.Contains(Path.GetExtension(file).ToLower()))
@@ -133,7 +144,13 @@ namespace Bundlingway
                     {
                         Instances.LocalConfigProvider.Save();
                         PopulateGrid();
+
+                        UI.Announce(Constants.MessageCategory.Finished);
                     });
+                }
+                else
+                {
+                    UI.Announce(Constants.MessageCategory.AddPackageSelectionCancelled);
                 }
             }
         }
@@ -196,8 +213,11 @@ namespace Bundlingway
             foreach (DataGridViewRow row in dgvPackages.SelectedRows)
             {
                 var package = (ResourcePackage)row.Tag;
-                Utilities.Handler.Package.Remove(package);
+                Package.Remove(package);
             }
+
+            UI.Announce(Constants.MessageCategory.RemovePackage);
+
             PopulateGrid();
 
         }
@@ -207,8 +227,11 @@ namespace Bundlingway
             Console.WriteLine("Landing: btnRemoveSelectedPackages_Click - Remove selected packages button clicked");
             foreach (DataGridViewRow row in dgvPackages.SelectedRows)
             {
-                Utilities.Handler.Package.Uninstall((ResourcePackage)row.Tag);
+                Package.Uninstall((ResourcePackage)row.Tag);
             }
+
+            UI.Announce(Constants.MessageCategory.UninstallPackage);
+
             PopulateGrid();
         }
 
@@ -218,8 +241,10 @@ namespace Bundlingway
             foreach (DataGridViewRow row in dgvPackages.SelectedRows)
             {
                 var package = (ResourcePackage)row.Tag;
-                Utilities.Handler.Package.Reinstall(package);
+                Package.Reinstall(package);
             }
+
+            UI.Announce(Constants.MessageCategory.ReinstallPackage);
 
             PopulateGrid();
 
@@ -278,6 +303,20 @@ namespace Bundlingway
         {
             Console.WriteLine("Landing: btnPackages_Click - Packages button clicked");
             pnlPackages.Focus();
+
+        }
+        internal async Task Announce(string message)
+        {
+            if (lblAnnouncement == null) return;
+
+            if (lblAnnouncement.InvokeRequired)
+            {
+                Invoke(new MethodInvoker(delegate { lblAnnouncement.Text = message; }));
+            }
+            else
+            {
+                lblAnnouncement.Text = message;
+            }
 
         }
     }

@@ -41,6 +41,8 @@ namespace Bundlingway.Utilities
 
         public void WriteLogToFile(string filePath)
         {
+            if (!_logEntries.Any()) return;
+
             using (var writer = new StreamWriter(filePath))
             {
                 var groupedEntries = _logEntries

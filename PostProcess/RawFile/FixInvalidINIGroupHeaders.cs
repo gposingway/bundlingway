@@ -75,7 +75,7 @@ namespace Bundlingway.PostProcess.RawFile
                     var cleanedHeader = $"[{match.Groups[1].Value}]";
                     if (!replacementMap.ContainsKey(originalHeader))
                     {
-                        if (originalHeader != cleanedHeader)
+                        if (originalHeader != cleanedHeader && !originalHeader.EndsWith("+.fx]"))
                             replacementMap.Add(originalHeader, cleanedHeader);
                     }
                 }
