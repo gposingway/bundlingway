@@ -8,7 +8,6 @@
         public static class Events { 
             public static string PackageInstalled = "package-installed";
         }
-
         public static class WellKnown
         {
             public static string ShaderFolder = "Shaders";

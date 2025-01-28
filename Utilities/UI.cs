@@ -3,7 +3,6 @@ using System.Threading;
 using System;
 using System.Xml;
 
-
 namespace Bundlingway.Utilities
 {
     public static class UI
@@ -14,7 +13,6 @@ namespace Bundlingway.Utilities
         {
             _idleTimer = new System.Threading.Timer(async a =>
             {
-
                 await Announce(MessageCategory.IdleCommentary);
                 _idleTimer.Change(TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
 
@@ -34,7 +32,5 @@ namespace Bundlingway.Utilities
             await _landing.Announce(Constants.Bundlingway.GetMessage(category, args));
             _idleTimer.Change(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
         }
-
-     
     }
 }
