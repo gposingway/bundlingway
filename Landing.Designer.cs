@@ -44,15 +44,15 @@
             label25 = new Label();
             pictureBox2 = new PictureBox();
             pnlPackages = new Panel();
+            dgvPackages = new DataGridView();
+            TypeCol = new DataGridViewTextBoxColumn();
+            NameCol = new DataGridViewTextBoxColumn();
+            StatusCol = new DataGridViewTextBoxColumn();
             flpPackageOptions = new FlowLayoutPanel();
             btnRemove = new Button();
             btnUninstall = new Button();
             btnReinstall = new Button();
             btnInstallPackage = new Button();
-            dgvPackages = new DataGridView();
-            TypeCol = new DataGridViewTextBoxColumn();
-            NameCol = new DataGridViewTextBoxColumn();
-            StatusCol = new DataGridViewTextBoxColumn();
             label8 = new Label();
             pnlSettings = new Panel();
             tableLayoutPanel1 = new TableLayoutPanel();
@@ -79,8 +79,8 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             pnlPackages.SuspendLayout();
-            flpPackageOptions.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvPackages).BeginInit();
+            flpPackageOptions.SuspendLayout();
             pnlSettings.SuspendLayout();
             tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)mainSource).BeginInit();
@@ -111,7 +111,7 @@
             splitContainer1.Panel2.Controls.Add(pnlAbout);
             splitContainer1.Panel2.Controls.Add(pnlPackages);
             splitContainer1.Panel2.Controls.Add(pnlSettings);
-            splitContainer1.Size = new Size(720, 674);
+            splitContainer1.Size = new Size(769, 1109);
             splitContainer1.SplitterDistance = 151;
             splitContainer1.TabIndex = 1;
             // 
@@ -129,7 +129,7 @@
             flpSideMenu.Dock = DockStyle.Fill;
             flpSideMenu.Location = new Point(0, 0);
             flpSideMenu.Name = "flpSideMenu";
-            flpSideMenu.Size = new Size(151, 674);
+            flpSideMenu.Size = new Size(151, 1109);
             flpSideMenu.TabIndex = 0;
             flpSideMenu.DragDrop += Generic_DragDrop;
             flpSideMenu.DragEnter += Generic_DragEnter;
@@ -236,10 +236,10 @@
             pnlAbout.Controls.Add(label25);
             pnlAbout.Controls.Add(pictureBox2);
             pnlAbout.Dock = DockStyle.Bottom;
-            pnlAbout.Location = new Point(0, 524);
+            pnlAbout.Location = new Point(0, 959);
             pnlAbout.Name = "pnlAbout";
             pnlAbout.Padding = new Padding(5);
-            pnlAbout.Size = new Size(565, 150);
+            pnlAbout.Size = new Size(614, 150);
             pnlAbout.TabIndex = 3;
             // 
             // lblAnnouncement
@@ -250,7 +250,7 @@
             lblAnnouncement.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblAnnouncement.Location = new Point(26, 55);
             lblAnnouncement.Name = "lblAnnouncement";
-            lblAnnouncement.Size = new Size(397, 70);
+            lblAnnouncement.Size = new Size(446, 70);
             lblAnnouncement.TabIndex = 2;
             lblAnnouncement.Text = "Gathering my tools, one sec...";
             lblAnnouncement.TextAlign = ContentAlignment.MiddleCenter;
@@ -259,7 +259,7 @@
             // 
             pictureBox1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             pictureBox1.Image = Properties.Resources.ffxiv_dx11_OkamiClarity_2024_02_18_16_07_46_icon;
-            pictureBox1.Location = new Point(448, 33);
+            pictureBox1.Location = new Point(497, 33);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(117, 117);
             pictureBox1.TabIndex = 1;
@@ -274,7 +274,7 @@
             label25.Location = new Point(5, 5);
             label25.Name = "label25";
             label25.Padding = new Padding(3);
-            label25.Size = new Size(555, 25);
+            label25.Size = new Size(604, 25);
             label25.TabIndex = 0;
             label25.Text = "GPosingway Says...";
             // 
@@ -282,7 +282,7 @@
             // 
             pictureBox2.Anchor = AnchorStyles.Right;
             pictureBox2.Image = Properties.Resources.ffxiv_dx11_OkamiClarity_2024_02_18_16_07_46_icon_tip;
-            pictureBox2.Location = new Point(409, 87);
+            pictureBox2.Location = new Point(458, 87);
             pictureBox2.Name = "pictureBox2";
             pictureBox2.Size = new Size(31, 25);
             pictureBox2.TabIndex = 3;
@@ -290,68 +290,15 @@
             // 
             // pnlPackages
             // 
-            pnlPackages.Controls.Add(flpPackageOptions);
             pnlPackages.Controls.Add(dgvPackages);
+            pnlPackages.Controls.Add(flpPackageOptions);
             pnlPackages.Controls.Add(label8);
             pnlPackages.Dock = DockStyle.Fill;
             pnlPackages.Location = new Point(0, 132);
             pnlPackages.Name = "pnlPackages";
             pnlPackages.Padding = new Padding(5, 5, 5, 150);
-            pnlPackages.Size = new Size(565, 542);
+            pnlPackages.Size = new Size(614, 977);
             pnlPackages.TabIndex = 1;
-            // 
-            // flpPackageOptions
-            // 
-            flpPackageOptions.Controls.Add(btnRemove);
-            flpPackageOptions.Controls.Add(btnUninstall);
-            flpPackageOptions.Controls.Add(btnReinstall);
-            flpPackageOptions.Controls.Add(btnInstallPackage);
-            flpPackageOptions.Dock = DockStyle.Bottom;
-            flpPackageOptions.FlowDirection = FlowDirection.RightToLeft;
-            flpPackageOptions.Location = new Point(5, 366);
-            flpPackageOptions.Name = "flpPackageOptions";
-            flpPackageOptions.Size = new Size(555, 26);
-            flpPackageOptions.TabIndex = 4;
-            // 
-            // btnRemove
-            // 
-            btnRemove.Location = new Point(461, 3);
-            btnRemove.Name = "btnRemove";
-            btnRemove.Size = new Size(91, 23);
-            btnRemove.TabIndex = 5;
-            btnRemove.Text = "Remove";
-            btnRemove.UseVisualStyleBackColor = true;
-            btnRemove.Click += btnRemove_Click;
-            // 
-            // btnUninstall
-            // 
-            btnUninstall.Location = new Point(364, 3);
-            btnUninstall.Name = "btnUninstall";
-            btnUninstall.Size = new Size(91, 23);
-            btnUninstall.TabIndex = 7;
-            btnUninstall.Text = "Uninstall";
-            btnUninstall.UseVisualStyleBackColor = true;
-            btnUninstall.Click += btnUninstall_Click;
-            // 
-            // btnReinstall
-            // 
-            btnReinstall.Location = new Point(267, 3);
-            btnReinstall.Name = "btnReinstall";
-            btnReinstall.Size = new Size(91, 23);
-            btnReinstall.TabIndex = 6;
-            btnReinstall.Text = "Reinstall";
-            btnReinstall.UseVisualStyleBackColor = true;
-            btnReinstall.Click += btnReinstall_Click;
-            // 
-            // btnInstallPackage
-            // 
-            btnInstallPackage.Location = new Point(170, 3);
-            btnInstallPackage.Name = "btnInstallPackage";
-            btnInstallPackage.Size = new Size(91, 23);
-            btnInstallPackage.TabIndex = 4;
-            btnInstallPackage.Text = "Add Package";
-            btnInstallPackage.UseVisualStyleBackColor = true;
-            btnInstallPackage.Click += btnInstallPackage_Click;
             // 
             // dgvPackages
             // 
@@ -359,7 +306,7 @@
             dgvPackages.AllowUserToAddRows = false;
             dgvPackages.AllowUserToDeleteRows = false;
             dgvPackages.BackgroundColor = SystemColors.Control;
-            dgvPackages.BorderStyle = BorderStyle.Fixed3D;
+            dgvPackages.BorderStyle = BorderStyle.None;
             dgvPackages.CausesValidation = false;
             dgvPackages.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvPackages.Columns.AddRange(new DataGridViewColumn[] { TypeCol, NameCol, StatusCol });
@@ -369,7 +316,7 @@
             dgvPackages.Name = "dgvPackages";
             dgvPackages.ReadOnly = true;
             dgvPackages.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvPackages.Size = new Size(555, 362);
+            dgvPackages.Size = new Size(604, 771);
             dgvPackages.TabIndex = 1;
             dgvPackages.DragDrop += Generic_DragDrop;
             dgvPackages.DragEnter += Generic_DragEnter;
@@ -398,6 +345,59 @@
             StatusCol.ReadOnly = true;
             StatusCol.Width = 64;
             // 
+            // flpPackageOptions
+            // 
+            flpPackageOptions.Controls.Add(btnRemove);
+            flpPackageOptions.Controls.Add(btnUninstall);
+            flpPackageOptions.Controls.Add(btnReinstall);
+            flpPackageOptions.Controls.Add(btnInstallPackage);
+            flpPackageOptions.Dock = DockStyle.Bottom;
+            flpPackageOptions.FlowDirection = FlowDirection.RightToLeft;
+            flpPackageOptions.Location = new Point(5, 801);
+            flpPackageOptions.Name = "flpPackageOptions";
+            flpPackageOptions.Size = new Size(604, 26);
+            flpPackageOptions.TabIndex = 4;
+            // 
+            // btnRemove
+            // 
+            btnRemove.Location = new Point(510, 3);
+            btnRemove.Name = "btnRemove";
+            btnRemove.Size = new Size(91, 23);
+            btnRemove.TabIndex = 5;
+            btnRemove.Text = "Remove";
+            btnRemove.UseVisualStyleBackColor = true;
+            btnRemove.Click += btnRemove_Click;
+            // 
+            // btnUninstall
+            // 
+            btnUninstall.Location = new Point(413, 3);
+            btnUninstall.Name = "btnUninstall";
+            btnUninstall.Size = new Size(91, 23);
+            btnUninstall.TabIndex = 7;
+            btnUninstall.Text = "Uninstall";
+            btnUninstall.UseVisualStyleBackColor = true;
+            btnUninstall.Click += btnUninstall_Click;
+            // 
+            // btnReinstall
+            // 
+            btnReinstall.Location = new Point(316, 3);
+            btnReinstall.Name = "btnReinstall";
+            btnReinstall.Size = new Size(91, 23);
+            btnReinstall.TabIndex = 6;
+            btnReinstall.Text = "Reinstall";
+            btnReinstall.UseVisualStyleBackColor = true;
+            btnReinstall.Click += btnReinstall_Click;
+            // 
+            // btnInstallPackage
+            // 
+            btnInstallPackage.Location = new Point(219, 3);
+            btnInstallPackage.Name = "btnInstallPackage";
+            btnInstallPackage.Size = new Size(91, 23);
+            btnInstallPackage.TabIndex = 4;
+            btnInstallPackage.Text = "Add Package";
+            btnInstallPackage.UseVisualStyleBackColor = true;
+            btnInstallPackage.Click += btnInstallPackage_Click;
+            // 
             // label8
             // 
             label8.BackColor = SystemColors.ControlDark;
@@ -407,7 +407,7 @@
             label8.Location = new Point(5, 5);
             label8.Name = "label8";
             label8.Padding = new Padding(3);
-            label8.Size = new Size(555, 25);
+            label8.Size = new Size(604, 25);
             label8.TabIndex = 0;
             label8.Text = "Packages";
             // 
@@ -419,7 +419,7 @@
             pnlSettings.Location = new Point(0, 0);
             pnlSettings.Name = "pnlSettings";
             pnlSettings.Padding = new Padding(5);
-            pnlSettings.Size = new Size(565, 132);
+            pnlSettings.Size = new Size(614, 132);
             pnlSettings.TabIndex = 0;
             // 
             // tableLayoutPanel1
@@ -449,13 +449,13 @@
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
-            tableLayoutPanel1.Size = new Size(555, 101);
+            tableLayoutPanel1.Size = new Size(604, 101);
             tableLayoutPanel1.TabIndex = 1;
             // 
             // btnInstallGPosingway
             // 
             btnInstallGPosingway.Dock = DockStyle.Fill;
-            btnInstallGPosingway.Location = new Point(493, 66);
+            btnInstallGPosingway.Location = new Point(542, 66);
             btnInstallGPosingway.Name = "btnInstallGPosingway";
             btnInstallGPosingway.Size = new Size(54, 23);
             btnInstallGPosingway.TabIndex = 8;
@@ -473,7 +473,7 @@
             textBox3.Margin = new Padding(3, 7, 3, 3);
             textBox3.Name = "textBox3";
             textBox3.ReadOnly = true;
-            textBox3.Size = new Size(339, 16);
+            textBox3.Size = new Size(388, 16);
             textBox3.TabIndex = 7;
             textBox3.Text = "Not Installed";
             // 
@@ -496,7 +496,7 @@
             // 
             btnInstallReShade.DataBindings.Add(new Binding("Visible", mainSource, "ReShade.IsMissing", true));
             btnInstallReShade.Dock = DockStyle.Fill;
-            btnInstallReShade.Location = new Point(493, 37);
+            btnInstallReShade.Location = new Point(542, 37);
             btnInstallReShade.Name = "btnInstallReShade";
             btnInstallReShade.Size = new Size(54, 23);
             btnInstallReShade.TabIndex = 5;
@@ -514,7 +514,7 @@
             textBox2.Margin = new Padding(3, 7, 3, 3);
             textBox2.Name = "textBox2";
             textBox2.ReadOnly = true;
-            textBox2.Size = new Size(339, 16);
+            textBox2.Size = new Size(388, 16);
             textBox2.TabIndex = 4;
             textBox2.Text = "Not Installed";
             // 
@@ -549,12 +549,12 @@
             txtXivPath.Dock = DockStyle.Fill;
             txtXivPath.Location = new Point(148, 8);
             txtXivPath.Name = "txtXivPath";
-            txtXivPath.Size = new Size(339, 23);
+            txtXivPath.Size = new Size(388, 23);
             txtXivPath.TabIndex = 1;
             // 
             // btnDetectSettings
             // 
-            btnDetectSettings.Location = new Point(493, 8);
+            btnDetectSettings.Location = new Point(542, 8);
             btnDetectSettings.Name = "btnDetectSettings";
             btnDetectSettings.Size = new Size(54, 23);
             btnDetectSettings.TabIndex = 2;
@@ -571,7 +571,7 @@
             label1.Location = new Point(5, 5);
             label1.Name = "label1";
             label1.Padding = new Padding(3);
-            label1.Size = new Size(555, 25);
+            label1.Size = new Size(604, 25);
             label1.TabIndex = 0;
             label1.Text = "Settings";
             // 
@@ -583,7 +583,7 @@
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(720, 674);
+            ClientSize = new Size(769, 1109);
             Controls.Add(splitContainer1);
             MinimumSize = new Size(575, 551);
             Name = "Landing";
@@ -599,8 +599,8 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
             pnlPackages.ResumeLayout(false);
-            flpPackageOptions.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvPackages).EndInit();
+            flpPackageOptions.ResumeLayout(false);
             pnlSettings.ResumeLayout(false);
             tableLayoutPanel1.ResumeLayout(false);
             tableLayoutPanel1.PerformLayout();

@@ -14,6 +14,6 @@
         public string XIVPath { get; set; }
         public CorePackageStatus ReShade { get; set; } = new CorePackageStatus();
         public CorePackageStatus GPosingway { get; set; } = new CorePackageStatus();
-        public string? GameFolder { get; internal set; }
+        public string? GameFolder { get; set; }
     }
 }

@@ -16,13 +16,26 @@ namespace Bundlingway
 
             InitializeComponent();
 
-            Bootstrap.Initialize().ContinueWith(a => EvaluateButtonStates());
+            Bootstrap.DetectSettings().ContinueWith(a => EvaluateButtonStates());
+
             mainSource.DataSource = Instances.LocalConfigProvider.Configuration;
             Instances.MainDataSource = mainSource;
 
             PopulateGrid();
 
+            ProcessHelper.NotificationReceived += ProcessHelper_NotificationReceived;
+            ProcessHelper.ListenForNotifications();
+
             UI.Announce(Constants.MessageCategory.Ready);
+        }
+
+        private void ProcessHelper_NotificationReceived(object? sender, string e)
+        {
+            if (e == Constants.Events.PackageInstalled)
+            {
+                PopulateGrid();
+                UI.Announce(Constants.MessageCategory.Finished);
+            }
         }
 
         private void EvaluateButtonStates()

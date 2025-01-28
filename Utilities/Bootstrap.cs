@@ -15,9 +15,8 @@ namespace Bundlingway.Utilities
 
                 Instances.DataFolder = Instances.LocalConfigProvider.commonAppDataPath;
                 Instances.TempFolder = Path.Combine(Instances.DataFolder, "temp");
-                Instances.PackageFolder = Path.Combine(Instances.DataFolder, "Packages");
-
-                await DetectSettings();
+                Instances.CacheFolder = Path.Combine(Instances.DataFolder, Constants.WellKnown.CacheFolder);
+                Instances.PackageFolder = Path.Combine(Instances.DataFolder, Constants.WellKnown.PackagesFolder);
                 Console.WriteLine("Bootstrap.Initialize: Initialization completed.");
             }
             catch (Exception ex)
