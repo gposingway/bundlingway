@@ -78,6 +78,7 @@ namespace Bundlingway.Utilities
 
                     if (!appDataGposingwayConfigExists)
                     {
+
                         var gameGposingwayConfigProbe = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, ".gposingway", Constants.WellKnown.GPosingwayConfigFileName);
                         var gameGposingwayConfigExists = File.Exists(gameGposingwayConfigProbe);
 
@@ -101,6 +102,7 @@ namespace Bundlingway.Utilities
                         Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion = 
                             JObject.Parse(File.ReadAllText(appDataGposingwayConfigProbe))
                             .SelectToken("version")?.ToString() ?? "";
+
                         Console.WriteLine($"GPosingwayParser.GetLocalInfo: Local version found: {Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion}");
                     }
                 }

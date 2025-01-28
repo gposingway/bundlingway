@@ -148,7 +148,6 @@ namespace Bundlingway
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-
                     var validExtensions = new HashSet<string> { ".zip", ".rar", ".7z" };
                     var selectedFiles = openFileDialog.FileNames
                         .Where(file => validExtensions.Contains(Path.GetExtension(file).ToLower()))
@@ -319,7 +318,6 @@ namespace Bundlingway
             pnlPackages.Focus();
 
         }
-
         internal async Task Announce(string message)
         {
             if (lblAnnouncement == null) return;
