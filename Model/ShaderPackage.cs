@@ -1,6 +1,6 @@
 ﻿namespace Bundlingway.Model
 {
-    public class Package
+    public class ShaderPackage
     {
         public Dictionary<string, string> ShaderFiles { get; set; } = [];
     }

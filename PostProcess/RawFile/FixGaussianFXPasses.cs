@@ -13,14 +13,13 @@ namespace Bundlingway.PostProcess.RawFile
             throw new NotImplementedException();
         }
 
-        public Dictionary<string, string> ReplacementMap(List<string> presetFileList, string baselinePath)
+        public Dictionary<string, string> ReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath)
         {
             return new Dictionary<string, string> {
             { "gN_PASSES=6", "gN_PASSES=5" } ,
             { "gN_PASSES=7", "gN_PASSES=5" } ,
             { "gN_PASSES=8", "gN_PASSES=5" } ,
-            { "gN_PASSES=9", "gN_PASSES=5" }
-        };
+            { "gN_PASSES=9", "gN_PASSES=5" }};
         }
     }
 }

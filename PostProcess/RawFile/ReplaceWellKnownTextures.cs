@@ -36,7 +36,7 @@ namespace Bundlingway.PostProcess.RawFile
                 throw new NotImplementedException();
             }
 
-            public Dictionary<string, string> ReplacementMap(List<string> presetFileList, string baselinePath)
+            public Dictionary<string, string> ReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath)
             {
                 return WellKnownFileReplacements;
             }

@@ -1,4 +1,4 @@
-﻿using Bundlingway.Utilities;
+﻿using Bundlingway.Utilities.Extensions;
 using System.Reflection;
 
 namespace Bundlingway.Model

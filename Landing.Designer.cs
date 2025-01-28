@@ -1,6 +1,4 @@
-﻿using Bundlingway.Utilities;
-
-namespace Bundlingway
+﻿namespace Bundlingway
 {
     partial class Landing
     {
@@ -542,14 +540,6 @@ namespace Bundlingway
             // resourcePackageBindingSource
             // 
             resourcePackageBindingSource.DataSource = typeof(Model.ResourcePackage);
-            // 
-            // instancesBindingSource
-            // 
-            instancesBindingSource.DataSource = typeof(Instances);
-            // 
-            // instancesBindingSource1
-            // 
-            instancesBindingSource1.DataSource = typeof(Instances);
             // 
             // Landing
             // 

@@ -112,7 +112,7 @@ namespace Bundlingway
 
                     if (fileExtension == ".rar" || fileExtension == ".zip")
                     {
-                        PackageManager.PreparePackageCatalog(file);
+                        Utilities.Handler.Package.Onboard(file);
                     }
                 }
             }
@@ -129,16 +129,17 @@ namespace Bundlingway
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    foreach (string selectedFile in openFileDialog.FileNames)
+
+                    var validExtensions = new HashSet<string> { ".zip", ".rar", ".7z" };
+                    var selectedFiles = openFileDialog.FileNames
+                        .Where(file => validExtensions.Contains(Path.GetExtension(file).ToLower()))
+                        .ToList();
+
+                    Package.Onboard(selectedFiles).ContinueWith(a =>
                     {
-                        string fileExtension = Path.GetExtension(selectedFile).ToLower();
-
-                        if (fileExtension == ".zip" || fileExtension == ".rar")
-                            PackageManager.PreparePackageCatalog(selectedFile);
-                    }
-
-                    Instances.LocalConfigProvider.Save();
-                    PopulateGrid();
+                        Instances.LocalConfigProvider.Save();
+                        PopulateGrid();
+                    });
                 }
             }
         }
@@ -146,19 +147,23 @@ namespace Bundlingway
         private void PopulateGrid()
         {
             Console.WriteLine("Landing: PopulateGrid - Populating the grid with resource packages");
-            PackageManager.ScanPackages().Wait();
+            Package.Scan().Wait();
             dgvPackages.Rows.Clear();
 
             foreach (var package in Instances.ResourcePackages)
             {
-                var index = dgvPackages.Rows.Add(
-                    package.Type,
-                    package.Name,
-                    package.Status
-                );
+                var rowObj = new DataGridViewRow();
+                rowObj.CreateCells(dgvPackages, package.Type, package.Name, package.Status);
+                rowObj.Tag = package;
 
-                // Set the row data as the package object
-                dgvPackages.Rows[index].Tag = package;
+                if (dgvPackages.InvokeRequired)
+                {
+                    Invoke(new MethodInvoker(delegate { dgvPackages.Rows.Add(rowObj); }));
+                }
+                else
+                {
+                    dgvPackages.Rows.Add(rowObj);
+                }
             }
         }
 
@@ -201,7 +206,7 @@ namespace Bundlingway
             foreach (DataGridViewRow row in dgvPackages.SelectedRows)
             {
                 var package = (ResourcePackage)row.Tag;
-                PackageManager.RemovePackage(package);
+                Utilities.Handler.Package.Remove(package);
             }
             PopulateGrid();
 
@@ -212,7 +217,7 @@ namespace Bundlingway
             Console.WriteLine("Landing: btnRemoveSelectedPackages_Click - Remove selected packages button clicked");
             foreach (DataGridViewRow row in dgvPackages.SelectedRows)
             {
-                PackageManager.UninstallPackage((ResourcePackage)row.Tag);
+                Utilities.Handler.Package.Uninstall((ResourcePackage)row.Tag);
             }
             PopulateGrid();
         }
@@ -223,7 +228,7 @@ namespace Bundlingway
             foreach (DataGridViewRow row in dgvPackages.SelectedRows)
             {
                 var package = (ResourcePackage)row.Tag;
-                PackageManager.ReinstallPackage(package);
+                Utilities.Handler.Package.Reinstall(package);
             }
 
             PopulateGrid();

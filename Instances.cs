@@ -1,7 +1,8 @@
 ﻿using Bundlingway.Model;
 using Bundlingway.PostProcess.PresetItem;
+using Bundlingway.Utilities;
 
-namespace Bundlingway.Utilities
+namespace Bundlingway
 {
     public class Instances
     {
@@ -11,7 +12,8 @@ namespace Bundlingway.Utilities
         public static string TempFolder { get; set; }
 
         public static List<ResourcePackage> ResourcePackages { get; set; } = [];
-        public static Dictionary<string, Package> Packages { get; set; } = [];
+        public static Dictionary<string, ShaderPackage> Packages { get; set; } = [];
+        public static string PackageFolder { get; set; }
 
         public static string GPosingwayConfigFileName = "gposingway-definitions.json";
         public static string GPosingwayConfigFileUrl = "https://github.com/gposingway/gposingway/releases/latest/download/gposingway-definitions.json";

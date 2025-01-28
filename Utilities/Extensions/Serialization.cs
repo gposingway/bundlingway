@@ -1,11 +1,11 @@
 ﻿using System.Text.Json;
 
-namespace Bundlingway.Utilities
+namespace Bundlingway.Utilities.Extensions
 {
     public static class Serialization
     {
 
-        private static JsonSerializerOptions _options = new() { WriteIndented = true };
+        private static readonly JsonSerializerOptions _options = new() { WriteIndented = true };
 
         public static string ToJson<T>(this T obj)
         {

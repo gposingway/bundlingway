@@ -87,7 +87,7 @@ namespace Bundlingway.PostProcess.PresetItem
 
             if (probe)
             {
-                preset.Techniques["Vertical_Previewer@VerticalPreviewer.fx"] = true;
+                preset.Techniques["Vertical_Previewer@VerticalPreviewer.fx"] = false;
                 return true;
             }
 
