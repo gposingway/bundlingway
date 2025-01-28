@@ -1,4 +1,5 @@
 ﻿using Bundlingway.Model;
+using Bundlingway.Utilities;
 
 namespace Bundlingway.PostProcess.RawFile
 {
@@ -8,12 +9,13 @@ namespace Bundlingway.PostProcess.RawFile
         public bool ApplyToShaders { get; set; } = true;
         public int Order { get; set; } = 0;
 
+
         public bool PostProcess(Preset preset)
         {
             throw new NotImplementedException();
         }
 
-        public Dictionary<string, string> ReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath)
+        public Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, InstallLogger _logger)
         {
             return new Dictionary<string, string> {
             { "gN_PASSES=6", "gN_PASSES=5" } ,
