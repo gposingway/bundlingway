@@ -1,14 +1,7 @@
 ﻿using Bundlingway.Model;
-using Bundlingway.PostProcess.PresetItem;
 using Bundlingway.Utilities.Extensions;
 using IniParser;
 using IniParser.Parser;
-using System;
-using System.Collections.Generic;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -26,6 +19,9 @@ namespace Bundlingway.Utilities.Handler
 
         internal static void RunPipeline(ResourcePackage package)
         {
+
+            InstallLogger _logger = new();
+
             var baseline = Path.Combine(Instances.PackageFolder, package.Name);
 
             var presetPath = Path.Combine(baseline, "Presets");
@@ -40,7 +36,7 @@ namespace Bundlingway.Utilities.Handler
 
             var techGraph = new Dictionary<string, int>();
 
-            package.RunRawFilePipeline();
+            package.RunRawFilePipeline(_logger);
 
 
             foreach (string iniFile in iniFiles)
@@ -76,18 +72,17 @@ namespace Bundlingway.Utilities.Handler
 
                         if (textNotFound)
                         {
-                            Console.Write("[Missing Textures] " + tex + " " + iniFile);
+                            Console.WriteLine("[Missing Textures] " + tex + " @ " + Path.GetFileName(iniFile));
                         }
                     }
                 }
 
-        
-
-
-                preset.RunPostProcessorPipeline(package, ini_filedata);
+                preset.RunPostProcessorPipeline(package, ini_filedata, _logger);
             }
 
 
+            _logger.WriteLogToConsole();
+            _logger.WriteLogToFile(Path.Combine(baseline, "installation-log.txt"));
 
         }
     }
