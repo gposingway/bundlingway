@@ -53,12 +53,12 @@ namespace Bundlingway.Utilities
                     }
                     catch (Exception e)
                     {
-                        Console.Write("Error while loading " + item.Key);
+                        Console.WriteLine("Error while loading " + item.Key);
                     }
                 }
             }
 
-            Console.Write($"Assembly Loader - {AssemblyLoadMap.Count} assemblies registered");
+            Console.WriteLine($"Assembly Loader - {AssemblyLoadMap.Count} assemblies registered");
         }
 
         public static List<T> GetInstances<T>(bool excludeCoreNullDefinitions = true) where T : class
