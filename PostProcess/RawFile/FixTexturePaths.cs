@@ -18,10 +18,8 @@ namespace Bundlingway.PostProcess.RawFile
         public Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, InstallLogger _logger)
         {
             var replacementMap = new Dictionary<string, string>();
-
             var textureFolder = Path.Combine(Instances.PackageFolder, package.Name, Constants.WellKnown.ShaderFolder, Constants.WellKnown.TextureFolder);
             var presetFolder = Path.Combine(Instances.PackageFolder, package.Name, Constants.WellKnown.PresetFolder);
-
 
             foreach (var presetFile in presetFileList)
             {
