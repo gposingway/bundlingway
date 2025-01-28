@@ -85,12 +85,6 @@ namespace Bundlingway
             pnlAbout.Focus();
         }
 
-        private void btnDownloads_Click(object sender, EventArgs e)
-        {
-            Console.WriteLine("Landing: btnDownloads_Click - Downloads button clicked");
-            pnlPackages.Focus();
-        }
-
         private void btnDetectSettings_Click(object sender, EventArgs e)
         {
             Console.WriteLine("Landing: btnDetectSettings_Click - Detect settings button clicked");
@@ -148,7 +142,9 @@ namespace Bundlingway
         {
             Console.WriteLine("Landing: PopulateGrid - Populating the grid with resource packages");
             Package.Scan().Wait();
-            dgvPackages.Rows.Clear();
+
+            if (dgvPackages.InvokeRequired) { Invoke(new MethodInvoker(dgvPackages.Rows.Clear)); }
+            else { dgvPackages.Rows.Clear(); }
 
             foreach (var package in Instances.ResourcePackages)
             {
@@ -156,14 +152,8 @@ namespace Bundlingway
                 rowObj.CreateCells(dgvPackages, package.Type, package.Name, package.Status);
                 rowObj.Tag = package;
 
-                if (dgvPackages.InvokeRequired)
-                {
-                    Invoke(new MethodInvoker(delegate { dgvPackages.Rows.Add(rowObj); }));
-                }
-                else
-                {
-                    dgvPackages.Rows.Add(rowObj);
-                }
+                if (dgvPackages.InvokeRequired) { Invoke(new MethodInvoker(delegate { dgvPackages.Rows.Add(rowObj); })); }
+                else { dgvPackages.Rows.Add(rowObj); }
             }
         }
 
@@ -251,6 +241,44 @@ namespace Bundlingway
             {
                 Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
             });
+        }
+
+        private void btnPackagesFolder_Click(object sender, EventArgs e)
+        {
+
+            Console.WriteLine("Landing: btnPackagesFolder_Click - Open Package folder button clicked");
+            string repositoryPath = Instances.PackageFolder;
+            if (Directory.Exists(repositoryPath))
+            {
+                System.Diagnostics.Process.Start("explorer.exe", repositoryPath);
+            }
+            else
+            {
+                MessageBox.Show("Package Folder not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnGameFolder_Click(object sender, EventArgs e)
+        {
+            // Open Game Folder in a new explorer window
+
+            Console.WriteLine("Landing: btnGameFolder_Click - Open Game folder button clicked");
+            string gamePath = Instances.LocalConfigProvider.Configuration.GameFolder;
+            if (Directory.Exists(gamePath))
+            {
+                System.Diagnostics.Process.Start("explorer.exe", gamePath);
+            }
+            else
+            {
+                MessageBox.Show("Game Folder not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void btnPackages_Click(object sender, EventArgs e)
+        {
+            Console.WriteLine("Landing: btnPackages_Click - Packages button clicked");
+            pnlPackages.Focus();
+
         }
     }
 }
