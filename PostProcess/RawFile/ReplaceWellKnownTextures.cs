@@ -1,4 +1,5 @@
 ﻿using Bundlingway.Model;
+using Bundlingway.Utilities;
 
 namespace Bundlingway.PostProcess.RawFile
 {
@@ -6,12 +7,6 @@ namespace Bundlingway.PostProcess.RawFile
     {
         public class ReplaceWellKnownPresetTextures : IRawFileProcess
         {
-            private Dictionary<string, string> WellKnownFileReplacements2 = new Dictionary<string, string>
-            {
-                ["Wifi_Renaissance5.png"] = "Wifi_Renaissance5.jpeg",
-                ["Wifi_Simplicity0.png"] = "Wifi_Simplicity0.jpeg",
-            };
-
             private Dictionary<string, string> WellKnownFileReplacements = new Dictionary<string, string>
             {
                 ["Wifi_Cinematic5.png"] = "Wifi_Cinematic5.jpeg",
@@ -36,7 +31,7 @@ namespace Bundlingway.PostProcess.RawFile
                 throw new NotImplementedException();
             }
 
-            public Dictionary<string, string> ReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath)
+            public Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, InstallLogger _logger)
             {
                 return WellKnownFileReplacements;
             }
