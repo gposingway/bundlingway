@@ -1,5 +1,7 @@
 ﻿using Bundlingway.Model;
 using Bundlingway.Utilities;
+using System;
+using System.Collections.Generic;
 
 namespace Bundlingway.PostProcess.RawFile
 {
@@ -17,8 +19,8 @@ namespace Bundlingway.PostProcess.RawFile
         {
             var replacementMap = new Dictionary<string, string>();
 
-            var textureFolder = Path.Combine(Instances.PackageFolder, package.Name, "Shaders", "Textures");
-            var presetFolder = Path.Combine(Instances.PackageFolder, package.Name, "Presets");
+            var textureFolder = Path.Combine(Instances.PackageFolder, package.Name, Constants.WellKnown.ShaderFolder, Constants.WellKnown.TextureFolder);
+            var presetFolder = Path.Combine(Instances.PackageFolder, package.Name, Constants.WellKnown.PresetFolder);
 
 
             foreach (var presetFile in presetFileList)
@@ -73,7 +75,7 @@ namespace Bundlingway.PostProcess.RawFile
 
                 string texturePath = line.Substring(startIndex + 1, endIndex - startIndex - 1);
 
-                if (Instances.ValidTextureExtensions.Any(texturePath.ToLowerInvariant().EndsWith))
+                if (Constants.ValidTextureExtensions.Any(texturePath.ToLowerInvariant().EndsWith))
                 {
                     texturePaths.Add(texturePath);
                 }
