@@ -1,4 +1,5 @@
 ﻿using Bundlingway.Model;
+using Bundlingway.Utilities.Handler;
 
 namespace Bundlingway.Utilities
 {
@@ -11,19 +12,17 @@ namespace Bundlingway.Utilities
                 Console.WriteLine("Bootstrap.Initialize: Starting initialization.");
                 CustomProtocolHandler.RegisterCustomProtocol("gwpreset", "A collection of presets for GPosingway", true);
                 Instances.LocalConfigProvider = new ConfigProvider<GPosingwayConfig>();
-                Instances.VersionedAppDataFolder = Instances.LocalConfigProvider.versionedLocalAppDataPath;
-                Instances.AppDataFolder = Instances.LocalConfigProvider.localAppDataPath;
-                Instances.AppDataCacheFolder = Path.Combine(Instances.AppDataFolder, "cache");
-                Instances.AppDataTempFolder = Path.Combine(Instances.AppDataFolder, "temp");
+
+                Instances.DataFolder = Instances.LocalConfigProvider.commonAppDataPath;
+                Instances.TempFolder = Path.Combine(Instances.DataFolder, "temp");
+                Instances.PackageFolder = Path.Combine(Instances.DataFolder, "Packages");
 
                 await DetectSettings();
-
                 Console.WriteLine("Bootstrap.Initialize: Initialization completed.");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Bootstrap.Initialize: Error in Initialize: {ex.Message}");
-                MessageBox.Show($"Bootstrap.Initialize: Error in Initialize: {ex.Message}");
             }
         }
 
@@ -49,7 +48,6 @@ namespace Bundlingway.Utilities
             catch (Exception ex)
             {
                 Console.WriteLine($"Bootstrap.DetectSettings: Error in DetectSettings: {ex.Message}");
-                MessageBox.Show($"Bootstrap.DetectSettings: Error in DetectSettings: {ex.Message}");
             }
         }
 
@@ -81,7 +79,6 @@ namespace Bundlingway.Utilities
             catch (Exception ex)
             {
                 Console.WriteLine($"Bootstrap.CheckGameClient: Error in CheckGameClient: {ex.Message}");
-                MessageBox.Show($"Bootstrap.CheckGameClient: Error in CheckGameClient: {ex.Message}");
             }
         }
 
@@ -90,8 +87,8 @@ namespace Bundlingway.Utilities
             try
             {
                 Console.WriteLine("Bootstrap.CheckGPosingway: Checking GPosingway.");
-                GPosingwayParser.GetLocalInfo();
-                await GPosingwayParser.GetRemoteInfo();
+                GPosingway.GetLocalInfo();
+                await GPosingway.GetRemoteInfo();
 
                 Instances.LocalConfigProvider.Configuration.GPosingway.Status = $"Local: {Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion}, Remote: {Instances.LocalConfigProvider.Configuration.GPosingway.RemoteVersion}";
                 Instances.LocalConfigProvider.Save();
@@ -100,7 +97,6 @@ namespace Bundlingway.Utilities
             catch (Exception ex)
             {
                 Console.WriteLine($"Bootstrap.CheckGPosingway: Error in CheckGPosingway: {ex.Message}");
-                MessageBox.Show($"Bootstrap.CheckGPosingway: Error in CheckGPosingway: {ex.Message}");
             }
         }
 
@@ -109,8 +105,8 @@ namespace Bundlingway.Utilities
             try
             {
                 Console.WriteLine("Bootstrap.CheckReShade: Checking ReShade.");
-                ReShadeParser.GetLocalInfo();
-                await ReShadeParser.GetRemoteInfo();
+                ReShade.GetLocalInfo();
+                await ReShade.GetRemoteInfo();
 
                 Instances.LocalConfigProvider.Configuration.ReShade.Status = $"Local: {Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion}, Remote: {Instances.LocalConfigProvider.Configuration.ReShade.RemoteVersion}";
                 Instances.LocalConfigProvider.Save();
@@ -119,7 +115,6 @@ namespace Bundlingway.Utilities
             catch (Exception ex)
             {
                 Console.WriteLine($"Bootstrap.CheckReShade: Error in CheckReShade: {ex.Message}");
-                MessageBox.Show($"Bootstrap.CheckReShade: Error in CheckReShade: {ex.Message}");
             }
         }
     }

@@ -1,22 +1,13 @@
-﻿using Bundlingway.Model;
-
-namespace Bundlingway.Utilities
+﻿namespace Bundlingway.Utilities
 {
     public static class Maintenance
     {
 
         public static void RemoveTempDir()
         {
-            if (Directory.Exists(Instances.AppDataTempFolder))
+            if (Directory.Exists(Instances.TempFolder))
             {
-                Directory.Delete(Instances.AppDataTempFolder, true);
-            }
-        }
-        public static void RemoveCacheDir()
-        {
-            if (Directory.Exists(Instances.AppDataCacheFolder))
-            {
-                Directory.Delete(Instances.AppDataCacheFolder, true);
+                Directory.Delete(Instances.TempFolder, true);
             }
         }
     }

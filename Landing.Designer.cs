@@ -32,9 +32,12 @@
             contextMenuStrip1 = new ContextMenuStrip(components);
             splitContainer1 = new SplitContainer();
             flpSideMenu = new FlowLayoutPanel();
-            btnSettings = new Button();
-            btnDownloads = new Button();
-            btnAbout = new Button();
+            btnSettings = new FontAwesome.Sharp.IconButton();
+            btnPackages = new FontAwesome.Sharp.IconButton();
+            btnAbout = new FontAwesome.Sharp.IconButton();
+            lblSpacing1 = new Label();
+            btnPackagesFolder = new FontAwesome.Sharp.IconButton();
+            btnGameFolder = new FontAwesome.Sharp.IconButton();
             pnlAbout = new Panel();
             tableLayoutPanel4 = new TableLayoutPanel();
             label21 = new Label();
@@ -109,7 +112,7 @@
             splitContainer1.Panel2.Controls.Add(pnlPackages);
             splitContainer1.Panel2.Controls.Add(pnlSettings);
             splitContainer1.Size = new Size(720, 674);
-            splitContainer1.SplitterDistance = 153;
+            splitContainer1.SplitterDistance = 151;
             splitContainer1.TabIndex = 1;
             // 
             // flpSideMenu
@@ -118,54 +121,113 @@
             flpSideMenu.AutoScroll = true;
             flpSideMenu.BackColor = SystemColors.ControlLight;
             flpSideMenu.Controls.Add(btnSettings);
-            flpSideMenu.Controls.Add(btnDownloads);
+            flpSideMenu.Controls.Add(btnPackages);
             flpSideMenu.Controls.Add(btnAbout);
+            flpSideMenu.Controls.Add(lblSpacing1);
+            flpSideMenu.Controls.Add(btnPackagesFolder);
+            flpSideMenu.Controls.Add(btnGameFolder);
             flpSideMenu.Dock = DockStyle.Fill;
             flpSideMenu.Location = new Point(0, 0);
             flpSideMenu.Name = "flpSideMenu";
-            flpSideMenu.Size = new Size(153, 674);
+            flpSideMenu.Size = new Size(151, 674);
             flpSideMenu.TabIndex = 0;
             flpSideMenu.DragDrop += Generic_DragDrop;
             flpSideMenu.DragEnter += Generic_DragEnter;
             // 
             // btnSettings
             // 
-            btnSettings.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            btnSettings.FlatAppearance.BorderSize = 0;
-            btnSettings.FlatStyle = FlatStyle.Flat;
+            btnSettings.IconChar = FontAwesome.Sharp.IconChar.Server;
+            btnSettings.IconColor = Color.SkyBlue;
+            btnSettings.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnSettings.IconSize = 32;
+            btnSettings.ImageAlign = ContentAlignment.MiddleLeft;
             btnSettings.Location = new Point(3, 3);
+            btnSettings.Margin = new Padding(3, 3, 3, 0);
             btnSettings.Name = "btnSettings";
-            btnSettings.Size = new Size(145, 23);
-            btnSettings.TabIndex = 4;
+            btnSettings.Size = new Size(145, 37);
+            btnSettings.TabIndex = 10;
             btnSettings.Text = "Settings";
+            btnSettings.TextAlign = ContentAlignment.MiddleRight;
             btnSettings.UseVisualStyleBackColor = true;
             btnSettings.Click += btnSettings_Click;
             // 
-            // btnDownloads
+            // btnPackages
             // 
-            btnDownloads.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            btnDownloads.FlatAppearance.BorderSize = 0;
-            btnDownloads.FlatStyle = FlatStyle.Flat;
-            btnDownloads.Location = new Point(3, 32);
-            btnDownloads.Name = "btnDownloads";
-            btnDownloads.Size = new Size(145, 23);
-            btnDownloads.TabIndex = 1;
-            btnDownloads.Text = "Packages";
-            btnDownloads.UseVisualStyleBackColor = true;
-            btnDownloads.Click += btnDownloads_Click;
+            btnPackages.IconChar = FontAwesome.Sharp.IconChar.Gifts;
+            btnPackages.IconColor = Color.SkyBlue;
+            btnPackages.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnPackages.IconSize = 32;
+            btnPackages.ImageAlign = ContentAlignment.MiddleLeft;
+            btnPackages.Location = new Point(3, 40);
+            btnPackages.Margin = new Padding(3, 0, 3, 0);
+            btnPackages.Name = "btnPackages";
+            btnPackages.Size = new Size(145, 37);
+            btnPackages.TabIndex = 11;
+            btnPackages.Text = "Packages";
+            btnPackages.TextAlign = ContentAlignment.MiddleRight;
+            btnPackages.UseVisualStyleBackColor = true;
+            btnPackages.Click += btnPackages_Click;
             // 
             // btnAbout
             // 
-            btnAbout.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            btnAbout.FlatAppearance.BorderSize = 0;
-            btnAbout.FlatStyle = FlatStyle.Flat;
-            btnAbout.Location = new Point(3, 61);
+            btnAbout.IconChar = FontAwesome.Sharp.IconChar.Carrot;
+            btnAbout.IconColor = Color.SkyBlue;
+            btnAbout.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnAbout.IconSize = 32;
+            btnAbout.ImageAlign = ContentAlignment.MiddleLeft;
+            btnAbout.Location = new Point(3, 77);
+            btnAbout.Margin = new Padding(3, 0, 3, 0);
             btnAbout.Name = "btnAbout";
-            btnAbout.Size = new Size(145, 23);
-            btnAbout.TabIndex = 5;
+            btnAbout.Size = new Size(145, 37);
+            btnAbout.TabIndex = 12;
             btnAbout.Text = "About";
+            btnAbout.TextAlign = ContentAlignment.MiddleRight;
             btnAbout.UseVisualStyleBackColor = true;
             btnAbout.Click += btnAbout_Click;
+            // 
+            // lblSpacing1
+            // 
+            lblSpacing1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            lblSpacing1.AutoSize = true;
+            lblSpacing1.Font = new Font("Segoe UI", 12F);
+            lblSpacing1.Location = new Point(3, 114);
+            lblSpacing1.Name = "lblSpacing1";
+            lblSpacing1.Size = new Size(0, 21);
+            lblSpacing1.TabIndex = 6;
+            // 
+            // btnPackagesFolder
+            // 
+            btnPackagesFolder.IconChar = FontAwesome.Sharp.IconChar.FolderOpen;
+            btnPackagesFolder.IconColor = Color.SkyBlue;
+            btnPackagesFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnPackagesFolder.IconSize = 32;
+            btnPackagesFolder.ImageAlign = ContentAlignment.MiddleLeft;
+            btnPackagesFolder.Location = new Point(3, 138);
+            btnPackagesFolder.Margin = new Padding(3, 3, 3, 0);
+            btnPackagesFolder.Name = "btnPackagesFolder";
+            btnPackagesFolder.Size = new Size(145, 37);
+            btnPackagesFolder.TabIndex = 8;
+            btnPackagesFolder.Text = "Repository";
+            btnPackagesFolder.TextAlign = ContentAlignment.MiddleRight;
+            btnPackagesFolder.UseVisualStyleBackColor = true;
+            btnPackagesFolder.Click += btnPackagesFolder_Click;
+            // 
+            // btnGameFolder
+            // 
+            btnGameFolder.IconChar = FontAwesome.Sharp.IconChar.Gamepad;
+            btnGameFolder.IconColor = Color.SkyBlue;
+            btnGameFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnGameFolder.IconSize = 32;
+            btnGameFolder.ImageAlign = ContentAlignment.MiddleLeft;
+            btnGameFolder.Location = new Point(3, 175);
+            btnGameFolder.Margin = new Padding(3, 0, 3, 0);
+            btnGameFolder.Name = "btnGameFolder";
+            btnGameFolder.Size = new Size(145, 37);
+            btnGameFolder.TabIndex = 9;
+            btnGameFolder.Text = "FFXIV Folder";
+            btnGameFolder.TextAlign = ContentAlignment.MiddleRight;
+            btnGameFolder.UseVisualStyleBackColor = true;
+            btnGameFolder.Click += btnGameFolder_Click;
             // 
             // pnlAbout
             // 
@@ -175,7 +237,7 @@
             pnlAbout.Location = new Point(0, 558);
             pnlAbout.Name = "pnlAbout";
             pnlAbout.Padding = new Padding(5);
-            pnlAbout.Size = new Size(563, 116);
+            pnlAbout.Size = new Size(565, 116);
             pnlAbout.TabIndex = 3;
             // 
             // tableLayoutPanel4
@@ -199,7 +261,7 @@
             tableLayoutPanel4.RowStyles.Add(new RowStyle());
             tableLayoutPanel4.RowStyles.Add(new RowStyle());
             tableLayoutPanel4.RowStyles.Add(new RowStyle());
-            tableLayoutPanel4.Size = new Size(553, 81);
+            tableLayoutPanel4.Size = new Size(555, 81);
             tableLayoutPanel4.TabIndex = 1;
             // 
             // label21
@@ -222,7 +284,7 @@
             lblGPosingwayVersion.Location = new Point(118, 5);
             lblGPosingwayVersion.Name = "lblGPosingwayVersion";
             lblGPosingwayVersion.Padding = new Padding(0, 10, 0, 20);
-            lblGPosingwayVersion.Size = new Size(412, 51);
+            lblGPosingwayVersion.Size = new Size(414, 51);
             lblGPosingwayVersion.TabIndex = 0;
             lblGPosingwayVersion.Text = "GPosingway 0.0.0.1 (prototype)";
             lblGPosingwayVersion.TextAlign = ContentAlignment.MiddleLeft;
@@ -246,7 +308,7 @@
             label25.Location = new Point(5, 5);
             label25.Name = "label25";
             label25.Padding = new Padding(3);
-            label25.Size = new Size(553, 25);
+            label25.Size = new Size(555, 25);
             label25.TabIndex = 0;
             label25.Text = "About";
             // 
@@ -259,7 +321,7 @@
             pnlPackages.Location = new Point(0, 132);
             pnlPackages.Name = "pnlPackages";
             pnlPackages.Padding = new Padding(5, 5, 5, 115);
-            pnlPackages.Size = new Size(563, 542);
+            pnlPackages.Size = new Size(565, 542);
             pnlPackages.TabIndex = 1;
             // 
             // flpPackageOptions
@@ -272,12 +334,12 @@
             flpPackageOptions.FlowDirection = FlowDirection.RightToLeft;
             flpPackageOptions.Location = new Point(5, 401);
             flpPackageOptions.Name = "flpPackageOptions";
-            flpPackageOptions.Size = new Size(553, 26);
+            flpPackageOptions.Size = new Size(555, 26);
             flpPackageOptions.TabIndex = 4;
             // 
             // btnRemove
             // 
-            btnRemove.Location = new Point(459, 3);
+            btnRemove.Location = new Point(461, 3);
             btnRemove.Name = "btnRemove";
             btnRemove.Size = new Size(91, 23);
             btnRemove.TabIndex = 5;
@@ -287,7 +349,7 @@
             // 
             // btnUninstall
             // 
-            btnUninstall.Location = new Point(362, 3);
+            btnUninstall.Location = new Point(364, 3);
             btnUninstall.Name = "btnUninstall";
             btnUninstall.Size = new Size(91, 23);
             btnUninstall.TabIndex = 7;
@@ -297,7 +359,7 @@
             // 
             // btnReinstall
             // 
-            btnReinstall.Location = new Point(265, 3);
+            btnReinstall.Location = new Point(267, 3);
             btnReinstall.Name = "btnReinstall";
             btnReinstall.Size = new Size(91, 23);
             btnReinstall.TabIndex = 6;
@@ -307,7 +369,7 @@
             // 
             // btnInstallPackage
             // 
-            btnInstallPackage.Location = new Point(168, 3);
+            btnInstallPackage.Location = new Point(170, 3);
             btnInstallPackage.Name = "btnInstallPackage";
             btnInstallPackage.Size = new Size(91, 23);
             btnInstallPackage.TabIndex = 4;
@@ -331,7 +393,7 @@
             dgvPackages.Name = "dgvPackages";
             dgvPackages.ReadOnly = true;
             dgvPackages.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvPackages.Size = new Size(553, 397);
+            dgvPackages.Size = new Size(555, 397);
             dgvPackages.TabIndex = 1;
             dgvPackages.DragDrop += Generic_DragDrop;
             dgvPackages.DragEnter += Generic_DragEnter;
@@ -369,7 +431,7 @@
             label8.Location = new Point(5, 5);
             label8.Name = "label8";
             label8.Padding = new Padding(3);
-            label8.Size = new Size(553, 25);
+            label8.Size = new Size(555, 25);
             label8.TabIndex = 0;
             label8.Text = "Packages";
             // 
@@ -381,7 +443,7 @@
             pnlSettings.Location = new Point(0, 0);
             pnlSettings.Name = "pnlSettings";
             pnlSettings.Padding = new Padding(5);
-            pnlSettings.Size = new Size(563, 132);
+            pnlSettings.Size = new Size(565, 132);
             pnlSettings.TabIndex = 0;
             // 
             // tableLayoutPanel1
@@ -411,13 +473,13 @@
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
-            tableLayoutPanel1.Size = new Size(553, 101);
+            tableLayoutPanel1.Size = new Size(555, 101);
             tableLayoutPanel1.TabIndex = 1;
             // 
             // btnInstallGPosingway
             // 
             btnInstallGPosingway.Dock = DockStyle.Fill;
-            btnInstallGPosingway.Location = new Point(491, 66);
+            btnInstallGPosingway.Location = new Point(493, 66);
             btnInstallGPosingway.Name = "btnInstallGPosingway";
             btnInstallGPosingway.Size = new Size(54, 23);
             btnInstallGPosingway.TabIndex = 8;
@@ -435,7 +497,7 @@
             textBox3.Margin = new Padding(3, 7, 3, 3);
             textBox3.Name = "textBox3";
             textBox3.ReadOnly = true;
-            textBox3.Size = new Size(337, 16);
+            textBox3.Size = new Size(339, 16);
             textBox3.TabIndex = 7;
             textBox3.Text = "Not Installed";
             // 
@@ -458,7 +520,7 @@
             // 
             btnInstallReShade.DataBindings.Add(new Binding("Visible", mainSource, "ReShade.IsMissing", true));
             btnInstallReShade.Dock = DockStyle.Fill;
-            btnInstallReShade.Location = new Point(491, 37);
+            btnInstallReShade.Location = new Point(493, 37);
             btnInstallReShade.Name = "btnInstallReShade";
             btnInstallReShade.Size = new Size(54, 23);
             btnInstallReShade.TabIndex = 5;
@@ -476,7 +538,7 @@
             textBox2.Margin = new Padding(3, 7, 3, 3);
             textBox2.Name = "textBox2";
             textBox2.ReadOnly = true;
-            textBox2.Size = new Size(337, 16);
+            textBox2.Size = new Size(339, 16);
             textBox2.TabIndex = 4;
             textBox2.Text = "Not Installed";
             // 
@@ -511,12 +573,12 @@
             txtXivPath.Dock = DockStyle.Fill;
             txtXivPath.Location = new Point(148, 8);
             txtXivPath.Name = "txtXivPath";
-            txtXivPath.Size = new Size(337, 23);
+            txtXivPath.Size = new Size(339, 23);
             txtXivPath.TabIndex = 1;
             // 
             // btnDetectSettings
             // 
-            btnDetectSettings.Location = new Point(491, 8);
+            btnDetectSettings.Location = new Point(493, 8);
             btnDetectSettings.Name = "btnDetectSettings";
             btnDetectSettings.Size = new Size(54, 23);
             btnDetectSettings.TabIndex = 2;
@@ -533,21 +595,13 @@
             label1.Location = new Point(5, 5);
             label1.Name = "label1";
             label1.Padding = new Padding(3);
-            label1.Size = new Size(553, 25);
+            label1.Size = new Size(555, 25);
             label1.TabIndex = 0;
             label1.Text = "Settings";
             // 
             // resourcePackageBindingSource
             // 
             resourcePackageBindingSource.DataSource = typeof(Model.ResourcePackage);
-            // 
-            // instancesBindingSource
-            // 
-            instancesBindingSource.DataSource = typeof(Model.Instances);
-            // 
-            // instancesBindingSource1
-            // 
-            instancesBindingSource1.DataSource = typeof(Model.Instances);
             // 
             // Landing
             // 
@@ -564,6 +618,7 @@
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
             flpSideMenu.ResumeLayout(false);
+            flpSideMenu.PerformLayout();
             pnlAbout.ResumeLayout(false);
             tableLayoutPanel4.ResumeLayout(false);
             tableLayoutPanel4.PerformLayout();
@@ -585,9 +640,6 @@
         private ContextMenuStrip contextMenuStrip1;
         private SplitContainer splitContainer1;
         private FlowLayoutPanel flpSideMenu;
-        private Button btnDownloads;
-        private Button btnSettings;
-        private Button btnAbout;
         private Panel pnlSettings;
         private Label label1;
         private TableLayoutPanel tableLayoutPanel1;
@@ -621,5 +673,11 @@
         private DataGridViewTextBoxColumn NameCol;
         private DataGridViewTextBoxColumn StatusCol;
         private Button btnUninstall;
+        private Label lblSpacing1;
+        private FontAwesome.Sharp.IconButton btnPackagesFolder;
+        private FontAwesome.Sharp.IconButton btnGameFolder;
+        private FontAwesome.Sharp.IconButton btnSettings;
+        private FontAwesome.Sharp.IconButton btnPackages;
+        private FontAwesome.Sharp.IconButton btnAbout;
     }
 }

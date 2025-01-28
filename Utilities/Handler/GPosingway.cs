@@ -1,10 +1,11 @@
 using Bundlingway.Model;
+using Bundlingway.Utilities.Extensions;
 using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json.Linq;
 
 namespace Bundlingway.Utilities
 {
-    public static class GPosingwayParser
+    public static class GPosingway
     {
         private static readonly HttpClient client = new();
 
@@ -72,7 +73,7 @@ namespace Bundlingway.Utilities
             {
                 if (Instances.LocalConfigProvider.Configuration.XIVPath != null)
                 {
-                    var appDataGposingwayConfigProbe = Path.Combine(Instances.AppDataFolder, Instances.GPosingwayConfigFileName);
+                    var appDataGposingwayConfigProbe = Path.Combine(Instances.DataFolder, Instances.GPosingwayConfigFileName);
                     var appDataGposingwayConfigExists = File.Exists(appDataGposingwayConfigProbe);
 
                     if (!appDataGposingwayConfigExists)
@@ -83,7 +84,7 @@ namespace Bundlingway.Utilities
                         if (gameGposingwayConfigExists)
                         {
                             File.Copy(gameGposingwayConfigProbe, appDataGposingwayConfigProbe);
-                            appDataGposingwayConfigProbe = Path.Combine(Instances.AppDataFolder, Instances.GPosingwayConfigFileName);
+                            appDataGposingwayConfigProbe = Path.Combine(Instances.DataFolder, Instances.GPosingwayConfigFileName);
                             appDataGposingwayConfigExists = File.Exists(appDataGposingwayConfigProbe);
                         }
                     }
@@ -92,13 +93,11 @@ namespace Bundlingway.Utilities
                     {
                         Instances.LocalConfigProvider.Configuration.GPosingway.Status = "Not Installed";
                         Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion = "N/A";
-                        Instances.LocalConfigProvider.Configuration.GPosingway.IsMissing = true;
                         Console.WriteLine("GPosingwayParser.GetLocalInfo: GPosingway not installed locally");
                     }
                     else
                     {
                         Instances.LocalConfigProvider.Configuration.GPosingway.Status = "Found";
-                        Instances.LocalConfigProvider.Configuration.GPosingway.IsMissing = false;
                         Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion = JObject.Parse(File.ReadAllText(appDataGposingwayConfigProbe)).SelectToken("version")?.ToString() ?? "";
                         Console.WriteLine($"GPosingwayParser.GetLocalInfo: Local version found: {Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion}");
                     }
@@ -119,7 +118,7 @@ namespace Bundlingway.Utilities
 
             //Download the file from Instances.GPosingwayConfigFileUrl and store it in Instances.AppDataTempFolder as gposingway-definitions-new.json
             var downloadUrl = Instances.GPosingwayConfigFileUrl;
-            var destinationPath = Path.Combine(Instances.AppDataTempFolder, "gposingway-definitions.json");
+            var destinationPath = Path.Combine(Instances.TempFolder, "gposingway-definitions.json");
 
             try
             {
@@ -151,7 +150,7 @@ namespace Bundlingway.Utilities
                 return;
             }
 
-            var tempFolder = Path.Combine(Instances.AppDataTempFolder, "GPosingway");
+            var tempFolder = Path.Combine(Instances.TempFolder, "GPosingway");
             var gameFolder = Instances.LocalConfigProvider.Configuration.GameFolder;
 
             if (string.IsNullOrEmpty(definitions.gposingwayUrl) || string.IsNullOrEmpty(tempFolder) || string.IsNullOrEmpty(gameFolder))
@@ -251,7 +250,7 @@ namespace Bundlingway.Utilities
                 }
 
                 // Overwrite the gposingway-definitions.json in the appdata folder with the copy on temp
-                var appDataPath = Path.Combine(Instances.AppDataFolder, "gposingway-definitions.json");
+                var appDataPath = Path.Combine(Instances.DataFolder, "gposingway-definitions.json");
                 File.Copy(destinationPath, appDataPath, true);
                 Console.WriteLine("GPosingwayParser.Update: Successfully copied gposingway-definitions.json to the appdata folder.");
 
