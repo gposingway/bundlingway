@@ -30,7 +30,7 @@ namespace Bundlingway.Utilities.Extensions
 
                     if (originalContent != content)
                     {
-                        Console.Write("[Replacement] - " + filePath);
+                        Console.WriteLine("[Replacement] - " + filePath);
                         File.WriteAllText(filePath, content);
                     }
                 }
@@ -41,10 +41,7 @@ namespace Bundlingway.Utilities.Extensions
             }
         }
 
-
-
-
-        public static void RunRawFilePipeline(this ResourcePackage package)
+        public static void RunRawFilePipeline(this ResourcePackage package, InstallLogger _logger)
         {
             var baseline = Path.Combine(Instances.PackageFolder, package.Name);
             var presetPath = Path.Combine(baseline, "Presets");
@@ -53,7 +50,7 @@ namespace Bundlingway.Utilities.Extensions
 
             foreach (var processor in Instances.RawFileProcessors)
             {
-                var renameMap = processor.ReplacementMap(package, textureFiles, baseline);
+                var renameMap = processor.GetReplacementMap(package, textureFiles, baseline, _logger);
 
                 if (renameMap == null) continue;
                 if (renameMap.Count == 0) continue;
@@ -62,7 +59,7 @@ namespace Bundlingway.Utilities.Extensions
             }
         }
 
-        public static Preset RunPostProcessorPipeline(this Preset preset, ResourcePackage package, IniParser.Model.IniData iniData)
+        public static Preset RunPostProcessorPipeline(this Preset preset, ResourcePackage package, IniParser.Model.IniData iniData, InstallLogger _logger)
         {
             var baseline = Path.Combine(Instances.PackageFolder, package.Name);
             var presetPath = Path.Combine(baseline, "Presets");
