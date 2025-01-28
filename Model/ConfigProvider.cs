@@ -1,6 +1,5 @@
 ﻿using Bundlingway.Utilities;
 using System.Reflection;
-using System.Text.Json;
 
 namespace Bundlingway.Model
 {
@@ -9,8 +8,7 @@ namespace Bundlingway.Model
         public readonly string configFilePath;
         public readonly string appName;
         public readonly string appVersion;
-        public readonly string versionedLocalAppDataPath;
-        public readonly string localAppDataPath;
+        public readonly string commonAppDataPath;
 
         public T Configuration = new();
 
@@ -19,13 +17,11 @@ namespace Bundlingway.Model
             appName = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyProductAttribute>().Product;
             appVersion = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyFileVersionAttribute>().Version;
 
-            string localAppData = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
+            string commonAppData = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+            commonAppDataPath = Path.Combine(commonAppData, appName);
 
-            localAppDataPath = Path.Combine(localAppData, appName);
-            versionedLocalAppDataPath = Path.Combine(localAppData, appName, appVersion);
-            Directory.CreateDirectory(versionedLocalAppDataPath); // Ensure the directory exists
-
-            configFilePath = Path.Combine(versionedLocalAppDataPath, "config.json");
+            Directory.CreateDirectory(commonAppDataPath);
+            configFilePath = Path.Combine(commonAppDataPath, "config.json");
 
             Load();
         }
@@ -61,5 +57,4 @@ namespace Bundlingway.Model
             }
         }
     }
-
 }

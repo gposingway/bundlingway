@@ -1,13 +1,10 @@
-using Bundlingway.Model;
 using ICSharpCode.SharpZipLib.Zip;
-using SharpCompress.Archives;
-using SharpCompress.Common;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
-namespace Bundlingway.Utilities
+namespace Bundlingway.Utilities.Handler
 {
-    public static class ReShadeParser
+    public static class ReShade
     {
         private static readonly HttpClient client = new();
 
@@ -83,13 +80,11 @@ namespace Bundlingway.Utilities
                 {
                     Instances.LocalConfigProvider.Configuration.ReShade.Status = "Not Installed";
                     Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion = "N/A";
-                    Instances.LocalConfigProvider.Configuration.ReShade.IsMissing = true;
                     Console.WriteLine("ReShadeParser.GetLocalInfo: ReShade not installed.");
                 }
                 else
                 {
                     Instances.LocalConfigProvider.Configuration.ReShade.Status = "Found";
-                    Instances.LocalConfigProvider.Configuration.ReShade.IsMissing = false;
                     var rfvi = FileVersionInfo.GetVersionInfo(reShadeProbe);
                     Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion = rfvi.ProductVersion;
                     Console.WriteLine("ReShadeParser.GetLocalInfo: ReShade found. Version: " + rfvi.ProductVersion);
@@ -101,7 +96,7 @@ namespace Bundlingway.Utilities
         {
             Console.WriteLine("ReShadeParser.Update: Starting update process.");
             var remoteLink = Instances.LocalConfigProvider.Configuration.ReShade.RemoteLink;
-            var tempFolder = Path.Combine(Instances.AppDataTempFolder, "ReShade");
+            var tempFolder = Path.Combine(Instances.TempFolder, "ReShade");
             var gameFolder = Instances.LocalConfigProvider.Configuration.GameFolder;
 
             if (string.IsNullOrEmpty(remoteLink) || string.IsNullOrEmpty(tempFolder) || string.IsNullOrEmpty(gameFolder))

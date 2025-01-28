@@ -24,7 +24,7 @@ namespace Bundlingway.Utilities
             newCatalogEntry.Name = collectionName;
             newCatalogEntry.Status = "Unzipping...";
 
-            string originalTempFolderPath = Path.Combine(Instances.AppDataTempFolder, "presetUnpack.tmp");
+            string originalTempFolderPath = Path.Combine(Instances.TempFolder, "presetUnpack.tmp");
             string tempFolderPath = originalTempFolderPath;
 
             if (Directory.Exists(tempFolderPath)) Directory.Delete(tempFolderPath, true);
@@ -96,7 +96,7 @@ namespace Bundlingway.Utilities
                 } while (changeEval);
 
 
-                targetPackagePath = Path.Combine(Instances.AppDataFolder, "Packages", newCatalogEntry.Name);
+                targetPackagePath = Path.Combine(Instances.DataFolder, "Packages", newCatalogEntry.Name);
 
                 if (Directory.Exists(targetPackagePath)) Directory.Delete(targetPackagePath, true);
                 Directory.CreateDirectory(targetPackagePath);
@@ -221,8 +221,6 @@ namespace Bundlingway.Utilities
             string gamePresetsFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, "reshade-presets", collectionName);
             string gameTexturesFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, "reshade-shaders", "Textures", collectionName);
 
-            catalogEntry.LocalBasePath = gamePresetsFolder;
-
             Directory.CreateDirectory(gamePresetsFolder);
 
             catalogEntry.LocalPresetFolder = gamePresetsFolder;
@@ -252,7 +250,7 @@ namespace Bundlingway.Utilities
             catalogEntry.Status = "Installed";
             catalogEntry.Installed = true;
 
-            if (Directory.Exists(Instances.AppDataTempFolder)) Directory.Delete(Instances.AppDataTempFolder, true);
+            if (Directory.Exists(Instances.TempFolder)) Directory.Delete(Instances.TempFolder, true);
 
             catalogEntry.ToJsonFile(localCatalogFilePath);
             Console.WriteLine("PackageManager.InstallPackage: Package installed successfully.");
@@ -263,7 +261,7 @@ namespace Bundlingway.Utilities
             Console.WriteLine("PackageManager.ScanPackages: Start");
             try
             {
-                string packagesFolder = Path.Combine(Instances.AppDataFolder, "Packages");
+                string packagesFolder = Path.Combine(Instances.DataFolder, "Packages");
                 if (!Directory.Exists(packagesFolder)) return;
 
                 Instances.ResourcePackages = [];
@@ -301,7 +299,7 @@ namespace Bundlingway.Utilities
 
             UninstallPackage(package);
 
-            string targetPackagePath = Path.Combine(Instances.AppDataFolder, "Packages", package.Name);
+            string targetPackagePath = Path.Combine(Instances.DataFolder, "Packages", package.Name);
             if (Directory.Exists(targetPackagePath))
             {
                 Directory.Delete(targetPackagePath, true);
@@ -311,7 +309,7 @@ namespace Bundlingway.Utilities
             {
                 Console.WriteLine($"PackageManager.RemovePackage: Package {package.Name} not found.");
             }
-            if (Directory.Exists(Instances.AppDataTempFolder)) Directory.Delete(Instances.AppDataTempFolder, true);
+            if (Directory.Exists(Instances.TempFolder)) Directory.Delete(Instances.TempFolder, true);
 
         }
 
@@ -328,15 +326,16 @@ namespace Bundlingway.Utilities
             package.Status = "Uninstalled";
             package.Installed = false;
 
-            string localCatalogFilePath = Path.Combine(Instances.AppDataFolder, "Packages", package.Name, "catalog-entry.json");
+            string localCatalogFilePath = Path.Combine(Instances.DataFolder, "Packages", package.Name, "catalog-entry.json");
             package.ToJsonFile(localCatalogFilePath);
 
         }
 
         internal static void ReinstallPackage(ResourcePackage? package)
         {
-            string localCatalogFilePath = Path.Combine(Instances.AppDataFolder, "Packages", package.Name);
+            string localCatalogFilePath = Path.Combine(Instances.DataFolder, "Packages", package.Name);
             InstallPackage(localCatalogFilePath);
         }
     }
+
 }

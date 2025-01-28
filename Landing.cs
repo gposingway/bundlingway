@@ -1,6 +1,6 @@
 using Bundlingway.Model;
 using Bundlingway.Utilities;
-using Microsoft.Extensions.Logging;
+using Bundlingway.Utilities.Handler;
 
 namespace Bundlingway
 {
@@ -138,8 +138,6 @@ namespace Bundlingway
                     }
 
                     Instances.LocalConfigProvider.Save();
-                    mainSource.ResetBindings(true);
-
                     PopulateGrid();
                 }
             }
@@ -235,7 +233,7 @@ namespace Bundlingway
         private void btnInstallReShade_Click(object sender, EventArgs e)
         {
             Console.WriteLine("Landing: btnInstallReShade_Click - Install ReShade button clicked");
-            ReShadeParser.Update().ContinueWith(a =>
+            ReShade.Update().ContinueWith(a =>
             {
                 Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
             });
@@ -244,7 +242,7 @@ namespace Bundlingway
         private void btnInstallGPosingway_Click(object sender, EventArgs e)
         {
             Console.WriteLine("Landing: btnInstallGPosingway_Click - Install GPosingway button clicked");
-            GPosingwayParser.Update().ContinueWith(a =>
+            GPosingway.Update().ContinueWith(a =>
             {
                 Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
             });
