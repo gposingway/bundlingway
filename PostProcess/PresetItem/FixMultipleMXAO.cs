@@ -17,7 +17,7 @@ namespace Bundlingway.PostProcess.PresetItem
                 preset.Techniques = preset.Techniques.ReplaceKey("MXAO@qUINT_mxao.fx", "qMXAO@qUINT_mxao.fx");
                 preset.Techniques["qMXAO@qUINT_mxao.fx"] = true;
 
-                Console.Write("[Conflicting Techniques] - MXAO@qUINT_mxao.fx, " + preset.Filename);
+                Console.WriteLine("[Conflicting Techniques] - MXAO@qUINT_mxao.fx, " + Path.GetFileName(preset.Filename));
                 update = true;
             }
 
