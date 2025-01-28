@@ -67,7 +67,7 @@ namespace Bundlingway.PostProcess.PresetItem
 
                     var newPPDstring = string.Join(",", globalDefs.Select(i => i.Key + "=" + i.Value).ToList());
 
-                    Console.Write("[Transposed PreprocessorDefinitions]" + " " + newPPDstring + " " + preset.Filename);
+                    Console.WriteLine("[Transposed PreprocessorDefinitions]" + Path.GetFileName(preset.Filename));
 
                     preset.IniHandler.Global["PreprocessorDefinitions"] = newPPDstring;
                     return true;
