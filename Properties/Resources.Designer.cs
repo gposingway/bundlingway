@@ -59,5 +59,25 @@ namespace Bundlingway.Properties {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ffxiv_dx11_OkamiClarity_2024_02_18_16_07_46_icon {
+            get {
+                object obj = ResourceManager.GetObject("ffxiv_dx11 OkamiClarity 2024-02-18 16-07-46-icon", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap ffxiv_dx11_OkamiClarity_2024_02_18_16_07_46_icon_tip {
+            get {
+                object obj = ResourceManager.GetObject("ffxiv_dx11 OkamiClarity 2024-02-18 16-07-46-icon-tip", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
     }
 }
