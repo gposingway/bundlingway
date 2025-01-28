@@ -16,6 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="FontAwesome.Sharp" Version="6.6.0" />
     <PackageReference Include="INIFileParserDotNetCore" Version="2.5.2" />
     <PackageReference Include="SharpCompress" Version="0.39.0" />
     <PackageReference Include="SharpZipLib" Version="1.4.2" />
