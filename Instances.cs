@@ -18,6 +18,8 @@ namespace Bundlingway
         public static string GPosingwayConfigFileName = "gposingway-definitions.json";
         public static string GPosingwayConfigFileUrl = "https://github.com/gposingway/gposingway/releases/latest/download/gposingway-definitions.json";
 
+        public static List<string> ValidTextureExtensions { get; set; } = [".jpg", ".jpeg",".png", ".dds"];
+
         public static List<IRawFileProcess> RawFileProcessors = IoC.GetClassesByInterface<IRawFileProcess>().CreateInstances<IRawFileProcess>().ToList();
         public static List<IPresetProcess> PresetProcessors = IoC.GetClassesByInterface<IPresetProcess>().CreateInstances<IPresetProcess>().ToList();
 
