@@ -5,6 +5,9 @@
         public static List<string> ValidTextureExtensions { get; set; } = [".jpg", ".jpeg", ".png", ".dds"];
         public static List<string> ValidCompressedExtensions { get; set; } = [".zip", ".rar", ".7z"];
 
+        public static class Events { 
+            public static string PackageInstalled = "package-installed";
+        }
         public static class WellKnown
         {
             public static string ShaderFolder = "Shaders";
@@ -12,6 +15,8 @@
             public static string TextureFolder = "Textures";
             public static string CatalogEntryFile = "catalog-entry.json";
             public static string GPosingwayConfigFileName = "gposingway-definitions.json";
+            public static string PackagesFolder = "Packages";
+            public static string CacheFolder = "Cache";
         }
 
         public static BundlingwayDialogueOptions Bundlingway = new();

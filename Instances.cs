@@ -10,6 +10,7 @@ namespace Bundlingway
         public static string DataFolder { get; set; }
         public static BindingSource MainDataSource { get; set; }
         public static string TempFolder { get; set; }
+        public static string CacheFolder { get; set; }
 
         public static List<ResourcePackage> ResourcePackages { get; set; } = [];
         public static Dictionary<string, ShaderPackage> Packages { get; set; } = [];

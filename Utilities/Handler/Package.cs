@@ -2,6 +2,7 @@
 using Bundlingway.Utilities.Extensions;
 using SharpCompress.Archives;
 using System.IO.Compression;
+using System.Web;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -110,7 +111,7 @@ namespace Bundlingway.Utilities.Handler
                 File.Copy(filePath, target, true);
                 Console.WriteLine("Package.Onboard: Original file copied to target folder.");
 
-                var presetsFolder = Path.Combine(targetPackagePath, "Presets");
+                var presetsFolder = Path.Combine(targetPackagePath, Constants.WellKnown.PresetFolder);
                 if (Directory.Exists(presetsFolder)) Directory.Delete(presetsFolder, true);
                 Directory.CreateDirectory(presetsFolder);
                 Console.WriteLine("Package.Onboard: Presets folder created.");
@@ -122,7 +123,9 @@ namespace Bundlingway.Utilities.Handler
                     Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
                     File.Copy(file, targetPath, true);
                 }
-                Console.WriteLine("Package.Onboard: INI files copied to presets folder.");
+                Console.WriteLine("Package.Onboard: INI files copied to presets folder: " + presetsFolder);
+                newCatalogEntry.LocalPresetFolder = presetsFolder;
+
 
                 // Now, handle Textures.
                 var shadersFolder = Path.Combine(targetPackagePath, Constants.WellKnown.ShaderFolder, Constants.WellKnown.TextureFolder);
@@ -178,7 +181,9 @@ namespace Bundlingway.Utilities.Handler
                         File.Copy(file, targetPath, true);
                     }
                 }
-                Console.WriteLine("Package.Onboard: Texture files copied to shaders folder.");
+                Console.WriteLine("Package.Onboard: Texture files copied to shaders folder: " + shadersFolder);
+                newCatalogEntry.LocalTextureFolder = shadersFolder;
+
 
                 foreach (var dir in Directory.GetDirectories(shadersFolder, "*", SearchOption.AllDirectories))
                 {
@@ -231,6 +236,10 @@ namespace Bundlingway.Utilities.Handler
 
             ResourcePackage catalogEntry = new ResourcePackage();
             catalogEntry = Serialization.FromJsonFile<ResourcePackage>(localCatalogFilePath);
+            Console.WriteLine("Package.Install: Loaded catalog entry from file.");
+
+            Console.WriteLine("Package.Install: presetsFolder: " + catalogEntry.Name);
+            Console.WriteLine("Package.Install: GameFolder: " + Instances.LocalConfigProvider.Configuration.GameFolder);
 
             var collectionName = catalogEntry.Name;
             var presetsFolder = Path.Combine(targetPackagePath, Constants.WellKnown.PresetFolder);
@@ -239,7 +248,14 @@ namespace Bundlingway.Utilities.Handler
             string gamePresetsFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, "reshade-presets", collectionName);
             string gameTexturesFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, "reshade-shaders", "Textures", collectionName);
 
+            Console.WriteLine("Package.Install: presetsFolder: " + presetsFolder);
+            Console.WriteLine("Package.Install: shadersFolder: " + shadersFolder);
+            Console.WriteLine("Package.Install: gamePresetsFolder: " + gamePresetsFolder);
+            Console.WriteLine("Package.Install: gameTexturesFolder: " + gameTexturesFolder);
+
+
             Directory.CreateDirectory(gamePresetsFolder);
+            Console.WriteLine($"Package.Install: Created game presets folder at: {gamePresetsFolder}");
 
             catalogEntry.LocalPresetFolder = gamePresetsFolder;
             catalogEntry.LocalTextureFolder = gameTexturesFolder;
@@ -250,12 +266,14 @@ namespace Bundlingway.Utilities.Handler
                 var targetPath = Path.Combine(gamePresetsFolder, relativePath);
                 Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
                 File.Copy(file, targetPath, true);
+                Console.WriteLine($"Package.Install: Copied preset file {file} to {targetPath}");
             }
 
             if (Directory.Exists(shadersFolder))
                 if (Directory.EnumerateFileSystemEntries(shadersFolder).ToList().Count != 0)
                 {
                     Directory.CreateDirectory(gameTexturesFolder);
+                    Console.WriteLine($"Package.Install: Created game textures folder at: {gameTexturesFolder}");
 
                     foreach (var file in Directory.GetFiles(shadersFolder, "*.*", SearchOption.AllDirectories))
                     {
@@ -263,15 +281,19 @@ namespace Bundlingway.Utilities.Handler
                         var targetPath = Path.Combine(gameTexturesFolder, relativePath);
                         Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
                         File.Copy(file, targetPath, true);
+                        Console.WriteLine($"Package.Install: Copied texture file {file} to {targetPath}");
                     }
                 }
 
             catalogEntry.Status = "Installed";
             catalogEntry.Installed = true;
+            Console.WriteLine("Package.Install: Updated catalog entry status to Installed.");
 
             if (Directory.Exists(Instances.TempFolder)) Directory.Delete(Instances.TempFolder, true);
+            Console.WriteLine("Package.Install: Deleted temporary folder.");
 
             catalogEntry.ToJsonFile(localCatalogFilePath);
+            Console.WriteLine("Package.Install: Saved updated catalog entry to file.");
             Console.WriteLine("Package.Install: Package installed successfully.");
         }
 
@@ -367,6 +389,53 @@ namespace Bundlingway.Utilities.Handler
 
                 await Onboard(file);
             }
+        }
+
+        public static async Task DownloadAndInstall(string url)
+        {
+            // Log the start of the method
+            Console.WriteLine("DownloadAndInstall: Start");
+
+            using (HttpClient client = new HttpClient())
+            {
+                try
+                {
+                    // Log the URL being downloaded
+                    Console.WriteLine($"DownloadAndInstall: Downloading from URL: {url}");
+
+                    var response = await client.GetAsync(url);
+                    response.EnsureSuccessStatusCode();
+
+                    // Log the successful download
+                    Console.WriteLine("DownloadAndInstall: Download successful");
+
+                    var filename = Path.GetFileName(HttpUtility.UrlDecode(url));
+                    Directory.CreateDirectory(Instances.CacheFolder);
+
+                    var filePath = Path.Combine(Instances.CacheFolder, filename);
+                    using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        await response.Content.CopyToAsync(fs);
+                    }
+
+                    // Log the file path where the content is saved
+                    Console.WriteLine($"DownloadAndInstall: File saved to: {filePath}");
+
+                    // Call your install method here with the filePath
+                    await Onboard(filePath);
+
+                    Maintenance.RemoveTempDir();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show(ex.Message); // Debugging message box
+                    // Log any errors that occur during download or installation
+                    Console.WriteLine($"Error downloading or installing file: {ex.Message}");
+                }
+            }
+
+            // Log the end of the method
+            Console.WriteLine("DownloadAndInstall: End");
         }
     }
 }
