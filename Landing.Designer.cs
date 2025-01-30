@@ -38,6 +38,7 @@
             lblSpacing1 = new Label();
             btnPackagesFolder = new FontAwesome.Sharp.IconButton();
             btnGameFolder = new FontAwesome.Sharp.IconButton();
+            btnDebug = new FontAwesome.Sharp.IconButton();
             pnlAbout = new Panel();
             lblAnnouncement = new Label();
             pictureBox1 = new PictureBox();
@@ -126,6 +127,7 @@
             flpSideMenu.Controls.Add(lblSpacing1);
             flpSideMenu.Controls.Add(btnPackagesFolder);
             flpSideMenu.Controls.Add(btnGameFolder);
+            flpSideMenu.Controls.Add(btnDebug);
             flpSideMenu.Dock = DockStyle.Fill;
             flpSideMenu.Location = new Point(0, 0);
             flpSideMenu.Name = "flpSideMenu";
@@ -228,6 +230,23 @@
             btnGameFolder.TextAlign = ContentAlignment.MiddleRight;
             btnGameFolder.UseVisualStyleBackColor = true;
             btnGameFolder.Click += btnGameFolder_Click;
+            // 
+            // btnDebug
+            // 
+            btnDebug.IconChar = FontAwesome.Sharp.IconChar.ChevronRight;
+            btnDebug.IconColor = Color.SkyBlue;
+            btnDebug.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnDebug.IconSize = 32;
+            btnDebug.ImageAlign = ContentAlignment.MiddleLeft;
+            btnDebug.Location = new Point(3, 212);
+            btnDebug.Margin = new Padding(3, 0, 3, 0);
+            btnDebug.Name = "btnDebug";
+            btnDebug.Size = new Size(145, 37);
+            btnDebug.TabIndex = 13;
+            btnDebug.Text = "Debug Information";
+            btnDebug.TextAlign = ContentAlignment.MiddleRight;
+            btnDebug.UseVisualStyleBackColor = true;
+            btnDebug.Click += btnDebug_Click;
             // 
             // pnlAbout
             // 
@@ -477,10 +496,6 @@
             textBox3.TabIndex = 7;
             textBox3.Text = "Not Installed";
             // 
-            // mainSource
-            // 
-            mainSource.DataSource = typeof(Model.GPosingwayConfig);
-            // 
             // label4
             // 
             label4.AutoSize = true;
@@ -575,10 +590,6 @@
             label1.TabIndex = 0;
             label1.Text = "Settings";
             // 
-            // resourcePackageBindingSource
-            // 
-            resourcePackageBindingSource.DataSource = typeof(Model.ResourcePackage);
-            // 
             // Landing
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -654,5 +665,6 @@
         private Label lblAnnouncement;
         private PictureBox pictureBox1;
         private PictureBox pictureBox2;
+        private FontAwesome.Sharp.IconButton btnDebug;
     }
 }
