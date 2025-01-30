@@ -1,32 +1,38 @@
 ﻿using Microsoft.Win32;
+using Serilog;
 
 namespace Bundlingway.Utilities
 {
     public static class CustomProtocolHandler
     {
-        public static void RegisterCustomProtocol(string protocolName, string description = "", bool forceRegister = false)
+        public static async Task RegisterCustomProtocolAsync(string protocolName, string description = "", bool forceRegister = false)
         {
             var isExtensionRegistered = true;
             var isMainProtocolRegistered = true;
+            var ass = System.Reflection.Assembly.GetExecutingAssembly();
+            string appPath = ass.Location.Replace(".dll", ".exe");
 
             // Check if the protocol is already registered
             using (RegistryKey existingKey = Registry.ClassesRoot.OpenSubKey(protocolName))
             {
-
                 isMainProtocolRegistered = (existingKey != null && !forceRegister);
 
                 if (isMainProtocolRegistered)
-                    Console.WriteLine($"{protocolName} protocol handler is already registered.");
+                {
+                    string existingAppPath = existingKey.OpenSubKey("shell")?.OpenSubKey("open")?.OpenSubKey("command")?.GetValue("")?.ToString();
+                    if (existingAppPath != null && existingAppPath.Contains(appPath))
+                    {
+                        Log.Information($"{protocolName} protocol handler is already registered.");
+                    }
+                    else
+                    {
+                        isMainProtocolRegistered = false;
+                    }
+                }
             }
 
             if (!isMainProtocolRegistered)
             {
-                var ass = System.Reflection.Assembly.GetExecutingAssembly();
-
-
-                // Get the current app instance path
-                string appPath = ass.Location.Replace(".dll", ".exe");
-
                 // Create registry keys
                 using (RegistryKey key = Registry.ClassesRoot.CreateSubKey(protocolName))
                 {
@@ -37,7 +43,7 @@ namespace Bundlingway.Utilities
                     key.CreateSubKey("shell").CreateSubKey("open").CreateSubKey("command").SetValue("", $"{appPath} \"%1\"");
                 }
 
-                Console.WriteLine($"Registered {protocolName} protocol handler.");
+                Log.Information($"Registered {protocolName} protocol handler.");
             }
 
             var extensionName = "." + protocolName;
@@ -48,21 +54,29 @@ namespace Bundlingway.Utilities
                 isExtensionRegistered = (existingKey != null && !forceRegister);
 
                 if (isExtensionRegistered)
-                    Console.WriteLine($".{protocolName} extension is already registered.");
+                {
+                    string existingAppPath = existingKey.GetValue("")?.ToString();
+                    if (existingAppPath != null && existingAppPath.Equals(protocolName))
+                    {
+                        Log.Information($".{protocolName} extension is already registered.");
+                    }
+                    else
+                    {
+                        isExtensionRegistered = false;
+                    }
+                }
             }
 
             if (!isExtensionRegistered)
             {
-
                 // Create registry keys
                 using (RegistryKey key = Registry.ClassesRoot.CreateSubKey(extensionName))
                 {
                     key.SetValue("", protocolName);
                 }
 
-                Console.WriteLine($"Registered {extensionName} extension handler.");
+                Log.Information($"Registered {extensionName} extension handler.");
             }
-
         }
     }
 }

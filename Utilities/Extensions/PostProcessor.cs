@@ -1,6 +1,7 @@
 ﻿using Bundlingway.Model;
 using Bundlingway.PostProcess.PresetItem;
 using IniParser;
+using Serilog;
 using System.Text.RegularExpressions;
 
 namespace Bundlingway.Utilities.Extensions
@@ -12,7 +13,7 @@ namespace Bundlingway.Utilities.Extensions
         {
             if (!Directory.Exists(folderPath))
             {
-                Console.WriteLine($"Folder '{folderPath}' does not exist.");
+                Log.Information($"Folder '{folderPath}' does not exist.");
                 return;
             }
 
@@ -30,18 +31,18 @@ namespace Bundlingway.Utilities.Extensions
 
                     if (originalContent != content)
                     {
-                        Console.WriteLine("[Replacement] - " + filePath);
+                        Log.Information("[Replacement] - " + filePath);
                         File.WriteAllText(filePath, content);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Error processing file '{filePath}': {ex.Message}");
+                    Log.Information($"Error processing file '{filePath}': {ex.Message}");
                 }
             }
         }
 
-        public static void RunRawFilePipeline(this ResourcePackage package, InstallLogger _logger)
+        public static void RunRawFilePipeline(this ResourcePackage package, Logging _logger)
         {
             var baseline = Path.Combine(Instances.PackageFolder, package.Name);
             var presetPath = Path.Combine(baseline, "Presets");
@@ -59,7 +60,7 @@ namespace Bundlingway.Utilities.Extensions
             }
         }
 
-        public static Preset RunPostProcessorPipeline(this Preset preset, ResourcePackage package, IniParser.Model.IniData iniData, InstallLogger _logger)
+        public static Preset RunPostProcessorPipeline(this Preset preset, ResourcePackage package, IniParser.Model.IniData iniData, Logging _logger)
         {
             var baseline = Path.Combine(Instances.PackageFolder, package.Name);
             var presetPath = Path.Combine(baseline, "Presets");

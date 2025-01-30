@@ -15,7 +15,7 @@ namespace Bundlingway.PostProcess.RawFile
             throw new NotImplementedException();
         }
 
-        public Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, InstallLogger _logger)
+        public Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, Logging _logger)
         {
             var replacementMap = new Dictionary<string, string>();
             var textureFolder = Path.Combine(Instances.PackageFolder, package.Name, Constants.WellKnown.ShaderFolder, Constants.WellKnown.TextureFolder);

@@ -1,4 +1,5 @@
 using ICSharpCode.SharpZipLib.Zip;
+using Serilog;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 
@@ -10,24 +11,24 @@ namespace Bundlingway.Utilities.Handler
 
         private static async Task<string> FetchHtmlContent(string url)
         {
-            Console.WriteLine("ReShadeParser.FetchHtmlContent: Fetching HTML content from URL: " + url);
+            Log.Information("ReShadeParser.FetchHtmlContent: Fetching HTML content from URL: " + url);
             try
             {
                 HttpResponseMessage response = await client.GetAsync(url);
                 response.EnsureSuccessStatusCode();
-                Console.WriteLine("ReShadeParser.FetchHtmlContent: Successfully fetched HTML content.");
+                Log.Information("ReShadeParser.FetchHtmlContent: Successfully fetched HTML content.");
                 return await response.Content.ReadAsStringAsync();
             }
             catch (HttpRequestException e)
             {
-                Console.WriteLine($"ReShadeParser.FetchHtmlContent: Error fetching HTML content: {e.Message}");
+                Log.Information($"ReShadeParser.FetchHtmlContent: Error fetching HTML content: {e.Message}");
                 return string.Empty;
             }
         }
 
         private static (string version, string downloadLink) ExtractVersionAndDownloadLink(string htmlContent)
         {
-            Console.WriteLine("ReShadeParser.ExtractVersionAndDownloadLink: Extracting version and download link from HTML content.");
+            Log.Information("ReShadeParser.ExtractVersionAndDownloadLink: Extracting version and download link from HTML content.");
             string pattern = @"<a\s+href=""\/(?<downloadLink>downloads\/ReShade_Setup_[^""""]+)"".*>Download ReShade (?<version>.*) with full";
             Match match = Regex.Match(htmlContent, pattern);
 
@@ -35,19 +36,19 @@ namespace Bundlingway.Utilities.Handler
             {
                 string version = match.Groups["version"].Value.Trim();
                 string downloadLink = "https://reshade.me/" + match.Groups["downloadLink"].Value;
-                Console.WriteLine("ReShadeParser.ExtractVersionAndDownloadLink: Successfully extracted version and download link.");
+                Log.Information("ReShadeParser.ExtractVersionAndDownloadLink: Successfully extracted version and download link.");
                 return (version, downloadLink);
             }
             else
             {
-                Console.WriteLine("ReShadeParser.ExtractVersionAndDownloadLink: Could not find download link and version information.");
+                Log.Information("ReShadeParser.ExtractVersionAndDownloadLink: Could not find download link and version information.");
                 return (string.Empty, string.Empty);
             }
         }
 
         public static async Task GetRemoteInfo()
         {
-            Console.WriteLine("ReShadeParser.GetRemoteInfo: Starting to get remote info.");
+            Log.Information("ReShadeParser.GetRemoteInfo: Starting to get remote info.");
             var version = "N/A";
             var downloadLink = "N/A";
 
@@ -66,12 +67,12 @@ namespace Bundlingway.Utilities.Handler
 
             Instances.LocalConfigProvider.Configuration.ReShade.RemoteVersion = version;
             Instances.LocalConfigProvider.Configuration.ReShade.RemoteLink = downloadLink;
-            Console.WriteLine("ReShadeParser.GetRemoteInfo: Remote info updated. Version: " + version + ", Download Link: " + downloadLink);
+            Log.Information("ReShadeParser.GetRemoteInfo: Remote info updated. Version: " + version + ", Download Link: " + downloadLink);
         }
 
         internal static void GetLocalInfo()
         {
-            Console.WriteLine("ReShadeParser.GetLocalInfo: Starting to get local info.");
+            Log.Information("ReShadeParser.GetLocalInfo: Starting to get local info.");
             if (Instances.LocalConfigProvider.Configuration.GameFolder != null)
             {
                 var reShadeProbe = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, "dxgi.dll");
@@ -80,28 +81,28 @@ namespace Bundlingway.Utilities.Handler
                 {
                     Instances.LocalConfigProvider.Configuration.ReShade.Status = "Not Installed";
                     Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion = "N/A";
-                    Console.WriteLine("ReShadeParser.GetLocalInfo: ReShade not installed.");
+                    Log.Information("ReShadeParser.GetLocalInfo: ReShade not installed.");
                 }
                 else
                 {
                     Instances.LocalConfigProvider.Configuration.ReShade.Status = "Found";
                     var rfvi = FileVersionInfo.GetVersionInfo(reShadeProbe);
                     Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion = rfvi.ProductVersion;
-                    Console.WriteLine("ReShadeParser.GetLocalInfo: ReShade found. Version: " + rfvi.ProductVersion);
+                    Log.Information("ReShadeParser.GetLocalInfo: ReShade found. Version: " + rfvi.ProductVersion);
                 }
             }
         }
 
         internal static async Task Update()
         {
-            Console.WriteLine("ReShadeParser.Update: Starting update process.");
+            Log.Information("ReShadeParser.Update: Starting update process.");
             var remoteLink = Instances.LocalConfigProvider.Configuration.ReShade.RemoteLink;
             var tempFolder = Path.Combine(Instances.TempFolder, "ReShade");
             var gameFolder = Instances.LocalConfigProvider.Configuration.GameFolder;
 
             if (string.IsNullOrEmpty(remoteLink) || string.IsNullOrEmpty(tempFolder) || string.IsNullOrEmpty(gameFolder))
             {
-                Console.WriteLine("ReShadeParser.Update: Invalid configuration settings.");
+                Log.Information("ReShadeParser.Update: Invalid configuration settings.");
                 return;
             }
 
@@ -116,7 +117,7 @@ namespace Bundlingway.Utilities.Handler
                     await using var fs = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None);
                     await using var stream = await response.Content.ReadAsStreamAsync();
                     await stream.CopyToAsync(fs);
-                    Console.WriteLine("ReShadeParser.Update: Successfully downloaded the file.");
+                    Log.Information("ReShadeParser.Update: Successfully downloaded the file.");
                 }
 
                 var extractPath = Path.Combine(tempFolder, "Extracted");
@@ -146,7 +147,7 @@ namespace Bundlingway.Utilities.Handler
                             zipStream.CopyTo(streamWriter);
                         }
                     }
-                    Console.WriteLine("ReShadeParser.Update: Successfully extracted the file.");
+                    Log.Information("ReShadeParser.Update: Successfully extracted the file.");
                 }
 
                 var sourceDll = Path.Combine(extractPath, "ReShade64.dll");
@@ -154,12 +155,12 @@ namespace Bundlingway.Utilities.Handler
                 if (File.Exists(sourceDll))
                 {
                     File.Copy(sourceDll, destinationDll, true);
-                    Console.WriteLine("ReShadeParser.Update: Successfully copied the DLL.");
+                    Log.Information("ReShadeParser.Update: Successfully copied the DLL.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"ReShadeParser.Update: Error during update: {ex.Message}");
+                Log.Information($"ReShadeParser.Update: Error during update: {ex.Message}");
             }
         }
     }

@@ -1,6 +1,7 @@
 using Bundlingway.Model;
 using Bundlingway.Utilities;
 using Bundlingway.Utilities.Handler;
+using Serilog;
 
 namespace Bundlingway
 {
@@ -9,8 +10,6 @@ namespace Bundlingway
         public Landing()
         {
             UI._landing = this;
-
-            Console.WriteLine("Landing: Constructor - Initializing components");
 
             UI.Announce(Constants.MessageCategory.ApplicationStart);
 
@@ -40,7 +39,6 @@ namespace Bundlingway
 
         private void EvaluateButtonStates()
         {
-            Console.WriteLine("Landing: EvaluateButtonStates - Evaluating button states");
             if (btnInstallReShade.InvokeRequired)
             {
                 Invoke(new MethodInvoker(delegate
@@ -89,31 +87,26 @@ namespace Bundlingway
 
         private void Landing_Load(object sender, EventArgs e)
         {
-            Console.WriteLine("Landing: Landing_Load - Loading landing form");
             //lblGPosingwayVersion.Text = $"GPosingway {Instances.LocalConfigProvider.appVersion}";
         }
 
         private void btnSettings_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Landing: btnSettings_Click - Settings button clicked");
             pnlSettings.Focus();
         }
 
         private void btnAbout_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Landing: btnAbout_Click - About button clicked");
             pnlAbout.Focus();
         }
 
         private void btnDetectSettings_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Landing: btnDetectSettings_Click - Detect settings button clicked");
             Bootstrap.DetectSettings().ContinueWith(a => EvaluateButtonStates());
         }
 
         private void TryInstalPackages(DragEventArgs e)
         {
-            Console.WriteLine("Landing: TryInstalPackages - Trying to install packages");
             if (e.Data == null) return;
 
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
@@ -134,10 +127,6 @@ namespace Bundlingway
 
         private void btnInstallPackage_Click(object sender, EventArgs e)
         {
-
-
-
-            Console.WriteLine("Landing: btnInstallPackage_Click - Install package button clicked");
             UI.Announce(Constants.MessageCategory.BeforeAddPackageSelection);
 
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
@@ -170,7 +159,7 @@ namespace Bundlingway
 
         private void PopulateGrid()
         {
-            Console.WriteLine("Landing: PopulateGrid - Populating the grid with resource packages");
+            Log.Information("Landing: PopulateGrid - Populating the grid with resource packages");
             Package.Scan().Wait();
 
             if (dgvPackages.InvokeRequired) { Invoke(new MethodInvoker(dgvPackages.Rows.Clear)); }
@@ -189,14 +178,14 @@ namespace Bundlingway
 
         private void Generic_DragDrop(object sender, DragEventArgs e)
         {
-            Console.WriteLine("Landing: Generic_DragDrop - Drag and drop event");
+            Log.Information("Landing: Generic_DragDrop - Drag and drop event");
             Name = "flowLayoutPanel1_DragDrop";
             TryInstalPackages(e);
         }
 
         private void Generic_DragEnter(object sender, DragEventArgs e)
         {
-            Console.WriteLine("Landing: Generic_DragEnter - Drag enter event");
+            Log.Information("Landing: Generic_DragEnter - Drag enter event");
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 e.Effect = DragDropEffects.Copy; // You can set this to another effect if needed
@@ -209,7 +198,7 @@ namespace Bundlingway
 
         private void Generic_DragOver(object sender, DragEventArgs e)
         {
-            Console.WriteLine("Landing: Generic_DragOver - Drag over event");
+            Log.Information("Landing: Generic_DragOver - Drag over event");
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 e.Effect = DragDropEffects.Copy; // You can set this to another effect if needed
@@ -222,7 +211,6 @@ namespace Bundlingway
 
         private void btnRemove_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Landing: btnRemoveSelectedPackages_Click - Remove selected packages button clicked");
             foreach (DataGridViewRow row in dgvPackages.SelectedRows)
             {
                 var package = (ResourcePackage)row.Tag;
@@ -237,7 +225,6 @@ namespace Bundlingway
 
         private void btnUninstall_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Landing: btnRemoveSelectedPackages_Click - Remove selected packages button clicked");
             foreach (DataGridViewRow row in dgvPackages.SelectedRows)
             {
                 Package.Uninstall((ResourcePackage)row.Tag);
@@ -250,7 +237,6 @@ namespace Bundlingway
 
         private void btnReinstall_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Landing: btnReinstall_Click - Reinstall button clicked");
             foreach (DataGridViewRow row in dgvPackages.SelectedRows)
             {
                 var package = (ResourcePackage)row.Tag;
@@ -265,7 +251,6 @@ namespace Bundlingway
 
         private void btnInstallReShade_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Landing: btnInstallReShade_Click - Install ReShade button clicked");
             ReShade.Update().ContinueWith(a =>
             {
                 Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
@@ -274,7 +259,6 @@ namespace Bundlingway
 
         private void btnInstallGPosingway_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Landing: btnInstallGPosingway_Click - Install GPosingway button clicked");
             GPosingway.Update().ContinueWith(a =>
             {
                 Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
@@ -284,7 +268,6 @@ namespace Bundlingway
         private void btnPackagesFolder_Click(object sender, EventArgs e)
         {
 
-            Console.WriteLine("Landing: btnPackagesFolder_Click - Open Package folder button clicked");
             string repositoryPath = Instances.PackageFolder;
             if (Directory.Exists(repositoryPath))
             {
@@ -300,7 +283,6 @@ namespace Bundlingway
         {
             // Open Game Folder in a new explorer window
 
-            Console.WriteLine("Landing: btnGameFolder_Click - Open Game folder button clicked");
             string gamePath = Instances.LocalConfigProvider.Configuration.GameFolder;
             if (Directory.Exists(gamePath))
             {
@@ -314,7 +296,6 @@ namespace Bundlingway
 
         private void btnPackages_Click(object sender, EventArgs e)
         {
-            Console.WriteLine("Landing: btnPackages_Click - Packages button clicked");
             pnlPackages.Focus();
 
         }
@@ -330,7 +311,15 @@ namespace Bundlingway
             {
                 lblAnnouncement.Text = message;
             }
+        }
 
+        private void btnDebug_Click(object sender, EventArgs e)
+        {
+            string logFilePath = Path.Combine(Instances.BundlingwayDataFolder, Constants.WellKnown.LogFileName);
+            if (File.Exists(logFilePath))
+            {
+                System.Diagnostics.Process.Start("notepad.exe", logFilePath);
+            }
         }
     }
 }

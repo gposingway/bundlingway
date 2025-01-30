@@ -2,6 +2,7 @@
 using Bundlingway.Utilities.Extensions;
 using IniParser;
 using IniParser.Parser;
+using Serilog;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -20,7 +21,7 @@ namespace Bundlingway.Utilities.Handler
         internal static void RunPipeline(ResourcePackage package)
         {
 
-            InstallLogger _logger = new();
+            Logging _logger = new();
 
             var baseline = Path.Combine(Instances.PackageFolder, package.Name);
 
@@ -72,7 +73,7 @@ namespace Bundlingway.Utilities.Handler
 
                         if (textNotFound)
                         {
-                            Console.WriteLine("[Missing Textures] " + tex + " @ " + Path.GetFileName(iniFile));
+                            Log.Information("[Missing Textures] " + tex + " @ " + Path.GetFileName(iniFile));
                         }
                     }
                 }

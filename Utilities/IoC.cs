@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using Serilog;
+using System.Collections.Concurrent;
 using System.Reflection;
 using System.Runtime.Loader;
 
@@ -53,12 +54,12 @@ namespace Bundlingway.Utilities
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine("Error while loading " + item.Key);
+                        Log.Information("Error while loading " + item.Key);
                     }
                 }
             }
 
-            Console.WriteLine($"Assembly Loader - {AssemblyLoadMap.Count} assemblies registered");
+            Log.Information($"Assembly Loader - {AssemblyLoadMap.Count} assemblies registered");
         }
 
         public static List<T> GetInstances<T>(bool excludeCoreNullDefinitions = true) where T : class

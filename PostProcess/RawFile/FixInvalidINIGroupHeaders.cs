@@ -1,5 +1,6 @@
 ﻿using Bundlingway.Model;
 using Bundlingway.Utilities;
+using Serilog;
 using System.Text.RegularExpressions;
 
 namespace Bundlingway.PostProcess.RawFile
@@ -14,7 +15,7 @@ namespace Bundlingway.PostProcess.RawFile
             throw new NotImplementedException();
         }
 
-        public Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, InstallLogger _logger)
+        public Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, Logging _logger)
         {
             var result = new Dictionary<string, string>();
 
@@ -59,7 +60,7 @@ namespace Bundlingway.PostProcess.RawFile
 
             if (!File.Exists(iniFilePath))
             {
-                Console.WriteLine($"File '{iniFilePath}' does not exist.");
+                Log.Information($"File '{iniFilePath}' does not exist.");
                 return replacementMap;
             }
 

@@ -2,6 +2,7 @@ using Bundlingway.Model;
 using Bundlingway.Utilities.Extensions;
 using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json.Linq;
+using Serilog;
 
 namespace Bundlingway.Utilities
 {
@@ -13,14 +14,14 @@ namespace Bundlingway.Utilities
 
         public static async Task<(bool success, string version)> GetRemoteInfo()
         {
-            Console.WriteLine("GPosingwayParser.GetRemoteInfo: Start fetching remote info");
+            Log.Information("GPosingwayParser.GetRemoteInfo: Start fetching remote info");
 
             // Fetch the webpage HTML content
             string htmlContent = await FetchHtmlContent(Instances.GPosingwayConfigFileUrl);
 
             if (string.IsNullOrEmpty(htmlContent))
             {
-                Console.WriteLine("GPosingwayParser.GetRemoteInfo: Failed to fetch HTML content");
+                Log.Information("GPosingwayParser.GetRemoteInfo: Failed to fetch HTML content");
                 return (false, string.Empty);
             }
 
@@ -30,50 +31,50 @@ namespace Bundlingway.Utilities
 
             if (version == null)
             {
-                Console.WriteLine("GPosingwayParser.GetRemoteInfo: Version not found in HTML content");
+                Log.Information("GPosingwayParser.GetRemoteInfo: Version not found in HTML content");
                 return (false, string.Empty);
             }
 
             if (downloadUrl == null)
             {
-                Console.WriteLine("GPosingwayParser.GetRemoteInfo: DownloadUrl not found in HTML content");
+                Log.Information("GPosingwayParser.GetRemoteInfo: DownloadUrl not found in HTML content");
                 return (false, string.Empty);
             }
 
             Instances.LocalConfigProvider.Configuration.GPosingway.RemoteVersion = version;
             Instances.LocalConfigProvider.Configuration.GPosingway.RemoteLink = downloadUrl;
 
-            Console.WriteLine($"GPosingwayParser.GetRemoteInfo: Remote version fetched: {version}");
+            Log.Information($"GPosingwayParser.GetRemoteInfo: Remote version fetched: {version}");
 
             return (true, version);
         }
 
         private static async Task<string> FetchHtmlContent(string url)
         {
-            Console.WriteLine($"GPosingwayParser.FetchHtmlContent: Fetching HTML content from {url}");
+            Log.Information($"GPosingwayParser.FetchHtmlContent: Fetching HTML content from {url}");
             try
             {
                 HttpResponseMessage response = await client.GetAsync(url);
                 response.EnsureSuccessStatusCode();
                 string content = await response.Content.ReadAsStringAsync();
-                Console.WriteLine("GPosingwayParser.FetchHtmlContent: Successfully fetched HTML content");
+                Log.Information("GPosingwayParser.FetchHtmlContent: Successfully fetched HTML content");
                 return content;
             }
             catch (HttpRequestException e)
             {
-                Console.WriteLine($"GPosingwayParser.FetchHtmlContent: Error fetching HTML content: {e.Message}");
+                Log.Information($"GPosingwayParser.FetchHtmlContent: Error fetching HTML content: {e.Message}");
                 return string.Empty;
             }
         }
 
         internal static void GetLocalInfo()
         {
-            Console.WriteLine("GPosingwayParser.GetLocalInfo: Start fetching local info");
+            Log.Information("GPosingwayParser.GetLocalInfo: Start fetching local info");
             try
             {
                 if (Instances.LocalConfigProvider.Configuration.XIVPath != null)
                 {
-                    var appDataGposingwayConfigProbe = Path.Combine(Instances.DataFolder, Constants.WellKnown.GPosingwayConfigFileName);
+                    var appDataGposingwayConfigProbe = Path.Combine(Instances.BundlingwayDataFolder, Constants.WellKnown.GPosingwayConfigFileName);
                     var appDataGposingwayConfigExists = File.Exists(appDataGposingwayConfigProbe);
 
                     if (!appDataGposingwayConfigExists)
@@ -85,7 +86,7 @@ namespace Bundlingway.Utilities
                         if (gameGposingwayConfigExists)
                         {
                             File.Copy(gameGposingwayConfigProbe, appDataGposingwayConfigProbe);
-                            appDataGposingwayConfigProbe = Path.Combine(Instances.DataFolder, Constants.WellKnown.GPosingwayConfigFileName);
+                            appDataGposingwayConfigProbe = Path.Combine(Instances.BundlingwayDataFolder, Constants.WellKnown.GPosingwayConfigFileName);
                             appDataGposingwayConfigExists = File.Exists(appDataGposingwayConfigProbe);
                         }
                     }
@@ -94,7 +95,7 @@ namespace Bundlingway.Utilities
                     {
                         Instances.LocalConfigProvider.Configuration.GPosingway.Status = "Not Installed";
                         Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion = "N/A";
-                        Console.WriteLine("GPosingwayParser.GetLocalInfo: GPosingway not installed locally");
+                        Log.Information("GPosingwayParser.GetLocalInfo: GPosingway not installed locally");
                     }
                     else
                     {
@@ -103,22 +104,22 @@ namespace Bundlingway.Utilities
                             JObject.Parse(File.ReadAllText(appDataGposingwayConfigProbe))
                             .SelectToken("version")?.ToString() ?? "";
 
-                        Console.WriteLine($"GPosingwayParser.GetLocalInfo: Local version found: {Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion}");
+                        Log.Information($"GPosingwayParser.GetLocalInfo: Local version found: {Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"GPosingwayParser.GetLocalInfo: Error in CheckGPosingway: {ex.Message}");
+                Log.Information($"GPosingwayParser.GetLocalInfo: Error in CheckGPosingway: {ex.Message}");
             }
 
             Instances.LocalConfigProvider.Save();
-            Console.WriteLine("GPosingwayParser.GetLocalInfo: Local info fetching completed");
+            Log.Information("GPosingwayParser.GetLocalInfo: Local info fetching completed");
         }
 
         internal static async Task Update()
         {
-            Console.WriteLine("GPosingwayParser.Update: Starting update process.");
+            Log.Information("GPosingwayParser.Update: Starting update process.");
 
             //Download the file from Instances.GPosingwayConfigFileUrl and store it in Instances.AppDataTempFolder as gposingway-definitions-new.json
             var downloadUrl = Instances.GPosingwayConfigFileUrl;
@@ -135,12 +136,12 @@ namespace Bundlingway.Utilities
                     await using var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
                     await using var stream = await response.Content.ReadAsStreamAsync();
                     await stream.CopyToAsync(fs);
-                    Console.WriteLine("GPosingwayParser.Update: Successfully downloaded the file as gposingway-definitions-new.json.");
+                    Log.Information("GPosingwayParser.Update: Successfully downloaded the file as gposingway-definitions-new.json.");
                 }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"GPosingwayParser.Update: Error downloading the file: {ex.Message}");
+                Log.Information($"GPosingwayParser.Update: Error downloading the file: {ex.Message}");
             }
 
             // Read the JSON file...
@@ -150,7 +151,7 @@ namespace Bundlingway.Utilities
 
             if (string.IsNullOrEmpty(definitions.gposingwayUrl))
             {
-                Console.WriteLine("GPosingwayParser.Update: Download link not found in JSON content.");
+                Log.Information("GPosingwayParser.Update: Download link not found in JSON content.");
                 return;
             }
 
@@ -159,7 +160,7 @@ namespace Bundlingway.Utilities
 
             if (string.IsNullOrEmpty(definitions.gposingwayUrl) || string.IsNullOrEmpty(tempFolder) || string.IsNullOrEmpty(gameFolder))
             {
-                Console.WriteLine("GPosingwayParser.Update: Invalid configuration settings.");
+                Log.Information("GPosingwayParser.Update: Invalid configuration settings.");
                 return;
             }
 
@@ -174,7 +175,7 @@ namespace Bundlingway.Utilities
                     await using var fs = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None);
                     await using var stream = await response.Content.ReadAsStreamAsync();
                     await stream.CopyToAsync(fs);
-                    Console.WriteLine("GPosingwayParser.Update: Successfully downloaded the file.");
+                    Log.Information("GPosingwayParser.Update: Successfully downloaded the file.");
                 }
 
                 var extractPath = Path.Combine(tempFolder, "Extracted");
@@ -204,7 +205,7 @@ namespace Bundlingway.Utilities
                             zipStream.CopyTo(streamWriter);
                         }
                     }
-                    Console.WriteLine("GPosingwayParser.Update: Successfully extracted the file.");
+                    Log.Information("GPosingwayParser.Update: Successfully extracted the file.");
                 }
 
                 // Copy the content from extractPath + "reshade-shaders" to the game's "reshade-shaders" folder
@@ -223,11 +224,11 @@ namespace Bundlingway.Utilities
                         File.Copy(newPath, newPath.Replace(sourcePath, gameShaderPath), true);
                     }
 
-                    Console.WriteLine("GPosingwayParser.Update: Successfully copied reshade-shaders to the game folder.");
+                    Log.Information("GPosingwayParser.Update: Successfully copied reshade-shaders to the game folder.");
                 }
                 else
                 {
-                    Console.WriteLine("GPosingwayParser.Update: Source reshade-shaders folder does not exist.");
+                    Log.Information("GPosingwayParser.Update: Source reshade-shaders folder does not exist.");
                 }
 
                 // Copy the content from extractPath + "reshade-presets" to the game's "reshade-presets" folder
@@ -246,24 +247,24 @@ namespace Bundlingway.Utilities
                         File.Copy(newPath, newPath.Replace(sourcePresetsPath, gamePresetsPath), true);
                     }
 
-                    Console.WriteLine("GPosingwayParser.Update: Successfully copied reshade-presets to the game folder.");
+                    Log.Information("GPosingwayParser.Update: Successfully copied reshade-presets to the game folder.");
                 }
                 else
                 {
-                    Console.WriteLine("GPosingwayParser.Update: Source reshade-presets folder does not exist.");
+                    Log.Information("GPosingwayParser.Update: Source reshade-presets folder does not exist.");
                 }
 
                 // Overwrite the gposingway-definitions.json in the appdata folder with the copy on temp
-                var appDataPath = Path.Combine(Instances.DataFolder, "gposingway-definitions.json");
+                var appDataPath = Path.Combine(Instances.BundlingwayDataFolder, "gposingway-definitions.json");
                 File.Copy(destinationPath, appDataPath, true);
-                Console.WriteLine("GPosingwayParser.Update: Successfully copied gposingway-definitions.json to the appdata folder.");
+                Log.Information("GPosingwayParser.Update: Successfully copied gposingway-definitions.json to the appdata folder.");
 
                 //cleanup
                 Maintenance.RemoveTempDir();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"GPosingwayParser.Update: Error during update: {ex.Message}");
+                Log.Information($"GPosingwayParser.Update: Error during update: {ex.Message}");
             }
         }
     }

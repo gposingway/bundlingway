@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using Serilog;
+using System.Text.Json;
 
 namespace Bundlingway.Utilities.Extensions
 {
@@ -26,7 +27,7 @@ namespace Bundlingway.Utilities.Extensions
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Error writing to file {filePath}: {e.Message}");
+                Log.Information($"Error writing to file {filePath}: {e.Message}");
 
             }
         }

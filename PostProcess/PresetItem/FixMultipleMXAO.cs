@@ -1,5 +1,6 @@
 ﻿using Bundlingway.Model;
 using Bundlingway.Utilities.Extensions;
+using Serilog;
 
 namespace Bundlingway.PostProcess.PresetItem
 {
@@ -17,7 +18,7 @@ namespace Bundlingway.PostProcess.PresetItem
                 preset.Techniques = preset.Techniques.ReplaceKey("MXAO@qUINT_mxao.fx", "qMXAO@qUINT_mxao.fx");
                 preset.Techniques["qMXAO@qUINT_mxao.fx"] = true;
 
-                Console.WriteLine("[Conflicting Techniques] - MXAO@qUINT_mxao.fx, " + Path.GetFileName(preset.Filename));
+                Log.Information("[Conflicting Techniques] - MXAO@qUINT_mxao.fx, " + Path.GetFileName(preset.Filename));
                 update = true;
             }
 

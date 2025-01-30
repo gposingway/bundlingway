@@ -1,4 +1,5 @@
 ﻿using Bundlingway.Model;
+using Serilog;
 using System.Data;
 
 namespace Bundlingway.PostProcess.PresetItem
@@ -67,7 +68,7 @@ namespace Bundlingway.PostProcess.PresetItem
 
                     var newPPDstring = string.Join(",", globalDefs.Select(i => i.Key + "=" + i.Value).ToList());
 
-                    Console.WriteLine("[Transposed PreprocessorDefinitions]" + Path.GetFileName(preset.Filename));
+                    Log.Information("[Transposed PreprocessorDefinitions]" + Path.GetFileName(preset.Filename));
 
                     preset.IniHandler.Global["PreprocessorDefinitions"] = newPPDstring;
                     return true;
