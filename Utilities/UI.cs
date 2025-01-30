@@ -2,6 +2,8 @@
 using System.Threading;
 using System;
 using System.Xml;
+using System.Collections.Specialized;
+using Microsoft.Toolkit.Uwp.Notifications;
 
 namespace Bundlingway.Utilities
 {
@@ -31,6 +33,17 @@ namespace Bundlingway.Utilities
             _idleTimer.Change(Timeout.Infinite, Timeout.Infinite);
             await _landing.Announce(Constants.Bundlingway.GetMessage(category, args));
             _idleTimer.Change(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+        }
+
+        public static async Task NotifyAsync(string topic, string message)
+        {
+            new ToastContentBuilder()
+             .AddArgument("action", "viewConversation")
+             .AddArgument("conversationId", 9813)
+             .AddText(topic)
+             .AddText(message)
+             .Show();
+            ;
         }
     }
 }
