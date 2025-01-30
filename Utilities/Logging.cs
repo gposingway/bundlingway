@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-
 namespace Bundlingway.Utilities
 {
-    public class InstallLogger
+    public class Logging
     {
         private readonly List<LogEntry> _logEntries = new List<LogEntry>();
 
@@ -30,11 +25,11 @@ namespace Bundlingway.Utilities
 
             foreach (var group in groupedEntries)
             {
-                Console.WriteLine($"[{group.Key}]");
+                Serilog.Log.Information($"[{group.Key}]");
                 foreach (var entry in group.OrderBy(e => e.Item).ThenBy(e => e.Description))
                 {
                     var description = string.IsNullOrEmpty(entry.Description) ? "" : $": {entry.Description}";
-                    Console.WriteLine($"\t{entry.Item}{description}");
+                    Serilog.Log.Information($"\t{entry.Item}{description}");
                 }
             }
         }
