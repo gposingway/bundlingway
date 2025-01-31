@@ -48,7 +48,7 @@ jobs:
       id: create_release
       uses: actions/create-release@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_SECRET }}
+        GITHUB_TOKEN: ${{ secrets.PAT }}
       with:
         tag_name: ${{ github.sha }}
         release_name: Release ${{ github.sha }}
@@ -58,9 +58,10 @@ jobs:
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_SECRET }}
+        GITHUB_TOKEN: ${{ secrets.PAT }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./publish
         asset_name: myapp.zip
         asset_content_type: application/zip
+
