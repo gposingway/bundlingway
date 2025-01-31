@@ -39,7 +39,6 @@ namespace Bundlingway.Utilities.Handler
 
             package.RunRawFilePipeline(_logger);
 
-
             foreach (string iniFile in iniFiles)
             {
                 IniParser.Model.IniData ini_filedata = iniParser.ReadFile(iniFile);

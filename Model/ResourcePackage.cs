@@ -10,5 +10,6 @@
         public bool Installed { get; set; }
         public string LocalPresetFolder { get; set; }
         public string LocalTextureFolder { get; set; }
+        public bool Hidden { get; set; }
     }
 }

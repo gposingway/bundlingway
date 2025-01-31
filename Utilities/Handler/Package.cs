@@ -4,13 +4,69 @@ using Serilog;
 using SharpCompress.Archives;
 using System.IO.Compression;
 using System.Web;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Bundlingway.Utilities.Handler
 {
     public static class Package
     {
+        internal static async Task OnboardSinglePresetFile(string filePath)
+        {
+            Log.Information("Package.OnboardSinglePresetFile: Start");
+
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+            string fileExtension = Path.GetExtension(filePath);
+
+            string newFileName = $"{fileName}{fileExtension}";
+
+            if (!System.Text.RegularExpressions.Regex.IsMatch(filePath, @"\[\w{6}\]"))
+            {
+                string hashSignature = GetHashSignature(filePath);
+                Log.Information($"Package.OnboardSinglePresetFile: File hash signature: [{hashSignature}]");
+
+                newFileName = $"{fileName} [{hashSignature}]{fileExtension}";
+            }
+
+            var targetPath = Path.Combine(Instances.SinglePresetsFolder, Constants.WellKnown.PresetFolder);
+
+            string targetFileName = Path.Combine(targetPath, newFileName);
+
+
+            if (!Directory.Exists(Path.GetDirectoryName(targetPath)))
+                Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+
+            File.Copy(filePath, targetFileName, true);
+
+            Log.Information($"Package.OnboardSinglePresetFile: File copied to {targetFileName}");
+
+            await Task.Run(() => PostProcessor.RunPipeline(Constants.SingleFileCatalog));
+
+            await Task.Run(() => Install(Instances.SinglePresetsFolder));
+            Log.Information("Package.Onboard: Package installation completed.");
+
+        }
+
+        private static string GetHashSignature(string filePath)
+        {
+            using var stream = File.OpenRead(filePath);
+            byte[] hashBytes = SHA256.HashData(stream);
+            StringBuilder hash = new();
+            foreach (byte b in hashBytes)
+            {
+                hash.Append(b.ToString("X2"));
+            }
+            return hash.ToString().Substring(0, 6);
+        }
+
         internal static async Task Onboard(string filePath)
         {
+            if (Path.GetExtension(filePath).ToLower() == ".ini")
+            {
+                await OnboardSinglePresetFile(filePath);
+                return;
+            }
+
             Log.Information("Package.Onboard: Start");
             Log.Information($"Package.Onboard: Preparing package catalog for: {filePath}");
 
@@ -80,7 +136,7 @@ namespace Bundlingway.Utilities.Handler
                 {
                     changeEval = false;
 
-                    var reshadePresetsDir = Directory.GetDirectories(tempFolderPath, "reshade-presets", SearchOption.AllDirectories).FirstOrDefault();
+                    var reshadePresetsDir = Directory.GetDirectories(tempFolderPath, Constants.WellKnown.GamePresetsFolder, SearchOption.AllDirectories).FirstOrDefault();
                     if (reshadePresetsDir != null)
                     {
                         tempFolderPath = reshadePresetsDir;
@@ -127,7 +183,6 @@ namespace Bundlingway.Utilities.Handler
                 Log.Information("Package.Onboard: INI files copied to presets folder: " + presetsFolder);
                 newCatalogEntry.LocalPresetFolder = presetsFolder;
 
-
                 // Now, handle Textures.
                 var shadersFolder = Path.Combine(targetPackagePath, Constants.WellKnown.ShaderFolder, Constants.WellKnown.TextureFolder);
                 if (Directory.Exists(shadersFolder)) Directory.Delete(shadersFolder, true);
@@ -141,7 +196,7 @@ namespace Bundlingway.Utilities.Handler
                     changeEval = false;
 
                     var reshadeShadersDir = Directory.GetDirectories(tempFolderPath, "*", SearchOption.AllDirectories)
-                        .FirstOrDefault(d => Path.GetFileName(d).Equals("reshade-shaders", StringComparison.OrdinalIgnoreCase));
+                        .FirstOrDefault(d => Path.GetFileName(d).Equals(Constants.WellKnown.GameShadersFolder, StringComparison.OrdinalIgnoreCase));
                     if (reshadeShadersDir != null)
                     {
                         tempFolderPath = reshadeShadersDir;
@@ -184,7 +239,6 @@ namespace Bundlingway.Utilities.Handler
                 }
                 Log.Information("Package.Onboard: Texture files copied to shaders folder: " + shadersFolder);
                 newCatalogEntry.LocalTextureFolder = shadersFolder;
-
 
                 foreach (var dir in Directory.GetDirectories(shadersFolder, "*", SearchOption.AllDirectories))
                 {
@@ -246,8 +300,8 @@ namespace Bundlingway.Utilities.Handler
             var presetsFolder = Path.Combine(targetPackagePath, Constants.WellKnown.PresetFolder);
             var shadersFolder = Path.Combine(targetPackagePath, Constants.WellKnown.ShaderFolder, Constants.WellKnown.TextureFolder);
 
-            string gamePresetsFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, "reshade-presets", collectionName);
-            string gameTexturesFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, "reshade-shaders", "Textures", collectionName);
+            string gamePresetsFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.WellKnown.GamePresetsFolder, collectionName);
+            string gameTexturesFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.WellKnown.GameShadersFolder, Constants.WellKnown.TextureFolder, collectionName);
 
             Log.Information("Package.Install: presetsFolder: " + presetsFolder);
             Log.Information("Package.Install: shadersFolder: " + shadersFolder);
@@ -318,7 +372,27 @@ namespace Bundlingway.Utilities.Handler
                     {
                         Instances.ResourcePackages.Add(package);
                     }
+                }
 
+                // Scan for .ini files in SinglePresetsFolder
+                var iniFiles = Directory.GetFiles(Instances.SinglePresetsFolder, "*.ini", SearchOption.AllDirectories);
+                Log.Information($"Package.Scan: Found {iniFiles.Length} .ini files in SinglePresetsFolder.");
+
+                foreach (var iniFile in iniFiles)
+                {
+                    var gameProbeFile = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.WellKnown.GamePresetsFolder, Constants.SingleFileCatalog.Name, Path.GetFileName(iniFile));
+
+                    var singlePresetPackage = new ResourcePackage
+                    {
+                        Name = Path.GetFileNameWithoutExtension(iniFile),
+                        Source = iniFile,
+                        Type = "Single Preset",
+                        Status = File.Exists(gameProbeFile) ? "Installed" : "Uninstalled",
+                        Installed = File.Exists(gameProbeFile),
+                        LocalPresetFolder = Path.GetDirectoryName(iniFile)
+                    };
+
+                    Instances.ResourcePackages.Add(singlePresetPackage);
                 }
             }
             catch (Exception ex)
@@ -331,6 +405,7 @@ namespace Bundlingway.Utilities.Handler
 
         private static bool Validate(ResourcePackage package)
         {
+            if (package.Hidden) return false;
             return true;
         }
 

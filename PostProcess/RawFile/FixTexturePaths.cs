@@ -73,7 +73,7 @@ namespace Bundlingway.PostProcess.RawFile
 
                 string texturePath = line.Substring(startIndex + 1, endIndex - startIndex - 1);
 
-                if (Constants.ValidTextureExtensions.Any(texturePath.ToLowerInvariant().EndsWith))
+                if (Constants.TextureExtensions.Any(texturePath.ToLowerInvariant().EndsWith))
                 {
                     texturePaths.Add(texturePath);
                 }

@@ -23,6 +23,7 @@ namespace Bundlingway.Utilities
         {
             Log.Information($"Getting path for process {processName}.");
             Process[] processes = Process.GetProcessesByName(processName);
+
             if (processes.Length > 0)
             {
                 string path = processes[0].MainModule.FileName;
@@ -68,9 +69,12 @@ namespace Bundlingway.Utilities
                     await pipeServer.WaitForConnectionAsync();
                     using (StreamReader reader = new(pipeServer, Encoding.UTF8))
                     {
-                        string message = await reader.ReadLineAsync();
-                        Log.Information($"Notification received: {message}");
-                        NotificationReceived?.Invoke(null, message);
+                        string message;
+                        while ((message = await reader.ReadLineAsync()) != null)
+                        {
+                            Log.Information($"Notification received: {message}");
+                            NotificationReceived?.Invoke(null, message);
+                        }
                     }
                     pipeServer.Disconnect();
                 }
@@ -80,6 +84,7 @@ namespace Bundlingway.Utilities
         public static async Task PinToStartScreenAsync()
         {
             Log.Information("Pinning application to start screen.");
+
             string appPath = Process.GetCurrentProcess().MainModule.FileName;
             string appName = Path.GetFileNameWithoutExtension(appPath);
             string appUserModelId = Constants.AppUserModelId;

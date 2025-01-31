@@ -90,16 +90,6 @@ namespace Bundlingway
             //lblGPosingwayVersion.Text = $"GPosingway {Instances.LocalConfigProvider.appVersion}";
         }
 
-        private void btnSettings_Click(object sender, EventArgs e)
-        {
-            pnlSettings.Focus();
-        }
-
-        private void btnAbout_Click(object sender, EventArgs e)
-        {
-            pnlAbout.Focus();
-        }
-
         private void btnDetectSettings_Click(object sender, EventArgs e)
         {
             Bootstrap.DetectSettings().ContinueWith(a => EvaluateButtonStates());
@@ -117,7 +107,7 @@ namespace Bundlingway
                 {
                     string fileExtension = Path.GetExtension(file).ToLower();
 
-                    if (Constants.ValidCompressedExtensions.Contains(fileExtension))
+                    if (Constants.InstallableExtensions.Contains(fileExtension))
                     {
                         Package.Onboard(file);
                     }
@@ -131,13 +121,14 @@ namespace Bundlingway
 
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                openFileDialog.Filter = "Archive files (*.zip;*.rar)|*.zip;*.rar";
+                var filter = string.Join(";", Constants.InstallableExtensions.Select(ext => $"*{ext}"));
+                openFileDialog.Filter = $"Archive files ({filter})|{filter}";
                 openFileDialog.Title = "Select a Package File";
                 openFileDialog.Multiselect = true;
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    var validExtensions = new HashSet<string> { ".zip", ".rar", ".7z" };
+                    var validExtensions = new HashSet<string>(Constants.InstallableExtensions);
                     var selectedFiles = openFileDialog.FileNames
                         .Where(file => validExtensions.Contains(Path.GetExtension(file).ToLower()))
                         .ToList();
@@ -171,8 +162,14 @@ namespace Bundlingway
                 rowObj.CreateCells(dgvPackages, package.Type, package.Name, package.Status);
                 rowObj.Tag = package;
 
-                if (dgvPackages.InvokeRequired) { Invoke(new MethodInvoker(delegate { dgvPackages.Rows.Add(rowObj); })); }
-                else { dgvPackages.Rows.Add(rowObj); }
+                if (dgvPackages.InvokeRequired) { Invoke(new MethodInvoker(delegate { 
+                    dgvPackages.Rows.Add(rowObj);
+                    lblPackagesTitle.Text = $"{dgvPackages.Rows.Count} Packages";
+                })); }
+                else {
+                    dgvPackages.Rows.Add(rowObj);
+                    lblPackagesTitle.Text = $"{dgvPackages.Rows.Count} Packages";
+                }
             }
         }
 
@@ -294,11 +291,6 @@ namespace Bundlingway
             }
         }
 
-        private void btnPackages_Click(object sender, EventArgs e)
-        {
-            pnlPackages.Focus();
-
-        }
         internal async Task Announce(string message)
         {
             if (lblAnnouncement == null) return;

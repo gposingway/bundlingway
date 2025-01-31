@@ -16,8 +16,7 @@ namespace Bundlingway
         public static string TempFolder { get; private set; } = Path.Combine(BundlingwayDataFolder, Constants.WellKnown.TempFolderName);
         public static string CacheFolder { get; set; } =  Path.Combine(BundlingwayDataFolder, Constants.WellKnown.CacheFolder);
         public static string PackageFolder { get; set; } = Path.Combine(BundlingwayDataFolder, Constants.WellKnown.PackagesFolder);
-
-
+        public static string SinglePresetsFolder { get; set; } = Path.Combine(PackageFolder, Constants.WellKnown.SinglePresetsFolder);
 
         public static BindingSource MainDataSource { get; set; }
 

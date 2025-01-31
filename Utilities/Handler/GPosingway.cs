@@ -209,8 +209,8 @@ namespace Bundlingway.Utilities
                 }
 
                 // Copy the content from extractPath + "reshade-shaders" to the game's "reshade-shaders" folder
-                var sourcePath = Path.Combine(extractPath, "reshade-shaders");
-                var gameShaderPath = Path.Combine(gameFolder, "reshade-shaders");
+                var sourcePath = Path.Combine(extractPath, Constants.WellKnown.GameShadersFolder);
+                var gameShaderPath = Path.Combine(gameFolder, Constants.WellKnown.GameShadersFolder);
 
                 if (Directory.Exists(sourcePath))
                 {
@@ -232,8 +232,8 @@ namespace Bundlingway.Utilities
                 }
 
                 // Copy the content from extractPath + "reshade-presets" to the game's "reshade-presets" folder
-                var sourcePresetsPath = Path.Combine(extractPath, "reshade-presets");
-                var gamePresetsPath = Path.Combine(gameFolder, "reshade-presets");
+                var sourcePresetsPath = Path.Combine(extractPath, Constants.WellKnown.GamePresetsFolder);
+                var gamePresetsPath = Path.Combine(gameFolder, Constants.WellKnown.GamePresetsFolder);
 
                 if (Directory.Exists(sourcePresetsPath))
                 {

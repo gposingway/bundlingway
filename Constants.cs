@@ -1,9 +1,23 @@
-﻿namespace Bundlingway
+﻿using Bundlingway.Model;
+
+namespace Bundlingway
 {
     public static class Constants
     {
-        public static List<string> ValidTextureExtensions { get; set; } = [".jpg", ".jpeg", ".png", ".dds"];
-        public static List<string> ValidCompressedExtensions { get; set; } = [".zip", ".rar", ".7z"];
+        public static List<string> TextureExtensions { get; set; } = [".jpg", ".jpeg", ".png", ".dds"];
+        public static List<string> InstallableExtensions { get; set; } = [".zip", ".rar", ".7z", ".ini"];
+        public static ResourcePackage SingleFileCatalog { get; set; } = new ResourcePackage()
+        {
+            LocalPresetFolder = Path.Combine(Instances.SinglePresetsFolder, WellKnown.PresetFolder),
+            Name = "Single Presets",
+            Source = "Local",
+            Type = "Single",
+            Status = "Installed",
+            Default = true,
+            Installed = true,
+            Hidden = true,
+        };
+
         public static string AppUserModelId = "BundlingwayPackageManager";
 
         public static class Events
@@ -22,6 +36,10 @@
             public static readonly string ConfigFileName = "config.json";
             public static readonly string TempFolderName = "temp";
             public static readonly string LogFileName = "bundlingway-log.txt";
+            public static readonly string SinglePresetsFolder = "Single Presets";
+
+            public static readonly string GamePresetsFolder = "reshade-presets";
+            public static readonly string GameShadersFolder = "reshade-shaders";
         }
 
         public static BundlingwayDialogueOptions Bundlingway = new();

@@ -12,7 +12,7 @@
     <Title>Bundlingway Package Manager</Title>
     <ApplicationVersion>0.0.1-beta</ApplicationVersion>
     <AssemblyVersion>0.0.1</AssemblyVersion>
-    <Product>GPosingway</Product>
+    <Product>Bundlingway</Product>
   </PropertyGroup>
 
   <ItemGroup>
