@@ -28,7 +28,7 @@ jobs:
       run: dotnet publish --configuration Release --no-build --output ./publish
 
     - name: Archive build output
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build
         path: ./publish
@@ -39,7 +39,7 @@ jobs:
 
     steps:
     - name: Download build output
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build
         path: ./publish
@@ -50,8 +50,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: ${{ github.sha }}
+        release_name: Release ${{ github.sha }}
         draft: false
         prerelease: false
 
