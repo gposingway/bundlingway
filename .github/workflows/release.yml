@@ -3,100 +3,84 @@ name: Build and Deploy Release
 on:
   push:
     branches:
-      - main  # Triggers the workflow on commits to the main branch
+      - main
 
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0.x'
-
-    - name: Restore dependencies
-      run: dotnet restore --runtime win-x64
-
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-
-    - name: Publish
-      run: dotnet publish --configuration Release --no-build --output ./publish --runtime win-x64
-
-    - name: Archive build output
-      uses: actions/upload-artifact@v4
-      with:
-        name: build
-        path: ./publish
+      - uses: actions/checkout@v3
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet restore --runtime win-x64
+      - run: dotnet build --configuration Release --no-restore
+      - run: dotnet publish --configuration Release --no-build --output ./publish --runtime win-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: ./publish
 
   release:
     needs: build
     runs-on: windows-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-      
-    - name: Download build output
-      uses: actions/download-artifact@v4
-      with:
-        name: build
-        path: ./publish
+      - uses: actions/checkout@v3
 
-    - name: Find and Extract Version
-      id: extract_version
-      shell: pwsh
-      run: |
-        $exe_file = Get-ChildItem -Path ./publish -Filter *.exe | Select-Object -First 1
-        $exe_path = $exe_file.FullName
-        $version = & $exe_path --version
-        echo "VERSION=$version" >> $env:GITHUB_ENV
-        echo "EXE_FILE=$exe_path" >> $env:GITHUB_ENV
+      - uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: ./publish
 
-    - name: Create and Push Tag
-      id: create_tag
-      run: |
-        git tag -a "v${{ env.VERSION }}" -m "Release v${{ env.VERSION }}"
-        git push origin "v${{ env.VERSION }}"
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT }} 
+      - name: Find and Extract Version
+        id: extract_version
+        shell: pwsh
+        run: |
+          $exe_file = Get-ChildItem -Path ./publish -Filter *.exe | Select-Object -First 1
+          $exe_path = $exe_file.FullName
+          $version = & $exe_path --version  # Capture the output
+          echo "VERSION=$version" >> $env:GITHUB_ENV
+          echo "EXE_FILE=$exe_path" >> $env:GITHUB_ENV
 
-    - name: Extract Commit Details
-      id: extract_commit
-      run: |
-        author_name=$(git log -1 --pretty=format:'%an')
-        author_email=$(git log -1 --pretty=format:'%ae')
-        echo "AUTHOR_NAME=$author_name" >> $GITHUB_ENV
-        echo "AUTHOR_EMAIL=$author_email" >> $GITHUB_ENV
-      shell: bash
+      - name: Extract Commit Details
+        id: extract_commit
+        run: |
+          author_name=$(git log -1 --pretty=format:'%an')
+          author_email=$(git log -1 --pretty=format:'%ae')
+          echo "AUTHOR_NAME=$author_name" >> $GITHUB_ENV
+          echo "AUTHOR_EMAIL=$author_email" >> $GITHUB_ENV
+        shell: bash
 
-    - name: Configure Git User
-      run: |
-        git config --global user.email "${{ env.AUTHOR_EMAIL }}"
-        git config --global user.name "${{ env.AUTHOR_NAME }}"        
+      - name: Configure Git User  # Moved this step UP
+        run: |
+          git config --global user.email "${{ env.AUTHOR_EMAIL }}"
+          git config --global user.name "${{ env.AUTHOR_NAME }}"
 
-    - name: Create GitHub Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT }}
-      with:
-        tag_name: "v${{ env.VERSION }}"
-        release_name: Release "v${{ env.VERSION }}"
-        draft: false
-        prerelease: false
+      - name: Create and Push Tag
+        id: create_tag
+        run: |
+          git tag -a "v${{ env.VERSION }}" -m "Release v${{ env.VERSION }}"
+          git push origin "v${{ env.VERSION }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
 
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./publish
-        asset_name: myapp.zip
-        asset_content_type: application/zip
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        with:
+          tag_name: "v${{ env.VERSION }}"
+          release_name: Release "v${{ env.VERSION }}"
+          draft: false
+          prerelease: false
 
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./publish
+          asset_name: myapp.zip
+          asset_content_type: application/zip
