@@ -11,9 +11,11 @@ namespace Bundlingway
         {
             UI._landing = this;
 
-            UI.Announce(Constants.MessageCategory.ApplicationStart);
-
             InitializeComponent();
+
+            SwitchToDarkMode();
+
+            UI.Announce(Constants.MessageCategory.ApplicationStart);
 
             Bootstrap.DetectSettings().ContinueWith(a => EvaluateButtonStates());
 
@@ -27,6 +29,114 @@ namespace Bundlingway
 
             UI.Announce(Constants.MessageCategory.Ready);
         }
+
+        private void SwitchToDarkMode()
+        {
+            // Dark Mode Colors
+            Color backColor = Color.FromArgb(32, 33, 36); // Dark background
+            Color foreColor = Color.FromArgb(220, 221, 225); // Light text
+            Color panelColor = Color.FromArgb(43, 44, 47); // Slightly lighter panel background
+            Color controlBackColor = Color.FromArgb(55, 56, 59); //Even Lighter Background for controls like textboxes.
+            Color gridBackColor = Color.FromArgb(48, 49, 52); //Background color for datagridview.
+            Color gridForeColor = Color.FromArgb(170, 171, 175); //Foreground color for datagridview.
+            Color borderColor = Color.FromArgb(68, 69, 72); //Border color for controls.
+
+
+            this.BackColor = backColor;
+            this.ForeColor = foreColor;
+
+            // Apply to controls
+            splitContainer1.Panel1.BackColor = backColor;
+            splitContainer1.Panel2.BackColor = backColor;
+            flpSideMenu.BackColor = panelColor;
+
+            foreach (Control control in this.Controls)
+            {
+                ApplyDarkMode(control, backColor, foreColor, panelColor, controlBackColor, gridBackColor, gridForeColor, borderColor);
+            }
+
+        }
+
+
+        private void ApplyDarkMode(Control control, Color backColor, Color foreColor, Color panelColor, Color controlBackColor, Color gridBackColor, Color gridForeColor, Color borderColor)
+        {
+
+            var originalBackColor = control.BackColor;
+            var originalForeColor = control.ForeColor;
+
+            control.BackColor = backColor;
+            control.ForeColor = foreColor;
+
+            if (control is Panel || control is FlowLayoutPanel || control is GroupBox)
+            {
+                control.BackColor = panelColor;
+            }
+            else if (control is TextBox)
+            {
+                control.BackColor = backColor;
+                ((TextBox)control).BorderStyle = BorderStyle.FixedSingle;
+                ((TextBox)control).ForeColor = foreColor;
+
+            }
+            else if (control is Button)
+            {
+                control.BackColor = controlBackColor;
+                ((Button)control).FlatStyle = FlatStyle.Flat;
+                ((Button)control).FlatAppearance.BorderColor = borderColor;
+                ((Button)control).FlatAppearance.BorderSize = 1;
+            }
+            else if (control is Label)
+            {
+                // Labels with a specific background color should keep it (e.g. Title Labels)
+                if (control.BackColor == SystemColors.Control)
+                {
+                    control.BackColor = panelColor;
+                }
+                else
+                {
+                    control.ForeColor = originalForeColor;
+                    control.BackColor = originalBackColor;
+                }
+            }
+            else if (control is DataGridView)
+            {
+                DataGridView dataGridView = (DataGridView)control;
+                dataGridView.BackgroundColor = gridBackColor;
+                dataGridView.ForeColor = gridForeColor;
+                dataGridView.GridColor = borderColor;
+                dataGridView.ColumnHeadersDefaultCellStyle.BackColor = gridBackColor;
+                dataGridView.ColumnHeadersDefaultCellStyle.ForeColor = gridForeColor;
+                dataGridView.RowHeadersDefaultCellStyle.BackColor = gridBackColor;
+                dataGridView.RowHeadersDefaultCellStyle.ForeColor = gridForeColor;
+                dataGridView.EnableHeadersVisualStyles = false; // Important for header styling
+                dataGridView.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+                dataGridView.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
+                dataGridView.BorderStyle = BorderStyle.FixedSingle;
+                foreach (DataGridViewColumn column in dataGridView.Columns)
+                {
+                    column.DefaultCellStyle.BackColor = gridBackColor;
+                    column.DefaultCellStyle.ForeColor = gridForeColor;
+                }
+
+            }
+            else if (control is FontAwesome.Sharp.IconButton)
+            {
+                control.BackColor = controlBackColor;
+                ((FontAwesome.Sharp.IconButton)control).FlatStyle = FlatStyle.Flat;
+                ((FontAwesome.Sharp.IconButton)control).FlatAppearance.BorderColor = borderColor;
+                ((FontAwesome.Sharp.IconButton)control).FlatAppearance.BorderSize = 1;
+            }
+            else if (control is PictureBox)
+            {
+                control.BackColor = panelColor;
+            }
+
+            foreach (Control child in control.Controls)
+            {
+                ApplyDarkMode(child, backColor, foreColor, panelColor, controlBackColor, gridBackColor, gridForeColor, borderColor);
+            }
+        }
+
 
         private void ProcessHelper_NotificationReceived(object? sender, string e)
         {
@@ -164,11 +274,11 @@ namespace Bundlingway
 
                 if (dgvPackages.InvokeRequired) { Invoke(new MethodInvoker(delegate { 
                     dgvPackages.Rows.Add(rowObj);
-                    lblPackagesTitle.Text = $"{dgvPackages.Rows.Count} Packages";
+                    lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
                 })); }
                 else {
                     dgvPackages.Rows.Add(rowObj);
-                    lblPackagesTitle.Text = $"{dgvPackages.Rows.Count} Packages";
+                    lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
                 }
             }
         }
