@@ -40,6 +40,7 @@ namespace Bundlingway
 
             public static readonly string GamePresetsFolder = "reshade-presets";
             public static readonly string GameShadersFolder = "reshade-shaders";
+            internal static readonly string SinglePresetFile = "Single Preset";
         }
 
         public static BundlingwayDialogueOptions Bundlingway = new();
