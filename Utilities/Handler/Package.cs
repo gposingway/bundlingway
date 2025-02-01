@@ -6,6 +6,7 @@ using System.IO.Compression;
 using System.Web;
 using System.Security.Cryptography;
 using System.Text;
+using SharpCompress.Common;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -386,7 +387,7 @@ namespace Bundlingway.Utilities.Handler
                     {
                         Name = Path.GetFileNameWithoutExtension(iniFile),
                         Source = iniFile,
-                        Type = "Single Preset",
+                        Type = Constants.WellKnown.SinglePresetFile,
                         Status = File.Exists(gameProbeFile) ? "Installed" : "Uninstalled",
                         Installed = File.Exists(gameProbeFile),
                         LocalPresetFolder = Path.GetDirectoryName(iniFile)
@@ -411,6 +412,13 @@ namespace Bundlingway.Utilities.Handler
 
         internal static void Remove(ResourcePackage package)
         {
+
+            if (package.Type == Constants.WellKnown.SinglePresetFile)
+            {
+                RemoveSinglePresetFile(package);
+                return;
+            }
+
             Log.Information($"Package.Remove: Removing package: {package.Name}");
 
             Uninstall(package);
@@ -429,8 +437,48 @@ namespace Bundlingway.Utilities.Handler
 
         }
 
+        private static void RemoveSinglePresetFile(ResourcePackage package)
+        {
+            UninstallSinglePresetFile(package);
+
+            Log.Information($"Package.RemoveSinglePresetFile: Removing single preset file: {package.Name}");
+            string targetPresetFile = package.Source;
+            if (File.Exists(targetPresetFile))
+            {
+                File.Delete(targetPresetFile);
+                Log.Information($"Package.RemoveSinglePresetFile: Single preset file {package.Name} removed successfully.");
+            }
+            else
+            {
+                Log.Information($"Package.RemoveSinglePresetFile: Single preset file {package.Name} not found.");
+            }
+
+        }
+
+        private static void UninstallSinglePresetFile(ResourcePackage package)
+        {
+            Log.Information($"Package.UninstallSinglePresetFile: Uninstalling single preset file: {package.Name}");
+            string targetPresetFile = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.WellKnown.GamePresetsFolder, Constants.WellKnown.SinglePresetsFolder, $"{package.Name}.ini");
+            if (File.Exists(targetPresetFile))
+            {
+                File.Delete(targetPresetFile);
+                Log.Information($"Package.UninstallSinglePresetFile: Single preset file {package.Name} uninstalled successfully.");
+            }
+            else
+            {
+                Log.Information($"Package.UninstallSinglePresetFile: Single preset file {package.Name} not found.");
+            }
+        }
+
         internal static void Uninstall(ResourcePackage package)
         {
+
+            if (package.Type == Constants.WellKnown.SinglePresetFile)
+            {
+                UninstallSinglePresetFile(package);
+                return;
+            }
+
             Log.Information("Package.Uninstall: Start");
             Log.Information($"Package.Uninstall: Uninstalling package: {package.Name}");
 
@@ -448,9 +496,33 @@ namespace Bundlingway.Utilities.Handler
 
         internal static void Reinstall(ResourcePackage? package)
         {
+
+            if (package.Type == Constants.WellKnown.SinglePresetFile)
+            {
+                InstallSinglePresetFile(package);
+                return;
+            }
+
             Log.Information("Package.Reinstall: Start");
             string localCatalogFilePath = Path.Combine(Instances.PackageFolder, package.Name);
             Install(localCatalogFilePath);
+        }
+
+        private static void InstallSinglePresetFile(ResourcePackage package)
+        {
+            Log.Information($"Package.InstallSinglePresetFile: Installing single preset file: {package.Name}");
+            string source = package.Source;
+            string target = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.WellKnown.GamePresetsFolder, Constants.WellKnown.SinglePresetsFolder, $"{package.Name}.ini");
+
+            if (File.Exists(source))
+            {
+                File.Copy(source, target, true);
+                Log.Information($"Package.InstallSinglePresetFile: Single preset file {package.Name} installed successfully.");
+            }
+            else
+            {
+                Log.Information($"Package.InstallSinglePresetFile: Single preset file {package.Name} not found.");
+            }
         }
 
         internal static async Task Onboard(List<string> selectedFiles)
