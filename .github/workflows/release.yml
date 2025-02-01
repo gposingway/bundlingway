@@ -46,11 +46,12 @@ jobs:
 
     - name: Find and Extract Version
       id: extract_version
+      shell: pwsh
       run: |
-        exe_file=$(find ./publish -name "*.exe" -print -quit)
-        version=$(./"$exe_file" --version)
-        echo "VERSION=$version" >> $GITHUB_ENV
-        echo "EXE_FILE=$exe_file" >> $GITHUB_ENV
+        $exe_file = Get-ChildItem -Path ./publish -Filter *.exe | Select-Object -First 1
+        $version = & ./$exe_file.Name --version
+        echo "VERSION=$version" >> $env:GITHUB_ENV
+        echo "EXE_FILE=$exe_file" >> $env:GITHUB_ENV
 
     - name: Create and Push Tag
       id: create_tag
