@@ -80,7 +80,6 @@ namespace Bundlingway.Utilities.Handler
                 preset.RunPostProcessorPipeline(package, ini_filedata, _logger);
             }
 
-
             _logger.WriteLogToConsole();
             _logger.WriteLogToFile(Path.Combine(baseline, "installation-log.txt"));
 
