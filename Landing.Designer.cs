@@ -40,8 +40,7 @@
             pnlAbout = new Panel();
             lblAnnouncement = new Label();
             pictureBox1 = new PictureBox();
-            label25 = new Label();
-            pictureBox2 = new PictureBox();
+            lblBundlingwaySays = new Label();
             pnlPackages = new Panel();
             dgvPackages = new DataGridView();
             TypeCol = new DataGridViewTextBoxColumn();
@@ -52,7 +51,7 @@
             btnUninstall = new Button();
             btnReinstall = new Button();
             btnInstallPackage = new Button();
-            lblPackagesTitle = new Label();
+            lblGrpPackages = new Label();
             pnlSettings = new Panel();
             tableLayoutPanel1 = new TableLayoutPanel();
             btnInstallGPosingway = new Button();
@@ -65,7 +64,7 @@
             label2 = new Label();
             txtXivPath = new TextBox();
             btnDetectSettings = new Button();
-            label1 = new Label();
+            lblGrpSettings = new Label();
             resourcePackageBindingSource = new BindingSource(components);
             instancesBindingSource = new BindingSource(components);
             instancesBindingSource1 = new BindingSource(components);
@@ -76,7 +75,6 @@
             flpSideMenu.SuspendLayout();
             pnlAbout.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             pnlPackages.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dgvPackages).BeginInit();
             flpPackageOptions.SuspendLayout();
@@ -213,8 +211,7 @@
             // 
             pnlAbout.Controls.Add(lblAnnouncement);
             pnlAbout.Controls.Add(pictureBox1);
-            pnlAbout.Controls.Add(label25);
-            pnlAbout.Controls.Add(pictureBox2);
+            pnlAbout.Controls.Add(lblBundlingwaySays);
             pnlAbout.Dock = DockStyle.Bottom;
             pnlAbout.Location = new Point(0, 551);
             pnlAbout.Name = "pnlAbout";
@@ -225,7 +222,6 @@
             // lblAnnouncement
             // 
             lblAnnouncement.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
-            lblAnnouncement.BackColor = Color.White;
             lblAnnouncement.FlatStyle = FlatStyle.Flat;
             lblAnnouncement.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblAnnouncement.Location = new Point(26, 55);
@@ -245,34 +241,24 @@
             pictureBox1.TabIndex = 1;
             pictureBox1.TabStop = false;
             // 
-            // label25
+            // lblBundlingwaySays
             // 
-            label25.BackColor = SystemColors.ControlDark;
-            label25.Dock = DockStyle.Top;
-            label25.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label25.ForeColor = SystemColors.ButtonHighlight;
-            label25.Location = new Point(5, 5);
-            label25.Name = "label25";
-            label25.Padding = new Padding(3);
-            label25.Size = new Size(550, 25);
-            label25.TabIndex = 0;
-            label25.Text = "Bundlingway Says...";
-            // 
-            // pictureBox2
-            // 
-            pictureBox2.Anchor = AnchorStyles.Right;
-            pictureBox2.Image = Properties.Resources.ffxiv_dx11_OkamiClarity_2024_02_18_16_07_46_icon_tip;
-            pictureBox2.Location = new Point(404, 87);
-            pictureBox2.Name = "pictureBox2";
-            pictureBox2.Size = new Size(31, 25);
-            pictureBox2.TabIndex = 3;
-            pictureBox2.TabStop = false;
+            lblBundlingwaySays.BackColor = SystemColors.ControlDarkDark;
+            lblBundlingwaySays.Dock = DockStyle.Top;
+            lblBundlingwaySays.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblBundlingwaySays.ForeColor = SystemColors.ButtonHighlight;
+            lblBundlingwaySays.Location = new Point(5, 5);
+            lblBundlingwaySays.Name = "lblBundlingwaySays";
+            lblBundlingwaySays.Padding = new Padding(3);
+            lblBundlingwaySays.Size = new Size(550, 25);
+            lblBundlingwaySays.TabIndex = 0;
+            lblBundlingwaySays.Text = "Bundlingway Says...";
             // 
             // pnlPackages
             // 
             pnlPackages.Controls.Add(dgvPackages);
             pnlPackages.Controls.Add(flpPackageOptions);
-            pnlPackages.Controls.Add(lblPackagesTitle);
+            pnlPackages.Controls.Add(lblGrpPackages);
             pnlPackages.Dock = DockStyle.Fill;
             pnlPackages.Location = new Point(0, 132);
             pnlPackages.Name = "pnlPackages";
@@ -378,23 +364,23 @@
             btnInstallPackage.UseVisualStyleBackColor = true;
             btnInstallPackage.Click += btnInstallPackage_Click;
             // 
-            // lblPackagesTitle
+            // lblGrpPackages
             // 
-            lblPackagesTitle.BackColor = SystemColors.ControlDark;
-            lblPackagesTitle.Dock = DockStyle.Top;
-            lblPackagesTitle.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblPackagesTitle.ForeColor = SystemColors.ButtonHighlight;
-            lblPackagesTitle.Location = new Point(5, 5);
-            lblPackagesTitle.Name = "lblPackagesTitle";
-            lblPackagesTitle.Padding = new Padding(3);
-            lblPackagesTitle.Size = new Size(550, 25);
-            lblPackagesTitle.TabIndex = 0;
-            lblPackagesTitle.Text = "Packages";
+            lblGrpPackages.BackColor = SystemColors.ControlDarkDark;
+            lblGrpPackages.Dock = DockStyle.Top;
+            lblGrpPackages.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblGrpPackages.ForeColor = SystemColors.ButtonHighlight;
+            lblGrpPackages.Location = new Point(5, 5);
+            lblGrpPackages.Name = "lblGrpPackages";
+            lblGrpPackages.Padding = new Padding(3);
+            lblGrpPackages.Size = new Size(550, 25);
+            lblGrpPackages.TabIndex = 0;
+            lblGrpPackages.Text = "Packages";
             // 
             // pnlSettings
             // 
             pnlSettings.Controls.Add(tableLayoutPanel1);
-            pnlSettings.Controls.Add(label1);
+            pnlSettings.Controls.Add(lblGrpSettings);
             pnlSettings.Dock = DockStyle.Top;
             pnlSettings.Location = new Point(0, 0);
             pnlSettings.Name = "pnlSettings";
@@ -538,18 +524,18 @@
             btnDetectSettings.UseVisualStyleBackColor = true;
             btnDetectSettings.Click += btnDetectSettings_Click;
             // 
-            // label1
+            // lblGrpSettings
             // 
-            label1.BackColor = SystemColors.ControlDark;
-            label1.Dock = DockStyle.Top;
-            label1.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label1.ForeColor = SystemColors.ButtonHighlight;
-            label1.Location = new Point(5, 5);
-            label1.Name = "label1";
-            label1.Padding = new Padding(3);
-            label1.Size = new Size(550, 25);
-            label1.TabIndex = 0;
-            label1.Text = "Settings";
+            lblGrpSettings.BackColor = SystemColors.ControlDarkDark;
+            lblGrpSettings.Dock = DockStyle.Top;
+            lblGrpSettings.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblGrpSettings.ForeColor = SystemColors.ButtonHighlight;
+            lblGrpSettings.Location = new Point(5, 5);
+            lblGrpSettings.Name = "lblGrpSettings";
+            lblGrpSettings.Padding = new Padding(3);
+            lblGrpSettings.Size = new Size(550, 25);
+            lblGrpSettings.TabIndex = 0;
+            lblGrpSettings.Text = "Settings";
             // 
             // Landing
             // 
@@ -570,7 +556,6 @@
             flpSideMenu.PerformLayout();
             pnlAbout.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
-            ((System.ComponentModel.ISupportInitialize)pictureBox2).EndInit();
             pnlPackages.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dgvPackages).EndInit();
             flpPackageOptions.ResumeLayout(false);
@@ -590,7 +575,7 @@
         private SplitContainer splitContainer1;
         private FlowLayoutPanel flpSideMenu;
         private Panel pnlSettings;
-        private Label label1;
+        private Label lblGrpSettings;
         private TableLayoutPanel tableLayoutPanel1;
         private Label label2;
         private TextBox txtXivPath;
@@ -602,9 +587,9 @@
         private Label label4;
         private Label label3;
         private Panel pnlPackages;
-        private Label lblPackagesTitle;
+        private Label lblGrpPackages;
         private Panel pnlAbout;
-        private Label label25;
+        private Label lblBundlingwaySays;
         private DataGridView dgvPackages;
         private BindingSource instancesBindingSource;
         private BindingSource resourcePackageBindingSource;
@@ -624,7 +609,6 @@
         private FontAwesome.Sharp.IconButton btnAbout;
         private Label lblAnnouncement;
         private PictureBox pictureBox1;
-        private PictureBox pictureBox2;
         private FontAwesome.Sharp.IconButton btnDebug;
     }
 }
