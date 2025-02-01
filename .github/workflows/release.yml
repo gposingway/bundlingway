@@ -41,6 +41,8 @@ jobs:
           $version = & $exe_path --version  # Capture the output
           echo "VERSION=$version" >> $env:GITHUB_ENV
           echo "EXE_FILE=$exe_path" >> $env:GITHUB_ENV
+          echo "VERSION=$version"
+          echo "EXE_FILE=$exe_path"
 
       - name: Extract Commit Details
         id: extract_commit
@@ -49,6 +51,8 @@ jobs:
           author_email=$(git log -1 --pretty=format:'%ae')
           echo "AUTHOR_NAME=$author_name" >> $GITHUB_ENV
           echo "AUTHOR_EMAIL=$author_email" >> $GITHUB_ENV
+          echo "AUTHOR_NAME=$author_name"
+          echo "AUTHOR_EMAIL=$author_email"
         shell: bash
 
       - name: Configure Git User  # Moved this step UP
@@ -62,7 +66,7 @@ jobs:
           git tag -a "v${{ env.VERSION }}" -m "Release v${{ env.VERSION }}"
           git push origin "v${{ env.VERSION }}"
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PAT }}
 
       - name: Create GitHub Release
         id: create_release
