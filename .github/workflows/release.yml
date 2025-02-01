@@ -37,13 +37,13 @@ jobs:
         shell: pwsh
         run: |
           $exe_file = Get-ChildItem -Path ./publish -Filter *.exe | Select-Object -First 1
-          $exe_path = $exe_file.FullName
-          $version = & $exe_path --version  # Capture the output
+          $file_info = Get-Item $exe_file.FullName
+          $version = $file_info.VersionInfo.FileVersion
           echo "VERSION=$version" >> $env:GITHUB_ENV
-          echo "EXE_FILE=$exe_path" >> $env:GITHUB_ENV
+          echo "EXE_FILE=$exe_file.FullName" >> $env:GITHUB_ENV
           echo "VERSION=$version"
-          echo "EXE_FILE=$exe_path"
-
+          echo "EXE_FILE=$exe_file.FullName"
+          
       - name: Extract Commit Details
         id: extract_commit
         run: |
