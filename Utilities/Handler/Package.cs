@@ -290,7 +290,7 @@ namespace Bundlingway.Utilities.Handler
                 return;
             }
 
-            ResourcePackage catalogEntry = new ResourcePackage();
+            ResourcePackage catalogEntry = new();
             catalogEntry = Serialization.FromJsonFile<ResourcePackage>(localCatalogFilePath);
             Log.Information("Package.Install: Loaded catalog entry from file.");
 
@@ -309,48 +309,56 @@ namespace Bundlingway.Utilities.Handler
             Log.Information("Package.Install: gamePresetsFolder: " + gamePresetsFolder);
             Log.Information("Package.Install: gameTexturesFolder: " + gameTexturesFolder);
 
-
-            Directory.CreateDirectory(gamePresetsFolder);
-            Log.Information($"Package.Install: Created game presets folder at: {gamePresetsFolder}");
-
-            catalogEntry.LocalPresetFolder = gamePresetsFolder;
-            catalogEntry.LocalTextureFolder = gameTexturesFolder;
-
-            foreach (var file in Directory.GetFiles(presetsFolder, "*.ini", SearchOption.AllDirectories))
+            try
             {
-                var relativePath = Path.GetRelativePath(presetsFolder, file);
-                var targetPath = Path.Combine(gamePresetsFolder, relativePath);
-                Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
-                File.Copy(file, targetPath, true);
-                Log.Information($"Package.Install: Copied preset file {file} to {targetPath}");
-            }
+                Directory.CreateDirectory(gamePresetsFolder);
+                Log.Information($"Package.Install: Created game presets folder at: {gamePresetsFolder}");
 
-            if (Directory.Exists(shadersFolder))
-                if (Directory.EnumerateFileSystemEntries(shadersFolder).ToList().Count != 0)
+                catalogEntry.LocalPresetFolder = gamePresetsFolder;
+                catalogEntry.LocalTextureFolder = gameTexturesFolder;
+
+                foreach (var file in Directory.GetFiles(presetsFolder, "*.ini", SearchOption.AllDirectories))
                 {
-                    Directory.CreateDirectory(gameTexturesFolder);
-                    Log.Information($"Package.Install: Created game textures folder at: {gameTexturesFolder}");
-
-                    foreach (var file in Directory.GetFiles(shadersFolder, "*.*", SearchOption.AllDirectories))
-                    {
-                        var relativePath = Path.GetRelativePath(shadersFolder, file);
-                        var targetPath = Path.Combine(gameTexturesFolder, relativePath);
-                        Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
-                        File.Copy(file, targetPath, true);
-                        Log.Information($"Package.Install: Copied texture file {file} to {targetPath}");
-                    }
+                    var relativePath = Path.GetRelativePath(presetsFolder, file);
+                    var targetPath = Path.Combine(gamePresetsFolder, relativePath);
+                    Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                    File.Copy(file, targetPath, true);
+                    Log.Information($"Package.Install: Copied preset file {file} to {targetPath}");
                 }
 
-            catalogEntry.Status = "Installed";
-            catalogEntry.Installed = true;
-            Log.Information("Package.Install: Updated catalog entry status to Installed.");
+                if (Directory.Exists(shadersFolder))
+                    if (Directory.EnumerateFileSystemEntries(shadersFolder).ToList().Count != 0)
+                    {
+                        Directory.CreateDirectory(gameTexturesFolder);
+                        Log.Information($"Package.Install: Created game textures folder at: {gameTexturesFolder}");
 
-            if (Directory.Exists(Instances.TempFolder)) Directory.Delete(Instances.TempFolder, true);
-            Log.Information("Package.Install: Deleted temporary folder.");
+                        foreach (var file in Directory.GetFiles(shadersFolder, "*.*", SearchOption.AllDirectories))
+                        {
+                            var relativePath = Path.GetRelativePath(shadersFolder, file);
+                            var targetPath = Path.Combine(gameTexturesFolder, relativePath);
+                            Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                            File.Copy(file, targetPath, true);
+                            Log.Information($"Package.Install: Copied texture file {file} to {targetPath}");
+                        }
+                    }
 
-            catalogEntry.ToJsonFile(localCatalogFilePath);
-            Log.Information("Package.Install: Saved updated catalog entry to file.");
-            Log.Information("Package.Install: Package installed successfully.");
+                catalogEntry.Status = "Installed";
+                catalogEntry.Installed = true;
+                Log.Information("Package.Install: Updated catalog entry status to Installed.");
+
+                if (Directory.Exists(Instances.TempFolder)) Directory.Delete(Instances.TempFolder, true);
+                Log.Information("Package.Install: Deleted temporary folder.");
+
+                catalogEntry.ToJsonFile(localCatalogFilePath);
+                Log.Information("Package.Install: Saved updated catalog entry to file.");
+                Log.Information("Package.Install: Package installed successfully.");
+            }
+            catch (Exception e)
+            {
+                catalogEntry.Status = "Error";
+                catalogEntry.ToJsonFile(localCatalogFilePath);
+            }
+
         }
 
         public static async Task Scan()
