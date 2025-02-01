@@ -21,7 +21,7 @@ namespace Bundlingway.Utilities
             });
         }
 
-        public static Landing _landing { get; set; }
+        public static frmLanding _landing { get; set; }
 
         public static async Task Announce(string message)
         {

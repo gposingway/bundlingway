@@ -7,12 +7,13 @@ using System.Web;
 using System.Security.Cryptography;
 using System.Text;
 using SharpCompress.Common;
+using System.Reflection.Metadata.Ecma335;
 
 namespace Bundlingway.Utilities.Handler
 {
     public static class Package
     {
-        internal static async Task OnboardSinglePresetFile(string filePath)
+        internal static async Task<ResourcePackage> OnboardSinglePresetFile(string filePath)
         {
             Log.Information("Package.OnboardSinglePresetFile: Start");
 
@@ -46,6 +47,8 @@ namespace Bundlingway.Utilities.Handler
             await Task.Run(() => Install(Instances.SinglePresetsFolder));
             Log.Information("Package.Onboard: Package installation completed.");
 
+            return new ResourcePackage() { Name = fileName, Type = Constants.WellKnown.SinglePresetFile };
+
         }
 
         private static string GetHashSignature(string filePath)
@@ -60,12 +63,11 @@ namespace Bundlingway.Utilities.Handler
             return hash.ToString().Substring(0, 6);
         }
 
-        internal static async Task Onboard(string filePath)
+        internal static async Task<ResourcePackage> Onboard(string filePath)
         {
             if (Path.GetExtension(filePath).ToLower() == ".ini")
             {
-                await OnboardSinglePresetFile(filePath);
-                return;
+                return OnboardSinglePresetFile(filePath).Result;
             }
 
             Log.Information("Package.Onboard: Start");
@@ -82,9 +84,9 @@ namespace Bundlingway.Utilities.Handler
 
             string collectionName = Path.GetFileNameWithoutExtension(filePath);
             newCatalogEntry.Name = collectionName;
-            newCatalogEntry.Status = "Unzipping...";
+            newCatalogEntry.Status = "Unpacking...";
 
-            string originalTempFolderPath = Path.Combine(Instances.TempFolder, "presetUnpack.tmp");
+            string originalTempFolderPath = Path.Combine(Instances.TempFolder, Guid.NewGuid().ToString());
             string tempFolderPath = originalTempFolderPath;
 
             if (Directory.Exists(tempFolderPath)) Directory.Delete(tempFolderPath, true);
@@ -104,6 +106,16 @@ namespace Bundlingway.Utilities.Handler
                     archive.WriteToDirectory(tempFolderPath, new SharpCompress.Common.ExtractionOptions() { ExtractFullPath = true });
                 });
                 Log.Information("Package.Onboard: RAR file extracted.");
+            }
+
+            else if (fileExtension == ".7z")
+            {
+                await Task.Run(() =>
+                {
+                    using var archive = SharpCompress.Archives.SevenZip.SevenZipArchive.Open(filePath);
+                    archive.WriteToDirectory(tempFolderPath, new ExtractionOptions() { ExtractFullPath = true });
+                });
+                Log.Information("Package.Onboard: 7z file extracted.");
             }
 
             var changeEval = false;
@@ -275,9 +287,12 @@ namespace Bundlingway.Utilities.Handler
 
             await Task.Run(() => Install(targetPackagePath));
             Log.Information("Package.Onboard: Package installation completed.");
+
+            return newCatalogEntry;
+
         }
 
-        internal static void Install(string targetPackagePath)
+        internal static async Task<ResourcePackage> Install(string targetPackagePath)
         {
             Log.Information("Package.Install: Start");
             Log.Information($"Package.Install: Installing package at: {targetPackagePath}");
@@ -287,10 +302,11 @@ namespace Bundlingway.Utilities.Handler
             if (!File.Exists(localCatalogFilePath))
             {
                 Log.Information("Package.Install: catalog-entry.json not found. Exiting.");
-                return;
+                return null;
             }
 
             ResourcePackage catalogEntry = new();
+
             catalogEntry = Serialization.FromJsonFile<ResourcePackage>(localCatalogFilePath);
             Log.Information("Package.Install: Loaded catalog entry from file.");
 
@@ -359,6 +375,7 @@ namespace Bundlingway.Utilities.Handler
                 catalogEntry.ToJsonFile(localCatalogFilePath);
             }
 
+            return catalogEntry;
         }
 
         public static async Task Scan()
@@ -547,12 +564,12 @@ namespace Bundlingway.Utilities.Handler
             }
         }
 
-        public static async Task DownloadAndInstall(string url)
+        public static async Task<string> DownloadAndInstall(string url)
         {
             // Log the start of the method
             Log.Information("DownloadAndInstall: Start");
 
-            using (HttpClient client = new HttpClient())
+            using (HttpClient client = new())
             {
                 try
                 {
@@ -578,9 +595,12 @@ namespace Bundlingway.Utilities.Handler
                     Log.Information($"DownloadAndInstall: File saved to: {filePath}");
 
                     // Call your install method here with the filePath
-                    await Onboard(filePath);
+                    ResourcePackage package = Onboard(filePath).Result;
 
                     Maintenance.RemoveTempDir();
+
+                    Log.Information("DownloadAndInstall: Success");
+                    return package.Name;
                 }
                 catch (Exception ex)
                 {
@@ -592,6 +612,8 @@ namespace Bundlingway.Utilities.Handler
 
             // Log the end of the method
             Log.Information("DownloadAndInstall: End");
+
+            return null;
         }
     }
 }

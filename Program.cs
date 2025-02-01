@@ -36,7 +36,7 @@ namespace Bundlingway
 
             }
 
-            Application.Run(new Landing());
+            Application.Run(new frmLanding());
         }
     }
 }

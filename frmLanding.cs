@@ -5,9 +5,9 @@ using Serilog;
 
 namespace Bundlingway
 {
-    public partial class Landing : Form
+    public partial class frmLanding : Form
     {
-        public Landing()
+        public frmLanding()
         {
             UI._landing = this;
 
@@ -112,6 +112,7 @@ namespace Bundlingway
                 dataGridView.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
                 dataGridView.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
                 dataGridView.BorderStyle = BorderStyle.FixedSingle;
+
                 foreach (DataGridViewColumn column in dataGridView.Columns)
                 {
                     column.DefaultCellStyle.BackColor = gridBackColor;
@@ -195,7 +196,7 @@ namespace Bundlingway
             }
         }
 
-        private void Landing_Load(object sender, EventArgs e)
+        private void frmLanding_Load(object sender, EventArgs e)
         {
             //lblGPosingwayVersion.Text = $"GPosingway {Instances.LocalConfigProvider.appVersion}";
         }
@@ -260,7 +261,7 @@ namespace Bundlingway
 
         private void PopulateGrid()
         {
-            Log.Information("Landing: PopulateGrid - Populating the grid with resource packages");
+            Log.Information("frmLanding: PopulateGrid - Populating the grid with resource packages");
             Package.Scan().Wait();
 
             if (dgvPackages.InvokeRequired) { Invoke(new MethodInvoker(dgvPackages.Rows.Clear)); }
@@ -285,14 +286,14 @@ namespace Bundlingway
 
         private void Generic_DragDrop(object sender, DragEventArgs e)
         {
-            Log.Information("Landing: Generic_DragDrop - Drag and drop event");
+            Log.Information("frmLanding: Generic_DragDrop - Drag and drop event");
             Name = "flowLayoutPanel1_DragDrop";
             TryInstalPackages(e);
         }
 
         private void Generic_DragEnter(object sender, DragEventArgs e)
         {
-            Log.Information("Landing: Generic_DragEnter - Drag enter event");
+            Log.Information("frmLanding: Generic_DragEnter - Drag enter event");
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 e.Effect = DragDropEffects.Copy; // You can set this to another effect if needed
@@ -305,7 +306,7 @@ namespace Bundlingway
 
         private void Generic_DragOver(object sender, DragEventArgs e)
         {
-            Log.Information("Landing: Generic_DragOver - Drag over event");
+            Log.Information("frmLanding: Generic_DragOver - Drag over event");
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 e.Effect = DragDropEffects.Copy; // You can set this to another effect if needed
@@ -332,28 +333,30 @@ namespace Bundlingway
 
         private void btnUninstall_Click(object sender, EventArgs e)
         {
-            foreach (DataGridViewRow row in dgvPackages.SelectedRows)
+            var selectedPackages = dgvPackages.SelectedRows
+                .Cast<DataGridViewRow>()
+                .Select(row => (ResourcePackage)row.Tag)
+                .ToList();
+
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Uninstall(package)))).ContinueWith(t =>
             {
-                Package.Uninstall((ResourcePackage)row.Tag);
-            }
-
-            UI.Announce(Constants.MessageCategory.UninstallPackage);
-
-            PopulateGrid();
+                UI.Announce(Constants.MessageCategory.UninstallPackage);
+                PopulateGrid();
+            });
         }
 
         private void btnReinstall_Click(object sender, EventArgs e)
         {
-            foreach (DataGridViewRow row in dgvPackages.SelectedRows)
+            var selectedPackages = dgvPackages.SelectedRows
+                .Cast<DataGridViewRow>()
+                .Select(row => (ResourcePackage)row.Tag)
+                .ToList();
+
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Reinstall(package)))).ContinueWith(t =>
             {
-                var package = (ResourcePackage)row.Tag;
-                Package.Reinstall(package);
-            }
-
-            UI.Announce(Constants.MessageCategory.ReinstallPackage);
-
-            PopulateGrid();
-
+                UI.Announce(Constants.MessageCategory.ReinstallPackage);
+                PopulateGrid();
+            });
         }
 
         private void btnInstallReShade_Click(object sender, EventArgs e)

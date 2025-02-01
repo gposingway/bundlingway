@@ -1,6 +1,6 @@
 ﻿namespace Bundlingway
 {
-    partial class Landing
+    partial class frmLanding
     {
         /// <summary>
         ///  Required designer variable.
@@ -149,7 +149,7 @@
             // 
             // btnGameFolder
             // 
-            btnGameFolder.IconChar = FontAwesome.Sharp.IconChar.Gamepad;
+            btnGameFolder.IconChar = FontAwesome.Sharp.IconChar.FolderOpen;
             btnGameFolder.IconColor = Color.SkyBlue;
             btnGameFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnGameFolder.IconSize = 32;
@@ -159,7 +159,7 @@
             btnGameFolder.Name = "btnGameFolder";
             btnGameFolder.Size = new Size(145, 37);
             btnGameFolder.TabIndex = 9;
-            btnGameFolder.Text = "FFXIV Folder";
+            btnGameFolder.Text = "FFXIV Game Folder";
             btnGameFolder.TextAlign = ContentAlignment.MiddleRight;
             btnGameFolder.UseVisualStyleBackColor = true;
             btnGameFolder.Click += btnGameFolder_Click;
@@ -537,17 +537,17 @@
             lblGrpSettings.TabIndex = 0;
             lblGrpSettings.Text = "Settings";
             // 
-            // Landing
+            // frmLanding
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(715, 701);
             Controls.Add(splitContainer1);
             MinimumSize = new Size(575, 551);
-            Name = "Landing";
+            Name = "frmLanding";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Bundlingway Package Manager";
-            Load += Landing_Load;
+            Load += frmLanding_Load;
             splitContainer1.Panel1.ResumeLayout(false);
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();

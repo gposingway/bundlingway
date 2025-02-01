@@ -15,7 +15,8 @@ namespace Bundlingway.Utilities.Handler
                 // Run the installation form in a separate thread
 
                 await UI.NotifyAsync("Installing package", url);
-                await Package.DownloadAndInstall(url);
+                var packageName = Package.DownloadAndInstall(url).Result;
+                await UI.NotifyAsync("Installation Complete", packageName);
             }
         }
     }
