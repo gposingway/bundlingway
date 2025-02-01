@@ -273,11 +273,16 @@ namespace Bundlingway
                 rowObj.CreateCells(dgvPackages, package.Type, package.Name, package.Status);
                 rowObj.Tag = package;
 
-                if (dgvPackages.InvokeRequired) { Invoke(new MethodInvoker(delegate { 
-                    dgvPackages.Rows.Add(rowObj);
-                    lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
-                })); }
-                else {
+                if (dgvPackages.InvokeRequired)
+                {
+                    Invoke(new MethodInvoker(delegate
+                    {
+                        dgvPackages.Rows.Add(rowObj);
+                        lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
+                    }));
+                }
+                else
+                {
                     dgvPackages.Rows.Add(rowObj);
                     lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
                 }
@@ -319,15 +324,16 @@ namespace Bundlingway
 
         private void btnRemove_Click(object sender, EventArgs e)
         {
-            foreach (DataGridViewRow row in dgvPackages.SelectedRows)
+            var selectedPackages = dgvPackages.SelectedRows
+                .Cast<DataGridViewRow>()
+                .Select(row => (ResourcePackage)row.Tag)
+                .ToList();
+
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Remove(package)))).ContinueWith(t =>
             {
-                var package = (ResourcePackage)row.Tag;
-                Package.Remove(package);
-            }
-
-            UI.Announce(Constants.MessageCategory.RemovePackage);
-
-            PopulateGrid();
+                UI.Announce(Constants.MessageCategory.UninstallPackage);
+                PopulateGrid();
+            });
 
         }
 

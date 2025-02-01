@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmLanding));
             contextMenuStrip1 = new ContextMenuStrip(components);
             splitContainer1 = new SplitContainer();
             flpSideMenu = new FlowLayoutPanel();
@@ -543,6 +544,7 @@
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(715, 701);
             Controls.Add(splitContainer1);
+            Icon = (Icon)resources.GetObject("$this.Icon");
             MinimumSize = new Size(575, 551);
             Name = "frmLanding";
             StartPosition = FormStartPosition.CenterScreen;
