@@ -246,6 +246,7 @@ namespace Bundlingway
 
                     Package.Onboard(selectedFiles).ContinueWith(a =>
                     {
+                        Maintenance.RemoveTempDir();
                         Instances.LocalConfigProvider.Save();
                         PopulateGrid();
 
@@ -346,6 +347,7 @@ namespace Bundlingway
 
             Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Uninstall(package)))).ContinueWith(t =>
             {
+                Maintenance.RemoveTempDir();
                 UI.Announce(Constants.MessageCategory.UninstallPackage);
                 PopulateGrid();
             });
@@ -360,6 +362,7 @@ namespace Bundlingway
 
             Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Reinstall(package)))).ContinueWith(t =>
             {
+                Maintenance.RemoveTempDir();
                 UI.Announce(Constants.MessageCategory.ReinstallPackage);
                 PopulateGrid();
             });
@@ -369,7 +372,11 @@ namespace Bundlingway
         {
             ReShade.Update().ContinueWith(a =>
             {
-                Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
+                Bootstrap.DetectSettings().ContinueWith(b =>
+                {
+                    Maintenance.RemoveTempDir();
+                    EvaluateButtonStates();
+                });
             });
         }
 
@@ -377,7 +384,11 @@ namespace Bundlingway
         {
             GPosingway.Update().ContinueWith(a =>
             {
-                Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
+                Bootstrap.DetectSettings().ContinueWith(b =>
+                {
+                    Maintenance.RemoveTempDir();
+                    EvaluateButtonStates();
+                });
             });
         }
 
