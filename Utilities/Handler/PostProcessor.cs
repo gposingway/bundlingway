@@ -82,7 +82,6 @@ namespace Bundlingway.Utilities.Handler
 
             _logger.WriteLogToConsole();
             _logger.WriteLogToFile(Path.Combine(baseline, "installation-log.txt"));
-
         }
     }
 }

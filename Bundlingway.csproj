@@ -11,10 +11,25 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Title>Bundlingway Package Manager</Title>
-    <ApplicationVersion>0.0.1-beta</ApplicationVersion>
-    <AssemblyVersion>0.0.1</AssemblyVersion>
     <Product>Bundlingway</Product>
+    <!-- Set initial version numbers -->
+    <MajorVersion>0</MajorVersion>
+    <MinorVersion>1</MinorVersion>
+    <BuildVersion>$([System.DateTime]::Now.ToString("yyMM"))</BuildVersion>
+    <RevisionVersion>$([System.DateTime]::Now.ToString("ddHHmm"))</RevisionVersion>
+
+    <!-- Form the complete version strings -->
+    <ApplicationVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</ApplicationVersion>
+    <AssemblyVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</AssemblyVersion>
+    <FileVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</FileVersion>
   </PropertyGroup>
+  
+  <Target Name="UpdateBuildInfo" BeforeTargets="BeforeBuild">
+    <PropertyGroup>
+      <!-- Increment revision number based on the current build date and time -->
+      <Revision>$([System.DateTime]::Now.ToString("yyyyMMddHHmmss"))</Revision>
+    </PropertyGroup>
+  </Target>
 
   <ItemGroup>
     <PackageReference Include="FontAwesome.Sharp" Version="6.6.0" />
