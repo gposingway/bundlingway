@@ -47,10 +47,13 @@ jobs:
           $exe_file = Get-ChildItem -Path ./publish -Filter *.exe | Select-Object -First 1
           $file_info = Get-Item $exe_file.FullName
           $version = $file_info.VersionInfo.FileVersion
+          $exe_name = $exe_file.BaseName
           echo "VERSION=$version" >> $env:GITHUB_ENV
           echo "EXE_FILE=$exe_file.FullName" >> $env:GITHUB_ENV
+          echo "EXE_NAME=$exe_name" >> $env:GITHUB_ENV
           echo "VERSION=$version"
           echo "EXE_FILE=$exe_file.FullName"
+          echo "EXE_NAME=$exe_name"
           
       - name: Extract Commit Details
         id: extract_commit
@@ -87,12 +90,19 @@ jobs:
           draft: false
           prerelease: false
 
+      - name: Create zip file
+        shell: pwsh
+        run: |
+          $zip_file = "${{ env.EXE_NAME }}.${{ env.VERSION }}.zip"
+          Compress-Archive -Path $env:EXE_FILE -DestinationPath $zip_file
+          echo "ZIP_FILE=$zip_file" >> $env:GITHUB_ENV
+
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./publish
-          asset_name: myapp.zip
+          asset_path: "${{ env.EXE_NAME }}.${{ env.VERSION }}.zip"
+          asset_name: "${{ env.EXE_NAME }}.${{ env.VERSION }}.zip"
           asset_content_type: application/zip
