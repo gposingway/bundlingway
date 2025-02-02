@@ -7,7 +7,6 @@ using System.Web;
 using System.Security.Cryptography;
 using System.Text;
 using SharpCompress.Common;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -116,6 +115,13 @@ namespace Bundlingway.Utilities.Handler
                     archive.WriteToDirectory(tempFolderPath, new ExtractionOptions() { ExtractFullPath = true });
                 });
                 Log.Information("Package.Onboard: 7z file extracted.");
+            }
+
+
+            if (!ValidatePackage(tempFolderPath))
+            {
+                Log.Information("Package.Onboard: Invalid package structure.");
+                return null;
             }
 
             var changeEval = false;
@@ -289,7 +295,43 @@ namespace Bundlingway.Utilities.Handler
             Log.Information("Package.Onboard: Package installation completed.");
 
             return newCatalogEntry;
+        }
 
+        private static bool ValidatePackage(string tempFolderPath)
+        {
+            // Validate if the directory exists
+            if (!Directory.Exists(tempFolderPath))
+            {
+                return false;
+            }
+
+            // Run individual validation methods
+            bool hasIniFiles = ValidateIniFiles(tempFolderPath);
+            bool hasFxFiles = ValidateFxFiles(tempFolderPath);
+
+            // A package with no INIs but with FX is a shader package.
+            bool validationFlag = hasIniFiles || (!hasIniFiles && hasFxFiles);
+
+            Console.WriteLine(validationFlag ? "Package is valid." : "Package is not valid.");
+            return validationFlag;
+        }
+
+        private static bool ValidateIniFiles(string tempFolderPath)
+        {
+            // Search for .INI files in the directory and its subdirectories
+            string[] iniFiles = Directory.GetFiles(tempFolderPath, "*.INI", SearchOption.AllDirectories);
+
+            // Validate if there is at least one .INI file
+            return iniFiles.Length > 0;
+        }
+
+        private static bool ValidateFxFiles(string tempFolderPath)
+        {
+            // Search for .fx files in the directory and its subdirectories
+            string[] fxFiles = Directory.GetFiles(tempFolderPath, "*.fx", SearchOption.AllDirectories);
+
+            // Validate if there is at least one .fx file
+            return fxFiles.Length > 0;
         }
 
         internal static async Task<ResourcePackage> Install(string targetPackagePath)
@@ -361,9 +403,6 @@ namespace Bundlingway.Utilities.Handler
                 catalogEntry.Status = "Installed";
                 catalogEntry.Installed = true;
                 Log.Information("Package.Install: Updated catalog entry status to Installed.");
-
-                if (Directory.Exists(Instances.TempFolder)) Directory.Delete(Instances.TempFolder, true);
-                Log.Information("Package.Install: Deleted temporary folder.");
 
                 catalogEntry.ToJsonFile(localCatalogFilePath);
                 Log.Information("Package.Install: Saved updated catalog entry to file.");
@@ -458,7 +497,6 @@ namespace Bundlingway.Utilities.Handler
             {
                 Log.Information($"Package.Remove: Package {package.Name} not found.");
             }
-            if (Directory.Exists(Instances.TempFolder)) Directory.Delete(Instances.TempFolder, true);
 
         }
 
