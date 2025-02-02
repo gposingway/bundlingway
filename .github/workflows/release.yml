@@ -3,65 +3,106 @@ name: Build and Deploy Release
 on:
   push:
     branches:
-      - main  # Triggers the workflow on commits to the main branch
+      - main
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: write
+  checks: write
+  deployments: write
 
 jobs:
   build:
     runs-on: windows-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: '8.0.x'
-
-    - name: Restore dependencies
-      run: dotnet restore --runtime win-x64
-
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
-
-    - name: Publish
-      run: dotnet publish --configuration Release --no-build --output ./publish --runtime win-x64
-
-    - name: Archive build output
-      uses: actions/upload-artifact@v4
-      with:
-        name: build
-        path: ./publish
+      - uses: actions/checkout@v3
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '8.0.x'
+      - run: dotnet restore --runtime win-x64
+      - run: dotnet build --configuration Release --no-restore
+      - run: dotnet publish --configuration Release --no-build --output ./publish --runtime win-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: ./publish
 
   release:
     needs: build
     runs-on: windows-latest
-
     steps:
-    - name: Download build output
-      uses: actions/download-artifact@v4
-      with:
-        name: build
-        path: ./publish
+      - uses: actions/checkout@v3
 
-    - name: Create GitHub Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT }}
-      with:
-        tag_name: ${{ github.sha }}
-        release_name: Release ${{ github.sha }}
-        draft: false
-        prerelease: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: build
+          path: ./publish
 
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.PAT }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./publish
-        asset_name: myapp.zip
-        asset_content_type: application/zip
+      - name: Find and Extract Version
+        id: extract_version
+        shell: pwsh
+        run: |
+          $exe_file = Get-ChildItem -Path ./publish -Filter *.exe | Select-Object -First 1
+          $file_info = Get-Item $exe_file.FullName
+          $version = $file_info.VersionInfo.FileVersion
+          $exe_name = $exe_file.BaseName
+          echo "VERSION=$version" >> $env:GITHUB_ENV
+          echo "EXE_FILE=$($exe_file.FullName)" >> $env:GITHUB_ENV
+          echo "EXE_NAME=$exe_name" >> $env:GITHUB_ENV
+          echo "VERSION=$version"
+          echo "EXE_FILE=$($exe_file.FullName)"
+          echo "EXE_NAME=$exe_name"
 
+      - name: Extract Commit Details
+        id: extract_commit
+        run: |
+          author_name=$(git log -1 --pretty=format:'%an')
+          author_email=$(git log -1 --pretty=format:'%ae')
+          echo "AUTHOR_NAME=$author_name" >> $GITHUB_ENV
+          echo "AUTHOR_EMAIL=$author_email" >> $GITHUB_ENV
+          echo "AUTHOR_NAME=$author_name"
+          echo "AUTHOR_EMAIL=$author_email"
+        shell: bash
+
+      - name: Configure Git User
+        run: |
+          git config --global user.email "${{ env.AUTHOR_EMAIL }}"
+          git config --global user.name "${{ env.AUTHOR_NAME }}"
+
+      - name: Create and Push Tag
+        id: create_tag
+        run: |
+          git tag -a "v${{ env.VERSION }}" -m "Release v${{ env.VERSION }}"
+          git push origin "v${{ env.VERSION }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        with:
+          tag_name: "v${{ env.VERSION }}"
+          release_name: Release "v${{ env.VERSION }}"
+          draft: false
+          prerelease: false
+
+      - name: Create zip file
+        shell: pwsh
+        run: |
+          $zip_file = "${{ env.EXE_NAME }}.${{ env.VERSION }}.zip"
+          Compress-Archive -Path $env:EXE_FILE -DestinationPath $zip_file
+          echo "ZIP_FILE=$zip_file" >> $env:GITHUB_ENV
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: "${{ env.ZIP_FILE }}"
+          asset_name: "${{ env.ZIP_FILE }}"
+          asset_content_type: application/zip
