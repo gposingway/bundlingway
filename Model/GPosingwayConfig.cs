@@ -5,7 +5,7 @@
 
         public class CorePackageStatus
         {
-            public string Status { get; set; }
+            public EPackageStatus Status { get; set; }
             public string LocalVersion { get; set; }
             public string RemoteVersion { get; set; }
             public string RemoteLink { get; set; }

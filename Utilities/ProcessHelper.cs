@@ -2,6 +2,7 @@
 using Serilog;
 using System.Diagnostics;
 using System.IO.Pipes;
+using System.Reflection;
 using System.Text;
 
 namespace Bundlingway.Utilities
@@ -9,6 +10,21 @@ namespace Bundlingway.Utilities
     public static class ProcessHelper
     {
         public static event EventHandler<string> NotificationReceived;
+
+        public static void OpenUrlInBrowser(string url)
+        {
+            Process.Start(new ProcessStartInfo
+            {
+                FileName = url,
+                UseShellExecute = true
+            });
+        }
+
+        public static string GetCurrentMethodName()
+        {
+            return MethodBase.GetCurrentMethod().DeclaringType.Name + "." + MethodBase.GetCurrentMethod().Name;
+        }
+
 
         public static bool IsProcessRunning(string processName)
         {
@@ -40,44 +56,41 @@ namespace Bundlingway.Utilities
         public static void NotifyOtherInstances(string eventName)
         {
             Log.Information($"Notifying other instances with event: {eventName}");
-            using (NamedPipeClientStream pipeClient = new NamedPipeClientStream(".", "BundlingwayEventNotification", PipeDirection.Out))
+            using NamedPipeClientStream pipeClient = new(".", "BundlingwayEventNotification", PipeDirection.Out);
+
+            try
             {
-                try
+                pipeClient.Connect(1000); // Wait for 1 second to connect
+                using (StreamWriter writer = new(pipeClient, Encoding.UTF8))
                 {
-                    pipeClient.Connect(1000); // Wait for 1 second to connect
-                    using (StreamWriter writer = new(pipeClient, Encoding.UTF8))
-                    {
-                        writer.WriteLine(eventName);
-                    }
-                    Log.Information("Notification sent successfully.");
+                    writer.WriteLine(eventName);
                 }
-                catch (TimeoutException)
-                {
-                    Log.Information("No other instances are listening.");
-                    // Handle the case where no other instances are listening
-                }
+                Log.Information("Notification sent successfully.");
+            }
+            catch (TimeoutException)
+            {
+                Log.Information("No other instances are listening.");
+                // Handle the case where no other instances are listening
             }
         }
 
         public static async Task ListenForNotifications()
         {
             Log.Information("Listening for notifications.");
-            using (NamedPipeServerStream pipeServer = new("BundlingwayEventNotification", PipeDirection.In))
+            using NamedPipeServerStream pipeServer = new("BundlingwayEventNotification", PipeDirection.In);
+            while (true)
             {
-                while (true)
+                await pipeServer.WaitForConnectionAsync();
+                using (StreamReader reader = new(pipeServer, Encoding.UTF8))
                 {
-                    await pipeServer.WaitForConnectionAsync();
-                    using (StreamReader reader = new(pipeServer, Encoding.UTF8))
+                    string message;
+                    while ((message = await reader.ReadLineAsync()) != null)
                     {
-                        string message;
-                        while ((message = await reader.ReadLineAsync()) != null)
-                        {
-                            Log.Information($"Notification received: {message}");
-                            NotificationReceived?.Invoke(null, message);
-                        }
+                        Log.Information($"Notification received: {message}");
+                        NotificationReceived?.Invoke(null, message);
                     }
-                    pipeServer.Disconnect();
                 }
+                pipeServer.Disconnect();
             }
         }
 
@@ -103,14 +116,12 @@ namespace Bundlingway.Utilities
                 }
             }
 
-            using (RegistryKey explorerKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartPage", true))
+            using RegistryKey explorerKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartPage", true);
+            string pinnedApps = explorerKey.GetValue("PinnedApps") as string;
+            if (pinnedApps != appPath)
             {
-                string pinnedApps = explorerKey.GetValue("PinnedApps") as string;
-                if (pinnedApps != appPath)
-                {
-                    explorerKey.SetValue("PinnedApps", appPath, RegistryValueKind.String);
-                    Log.Information("Application pinned to start screen.");
-                }
+                explorerKey.SetValue("PinnedApps", appPath, RegistryValueKind.String);
+                Log.Information("Application pinned to start screen.");
             }
         }
     }

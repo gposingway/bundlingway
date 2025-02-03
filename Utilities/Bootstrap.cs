@@ -10,7 +10,6 @@ namespace Bundlingway.Utilities
         {
             try
             {
-                Log.Information("Bootstrap.Initialize: Starting initialization.");
                 await ProcessHelper.PinToStartScreenAsync();
                 await CustomProtocolHandler.RegisterCustomProtocolAsync("gwpreset", "A collection of presets for GPosingway", true);
 
@@ -36,12 +35,13 @@ namespace Bundlingway.Utilities
                 if (Instances.ResourcePackages == null)
                     Instances.ResourcePackages = [];
 
-                await CheckGameClient();
-                await CheckReShade();
-                await CheckGPosingway();
+                await Task.WhenAll(
+                    CheckGameClient(), 
+                    CheckReShade(), 
+                    CheckGPosingway()
+                    );
 
                 Instances.LocalConfigProvider.Save();
-                Instances.MainDataSource.ResetBindings(true);
 
                 Log.Information("Bootstrap.DetectSettings: Settings detection completed.");
                 UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.Ready));
@@ -64,18 +64,30 @@ namespace Bundlingway.Utilities
             try
             {
                 Log.Information("Bootstrap.CheckGameClient: Checking game client.");
-                if (ProcessHelper.IsProcessRunning("ffxiv_dx11"))
+                if (Instances.IsGameRunning)
                 {
                     var procPath = ProcessHelper.GetProcessPath("ffxiv_dx11");
 
                     if (procPath != null)
                     {
-                        Instances.LocalConfigProvider.Configuration.XIVPath = ProcessHelper.GetProcessPath("ffxiv_dx11");
+                        Instances.LocalConfigProvider.Configuration.XIVPath = procPath;
                     }
                 }
 
                 if (Instances.LocalConfigProvider.Configuration.XIVPath != null)
-                    Instances.LocalConfigProvider.Configuration.GameFolder = Path.GetDirectoryName(Instances.LocalConfigProvider.Configuration.XIVPath);
+                    if (!File.Exists(Instances.LocalConfigProvider.Configuration.XIVPath))
+                    {
+                        Instances.LocalConfigProvider.Configuration.XIVPath = null;
+                        Instances.LocalConfigProvider.Configuration.GameFolder = null;
+                    }
+                    else
+                    {
+                        Instances.LocalConfigProvider.Configuration.GameFolder = Path.GetDirectoryName(Instances.LocalConfigProvider.Configuration.XIVPath);
+                    }
+
+                
+                _= UI.UpdateElements();
+
                 Log.Information("Bootstrap.CheckGameClient: Game client check completed.");
             }
             catch (Exception ex)
@@ -89,10 +101,8 @@ namespace Bundlingway.Utilities
             try
             {
                 Log.Information("Bootstrap.CheckGPosingway: Checking GPosingway.");
-                GPosingway.GetLocalInfo();
+                await GPosingway.GetLocalInfo();
                 await GPosingway.GetRemoteInfo();
-
-                Instances.LocalConfigProvider.Configuration.GPosingway.Status = $"Local: {Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion}, Remote: {Instances.LocalConfigProvider.Configuration.GPosingway.RemoteVersion}";
                 Instances.LocalConfigProvider.Save();
                 Log.Information("Bootstrap.CheckGPosingway: GPosingway check completed.");
             }
@@ -107,10 +117,8 @@ namespace Bundlingway.Utilities
             try
             {
                 Log.Information("Bootstrap.CheckReShade: Checking ReShade.");
-                ReShade.GetLocalInfo();
+                await ReShade.GetLocalInfo();
                 await ReShade.GetRemoteInfo();
-
-                Instances.LocalConfigProvider.Configuration.ReShade.Status = $"Local: {Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion}, Remote: {Instances.LocalConfigProvider.Configuration.ReShade.RemoteVersion}";
                 Instances.LocalConfigProvider.Save();
                 Log.Information("Bootstrap.CheckReShade: ReShade check completed.");
             }

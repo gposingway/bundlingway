@@ -1,3 +1,4 @@
+using Bundlingway.Model;
 using ICSharpCode.SharpZipLib.Zip;
 using Serilog;
 using System.Diagnostics;
@@ -21,7 +22,7 @@ namespace Bundlingway.Utilities.Handler
             }
             catch (HttpRequestException e)
             {
-                Log.Information($"ReShadeParser.FetchHtmlContent: Error fetching HTML content: {e.Message}");
+                Log.Warning($"ReShadeParser.FetchHtmlContent: Error fetching HTML content: {e.Message}");
                 return string.Empty;
             }
         }
@@ -48,6 +49,8 @@ namespace Bundlingway.Utilities.Handler
 
         public static async Task GetRemoteInfo()
         {
+            var c = Instances.LocalConfigProvider.Configuration.ReShade;
+
             Log.Information("ReShadeParser.GetRemoteInfo: Starting to get remote info.");
             var version = "N/A";
             var downloadLink = "N/A";
@@ -65,32 +68,40 @@ namespace Bundlingway.Utilities.Handler
                 }
             }
 
-            Instances.LocalConfigProvider.Configuration.ReShade.RemoteVersion = version;
-            Instances.LocalConfigProvider.Configuration.ReShade.RemoteLink = downloadLink;
+            c.RemoteVersion = version;
+            c.RemoteLink = downloadLink;
             Log.Information("ReShadeParser.GetRemoteInfo: Remote info updated. Version: " + version + ", Download Link: " + downloadLink);
+
+            if (c.LocalVersion != null && c.RemoteVersion != null && c.LocalVersion != c.RemoteVersion)
+                c.Status = EPackageStatus.Outdated;
+
+
+            _ = UI.UpdateElements();
+
         }
 
-        internal static void GetLocalInfo()
+        internal static async Task GetLocalInfo()
         {
             Log.Information("ReShadeParser.GetLocalInfo: Starting to get local info.");
             if (Instances.LocalConfigProvider.Configuration.GameFolder != null)
             {
-                var reShadeProbe = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, "dxgi.dll");
+                var reShadeProbe = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.Files.LocalReshadeBinary);
 
                 if (!File.Exists(reShadeProbe))
                 {
-                    Instances.LocalConfigProvider.Configuration.ReShade.Status = "Not Installed";
-                    Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion = "N/A";
+                    Instances.LocalConfigProvider.Configuration.ReShade.Status = EPackageStatus.NotInstalled;
+                    Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion = null;
                     Log.Information("ReShadeParser.GetLocalInfo: ReShade not installed.");
                 }
                 else
                 {
-                    Instances.LocalConfigProvider.Configuration.ReShade.Status = "Found";
-                    var rfvi = FileVersionInfo.GetVersionInfo(reShadeProbe);
-                    Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion = rfvi.ProductVersion;
-                    Log.Information("ReShadeParser.GetLocalInfo: ReShade found. Version: " + rfvi.ProductVersion);
+                    Instances.LocalConfigProvider.Configuration.ReShade.Status = EPackageStatus.Installed;
+                    var rfvi = await Task.Run(() => FileVersionInfo.GetVersionInfo(reShadeProbe));
+                    Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion = rfvi?.ProductVersion;
+                    Log.Information("ReShadeParser.GetLocalInfo: ReShade found. Version: " + rfvi?.ProductVersion);
                 }
             }
+            _ = UI.UpdateElements();
         }
 
         internal static async Task Update()
@@ -141,17 +152,15 @@ namespace Bundlingway.Utilities.Handler
                         if (directoryName.Length > 0)
                             Directory.CreateDirectory(directoryName);
 
-                        using (var zipStream = zf.GetInputStream(entry))
-                        using (var streamWriter = File.Create(fullZipToPath))
-                        {
-                            zipStream.CopyTo(streamWriter);
-                        }
+                        using var zipStream = zf.GetInputStream(entry);
+                        using var streamWriter = File.Create(fullZipToPath);
+                        zipStream.CopyTo(streamWriter);
                     }
                     Log.Information("ReShadeParser.Update: Successfully extracted the file.");
                 }
 
                 var sourceDll = Path.Combine(extractPath, "ReShade64.dll");
-                var destinationDll = Path.Combine(gameFolder, "dxgi.dll");
+                var destinationDll = Path.Combine(gameFolder, Constants.Files.LocalReshadeBinary);
                 if (File.Exists(sourceDll))
                 {
                     File.Copy(sourceDll, destinationDll, true);
@@ -160,7 +169,7 @@ namespace Bundlingway.Utilities.Handler
             }
             catch (Exception ex)
             {
-                Log.Information($"ReShadeParser.Update: Error during update: {ex.Message}");
+                Log.Warning($"ReShadeParser.Update: Error during update: {ex.Message}");
             }
         }
     }

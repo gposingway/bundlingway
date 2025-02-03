@@ -1,8 +1,4 @@
 ﻿using static Bundlingway.Constants;
-using System.Threading;
-using System;
-using System.Xml;
-using System.Collections.Specialized;
 using Microsoft.Toolkit.Uwp.Notifications;
 
 namespace Bundlingway.Utilities
@@ -10,6 +6,7 @@ namespace Bundlingway.Utilities
     public static class UI
     {
         private static System.Threading.Timer _idleTimer;
+        private static string _currentMessage;
 
         static UI()
         {
@@ -25,7 +22,11 @@ namespace Bundlingway.Utilities
 
         public static async Task Announce(string message)
         {
-            await _landing.Announce(message);
+            if (_currentMessage != message)
+            {
+                _currentMessage = message;
+                await _landing.Announce(message);
+            }
         }
 
         public static async Task Announce(MessageCategory category, params string[] args)
@@ -44,6 +45,12 @@ namespace Bundlingway.Utilities
              .AddText(message)
              .Show();
             ;
+        }
+
+        public static async Task UpdateElements()
+        {
+            await _landing.UpdateElements();
+
         }
     }
 }

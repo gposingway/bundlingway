@@ -33,10 +33,13 @@
             contextMenuStrip1 = new ContextMenuStrip(components);
             splitContainer1 = new SplitContainer();
             flpSideMenu = new FlowLayoutPanel();
-            btnPackagesFolder = new FontAwesome.Sharp.IconButton();
-            btnGameFolder = new FontAwesome.Sharp.IconButton();
-            btnDebug = new FontAwesome.Sharp.IconButton();
+            btnFixIt = new FontAwesome.Sharp.IconButton();
             lblSpacing1 = new Label();
+            btnGameFolder = new FontAwesome.Sharp.IconButton();
+            btnPackagesFolder = new FontAwesome.Sharp.IconButton();
+            btnDebug = new FontAwesome.Sharp.IconButton();
+            label1 = new Label();
+            btnEmporium = new FontAwesome.Sharp.IconButton();
             btnAbout = new FontAwesome.Sharp.IconButton();
             pnlAbout = new Panel();
             lblAnnouncement = new Label();
@@ -56,11 +59,10 @@
             pnlSettings = new Panel();
             tableLayoutPanel1 = new TableLayoutPanel();
             btnInstallGPosingway = new Button();
-            textBox3 = new TextBox();
-            mainSource = new BindingSource(components);
+            txtGPosingwayStatus = new TextBox();
             label4 = new Label();
             btnInstallReShade = new Button();
-            textBox2 = new TextBox();
+            txtReShadeStatus = new TextBox();
             label3 = new Label();
             label2 = new Label();
             txtXivPath = new TextBox();
@@ -81,7 +83,6 @@
             flpPackageOptions.SuspendLayout();
             pnlSettings.SuspendLayout();
             tableLayoutPanel1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)mainSource).BeginInit();
             ((System.ComponentModel.ISupportInitialize)resourcePackageBindingSource).BeginInit();
             ((System.ComponentModel.ISupportInitialize)instancesBindingSource).BeginInit();
             ((System.ComponentModel.ISupportInitialize)instancesBindingSource1).BeginInit();
@@ -118,10 +119,13 @@
             flpSideMenu.AllowDrop = true;
             flpSideMenu.AutoScroll = true;
             flpSideMenu.BackColor = SystemColors.ControlLight;
-            flpSideMenu.Controls.Add(btnPackagesFolder);
-            flpSideMenu.Controls.Add(btnGameFolder);
-            flpSideMenu.Controls.Add(btnDebug);
+            flpSideMenu.Controls.Add(btnFixIt);
             flpSideMenu.Controls.Add(lblSpacing1);
+            flpSideMenu.Controls.Add(btnGameFolder);
+            flpSideMenu.Controls.Add(btnPackagesFolder);
+            flpSideMenu.Controls.Add(btnDebug);
+            flpSideMenu.Controls.Add(label1);
+            flpSideMenu.Controls.Add(btnEmporium);
             flpSideMenu.Controls.Add(btnAbout);
             flpSideMenu.Dock = DockStyle.Fill;
             flpSideMenu.Location = new Point(0, 0);
@@ -131,82 +135,133 @@
             flpSideMenu.DragDrop += Generic_DragDrop;
             flpSideMenu.DragEnter += Generic_DragEnter;
             // 
-            // btnPackagesFolder
+            // btnFixIt
             // 
-            btnPackagesFolder.IconChar = FontAwesome.Sharp.IconChar.FolderOpen;
-            btnPackagesFolder.IconColor = Color.SkyBlue;
-            btnPackagesFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
-            btnPackagesFolder.IconSize = 32;
-            btnPackagesFolder.ImageAlign = ContentAlignment.MiddleLeft;
-            btnPackagesFolder.Location = new Point(3, 3);
-            btnPackagesFolder.Margin = new Padding(3, 3, 3, 0);
-            btnPackagesFolder.Name = "btnPackagesFolder";
-            btnPackagesFolder.Size = new Size(145, 37);
-            btnPackagesFolder.TabIndex = 8;
-            btnPackagesFolder.Text = "Repository";
-            btnPackagesFolder.TextAlign = ContentAlignment.MiddleRight;
-            btnPackagesFolder.UseVisualStyleBackColor = true;
-            btnPackagesFolder.Click += btnPackagesFolder_Click;
-            // 
-            // btnGameFolder
-            // 
-            btnGameFolder.IconChar = FontAwesome.Sharp.IconChar.FolderOpen;
-            btnGameFolder.IconColor = Color.SkyBlue;
-            btnGameFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
-            btnGameFolder.IconSize = 32;
-            btnGameFolder.ImageAlign = ContentAlignment.MiddleLeft;
-            btnGameFolder.Location = new Point(3, 40);
-            btnGameFolder.Margin = new Padding(3, 0, 3, 0);
-            btnGameFolder.Name = "btnGameFolder";
-            btnGameFolder.Size = new Size(145, 37);
-            btnGameFolder.TabIndex = 9;
-            btnGameFolder.Text = "FFXIV Game Folder";
-            btnGameFolder.TextAlign = ContentAlignment.MiddleRight;
-            btnGameFolder.UseVisualStyleBackColor = true;
-            btnGameFolder.Click += btnGameFolder_Click;
-            // 
-            // btnDebug
-            // 
-            btnDebug.IconChar = FontAwesome.Sharp.IconChar.ChevronRight;
-            btnDebug.IconColor = Color.SkyBlue;
-            btnDebug.IconFont = FontAwesome.Sharp.IconFont.Auto;
-            btnDebug.IconSize = 32;
-            btnDebug.ImageAlign = ContentAlignment.MiddleLeft;
-            btnDebug.Location = new Point(3, 77);
-            btnDebug.Margin = new Padding(3, 0, 3, 0);
-            btnDebug.Name = "btnDebug";
-            btnDebug.Size = new Size(145, 37);
-            btnDebug.TabIndex = 13;
-            btnDebug.Text = "Debug Information";
-            btnDebug.TextAlign = ContentAlignment.MiddleRight;
-            btnDebug.UseVisualStyleBackColor = true;
-            btnDebug.Click += btnDebug_Click;
+            btnFixIt.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnFixIt.IconChar = FontAwesome.Sharp.IconChar.WandMagicSparkles;
+            btnFixIt.IconColor = SystemColors.Highlight;
+            btnFixIt.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnFixIt.IconSize = 32;
+            btnFixIt.ImageAlign = ContentAlignment.MiddleLeft;
+            btnFixIt.Location = new Point(3, 3);
+            btnFixIt.Margin = new Padding(3, 3, 3, 0);
+            btnFixIt.Name = "btnFixIt";
+            btnFixIt.Size = new Size(145, 37);
+            btnFixIt.TabIndex = 1;
+            btnFixIt.Text = "Fix It!";
+            btnFixIt.TextAlign = ContentAlignment.MiddleRight;
+            btnFixIt.UseVisualStyleBackColor = true;
+            btnFixIt.MouseEnter += btnFixIt_MouseEnter;
             // 
             // lblSpacing1
             // 
             lblSpacing1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             lblSpacing1.AutoSize = true;
             lblSpacing1.Font = new Font("Segoe UI", 12F);
-            lblSpacing1.Location = new Point(3, 114);
+            lblSpacing1.Location = new Point(3, 40);
             lblSpacing1.Name = "lblSpacing1";
             lblSpacing1.Size = new Size(0, 21);
             lblSpacing1.TabIndex = 6;
             // 
+            // btnGameFolder
+            // 
+            btnGameFolder.IconChar = FontAwesome.Sharp.IconChar.FolderOpen;
+            btnGameFolder.IconColor = SystemColors.Highlight;
+            btnGameFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnGameFolder.IconSize = 32;
+            btnGameFolder.ImageAlign = ContentAlignment.MiddleLeft;
+            btnGameFolder.Location = new Point(3, 64);
+            btnGameFolder.Margin = new Padding(3, 3, 3, 0);
+            btnGameFolder.Name = "btnGameFolder";
+            btnGameFolder.Size = new Size(145, 37);
+            btnGameFolder.TabIndex = 2;
+            btnGameFolder.Text = "FFXIV Game Folder";
+            btnGameFolder.TextAlign = ContentAlignment.MiddleRight;
+            btnGameFolder.UseVisualStyleBackColor = true;
+            btnGameFolder.Click += btnGameFolder_Click;
+            btnGameFolder.MouseEnter += btnGameFolder_MouseEnter;
+            // 
+            // btnPackagesFolder
+            // 
+            btnPackagesFolder.IconChar = FontAwesome.Sharp.IconChar.FolderOpen;
+            btnPackagesFolder.IconColor = SystemColors.Highlight;
+            btnPackagesFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnPackagesFolder.IconSize = 32;
+            btnPackagesFolder.ImageAlign = ContentAlignment.MiddleLeft;
+            btnPackagesFolder.Location = new Point(3, 104);
+            btnPackagesFolder.Margin = new Padding(3, 3, 3, 0);
+            btnPackagesFolder.Name = "btnPackagesFolder";
+            btnPackagesFolder.Size = new Size(145, 37);
+            btnPackagesFolder.TabIndex = 3;
+            btnPackagesFolder.Text = "Repository";
+            btnPackagesFolder.TextAlign = ContentAlignment.MiddleRight;
+            btnPackagesFolder.UseVisualStyleBackColor = true;
+            btnPackagesFolder.Click += btnPackagesFolder_Click;
+            btnPackagesFolder.MouseEnter += btnPackagesFolder_MouseEnter;
+            // 
+            // btnDebug
+            // 
+            btnDebug.IconChar = FontAwesome.Sharp.IconChar.ChevronRight;
+            btnDebug.IconColor = SystemColors.Highlight;
+            btnDebug.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnDebug.IconSize = 32;
+            btnDebug.ImageAlign = ContentAlignment.MiddleLeft;
+            btnDebug.Location = new Point(3, 144);
+            btnDebug.Margin = new Padding(3, 3, 3, 0);
+            btnDebug.Name = "btnDebug";
+            btnDebug.Size = new Size(145, 37);
+            btnDebug.TabIndex = 4;
+            btnDebug.Text = "Debug Information";
+            btnDebug.TextAlign = ContentAlignment.MiddleRight;
+            btnDebug.UseVisualStyleBackColor = true;
+            btnDebug.Click += btnDebug_Click;
+            btnDebug.MouseEnter += btnDebug_MouseEnter;
+            // 
+            // label1
+            // 
+            label1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            label1.AutoSize = true;
+            label1.Font = new Font("Segoe UI", 12F);
+            label1.Location = new Point(3, 181);
+            label1.Name = "label1";
+            label1.Size = new Size(0, 21);
+            label1.TabIndex = 20;
+            // 
+            // btnEmporium
+            // 
+            btnEmporium.IconChar = FontAwesome.Sharp.IconChar.Gifts;
+            btnEmporium.IconColor = SystemColors.Highlight;
+            btnEmporium.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnEmporium.IconSize = 32;
+            btnEmporium.ImageAlign = ContentAlignment.MiddleLeft;
+            btnEmporium.Location = new Point(3, 205);
+            btnEmporium.Margin = new Padding(3, 3, 3, 0);
+            btnEmporium.Name = "btnEmporium";
+            btnEmporium.Size = new Size(145, 37);
+            btnEmporium.TabIndex = 5;
+            btnEmporium.Text = "The Emporium";
+            btnEmporium.TextAlign = ContentAlignment.MiddleRight;
+            btnEmporium.UseVisualStyleBackColor = true;
+            btnEmporium.Click += btnEmporium_Click;
+            btnEmporium.MouseEnter += btnEmporium_MouseEnter;
+            // 
             // btnAbout
             // 
             btnAbout.IconChar = FontAwesome.Sharp.IconChar.Carrot;
-            btnAbout.IconColor = Color.SkyBlue;
+            btnAbout.IconColor = SystemColors.Highlight;
             btnAbout.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnAbout.IconSize = 32;
             btnAbout.ImageAlign = ContentAlignment.MiddleLeft;
-            btnAbout.Location = new Point(3, 135);
-            btnAbout.Margin = new Padding(3, 0, 3, 0);
+            btnAbout.Location = new Point(3, 245);
+            btnAbout.Margin = new Padding(3, 3, 3, 0);
             btnAbout.Name = "btnAbout";
             btnAbout.Size = new Size(145, 37);
-            btnAbout.TabIndex = 12;
+            btnAbout.TabIndex = 6;
             btnAbout.Text = "About";
             btnAbout.TextAlign = ContentAlignment.MiddleRight;
             btnAbout.UseVisualStyleBackColor = true;
+            btnAbout.Click += btnAbout_Click;
+            btnAbout.MouseEnter += btnAbout_MouseEnter;
             // 
             // pnlAbout
             // 
@@ -244,10 +299,10 @@
             // 
             // lblBundlingwaySays
             // 
-            lblBundlingwaySays.BackColor = SystemColors.ControlDarkDark;
+            lblBundlingwaySays.BackColor = SystemColors.Highlight;
             lblBundlingwaySays.Dock = DockStyle.Top;
             lblBundlingwaySays.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblBundlingwaySays.ForeColor = SystemColors.ButtonHighlight;
+            lblBundlingwaySays.ForeColor = SystemColors.Control;
             lblBundlingwaySays.Location = new Point(5, 5);
             lblBundlingwaySays.Name = "lblBundlingwaySays";
             lblBundlingwaySays.Padding = new Padding(3);
@@ -284,7 +339,7 @@
             dgvPackages.ReadOnly = true;
             dgvPackages.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvPackages.Size = new Size(550, 363);
-            dgvPackages.TabIndex = 1;
+            dgvPackages.TabIndex = 10;
             dgvPackages.DragDrop += Generic_DragDrop;
             dgvPackages.DragEnter += Generic_DragEnter;
             dgvPackages.DragOver += Generic_DragOver;
@@ -330,7 +385,7 @@
             btnRemove.Location = new Point(456, 3);
             btnRemove.Name = "btnRemove";
             btnRemove.Size = new Size(91, 23);
-            btnRemove.TabIndex = 5;
+            btnRemove.TabIndex = 14;
             btnRemove.Text = "Remove";
             btnRemove.UseVisualStyleBackColor = true;
             btnRemove.Click += btnRemove_Click;
@@ -340,7 +395,7 @@
             btnUninstall.Location = new Point(359, 3);
             btnUninstall.Name = "btnUninstall";
             btnUninstall.Size = new Size(91, 23);
-            btnUninstall.TabIndex = 7;
+            btnUninstall.TabIndex = 13;
             btnUninstall.Text = "Uninstall";
             btnUninstall.UseVisualStyleBackColor = true;
             btnUninstall.Click += btnUninstall_Click;
@@ -350,7 +405,7 @@
             btnReinstall.Location = new Point(262, 3);
             btnReinstall.Name = "btnReinstall";
             btnReinstall.Size = new Size(91, 23);
-            btnReinstall.TabIndex = 6;
+            btnReinstall.TabIndex = 12;
             btnReinstall.Text = "Reinstall";
             btnReinstall.UseVisualStyleBackColor = true;
             btnReinstall.Click += btnReinstall_Click;
@@ -360,17 +415,17 @@
             btnInstallPackage.Location = new Point(165, 3);
             btnInstallPackage.Name = "btnInstallPackage";
             btnInstallPackage.Size = new Size(91, 23);
-            btnInstallPackage.TabIndex = 4;
+            btnInstallPackage.TabIndex = 11;
             btnInstallPackage.Text = "Add Package";
             btnInstallPackage.UseVisualStyleBackColor = true;
             btnInstallPackage.Click += btnInstallPackage_Click;
             // 
             // lblGrpPackages
             // 
-            lblGrpPackages.BackColor = SystemColors.ControlDarkDark;
+            lblGrpPackages.BackColor = SystemColors.Highlight;
             lblGrpPackages.Dock = DockStyle.Top;
             lblGrpPackages.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblGrpPackages.ForeColor = SystemColors.ButtonHighlight;
+            lblGrpPackages.ForeColor = SystemColors.Control;
             lblGrpPackages.Location = new Point(5, 5);
             lblGrpPackages.Name = "lblGrpPackages";
             lblGrpPackages.Padding = new Padding(3);
@@ -396,10 +451,10 @@
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60F));
             tableLayoutPanel1.Controls.Add(btnInstallGPosingway, 2, 2);
-            tableLayoutPanel1.Controls.Add(textBox3, 1, 2);
+            tableLayoutPanel1.Controls.Add(txtGPosingwayStatus, 1, 2);
             tableLayoutPanel1.Controls.Add(label4, 0, 2);
             tableLayoutPanel1.Controls.Add(btnInstallReShade, 2, 1);
-            tableLayoutPanel1.Controls.Add(textBox2, 1, 1);
+            tableLayoutPanel1.Controls.Add(txtReShadeStatus, 1, 1);
             tableLayoutPanel1.Controls.Add(label3, 0, 1);
             tableLayoutPanel1.Controls.Add(label2, 0, 0);
             tableLayoutPanel1.Controls.Add(txtXivPath, 1, 0);
@@ -425,24 +480,22 @@
             btnInstallGPosingway.Location = new Point(488, 66);
             btnInstallGPosingway.Name = "btnInstallGPosingway";
             btnInstallGPosingway.Size = new Size(54, 23);
-            btnInstallGPosingway.TabIndex = 8;
+            btnInstallGPosingway.TabIndex = 9;
             btnInstallGPosingway.Text = "Install";
             btnInstallGPosingway.UseVisualStyleBackColor = true;
             btnInstallGPosingway.Visible = false;
             btnInstallGPosingway.Click += btnInstallGPosingway_Click;
             // 
-            // textBox3
+            // txtGPosingwayStatus
             // 
-            textBox3.BorderStyle = BorderStyle.None;
-            textBox3.DataBindings.Add(new Binding("Text", mainSource, "GPosingway.Status", true));
-            textBox3.Dock = DockStyle.Fill;
-            textBox3.Location = new Point(148, 70);
-            textBox3.Margin = new Padding(3, 7, 3, 3);
-            textBox3.Name = "textBox3";
-            textBox3.ReadOnly = true;
-            textBox3.Size = new Size(334, 16);
-            textBox3.TabIndex = 7;
-            textBox3.Text = "Not Installed";
+            txtGPosingwayStatus.BorderStyle = BorderStyle.None;
+            txtGPosingwayStatus.Dock = DockStyle.Fill;
+            txtGPosingwayStatus.Location = new Point(148, 70);
+            txtGPosingwayStatus.Margin = new Padding(3, 7, 3, 3);
+            txtGPosingwayStatus.Name = "txtGPosingwayStatus";
+            txtGPosingwayStatus.ReadOnly = true;
+            txtGPosingwayStatus.Size = new Size(334, 16);
+            txtGPosingwayStatus.TabIndex = 41;
             // 
             // label4
             // 
@@ -457,29 +510,27 @@
             // 
             // btnInstallReShade
             // 
-            btnInstallReShade.DataBindings.Add(new Binding("Visible", mainSource, "ReShade.IsMissing", true));
             btnInstallReShade.Dock = DockStyle.Fill;
             btnInstallReShade.Location = new Point(488, 37);
             btnInstallReShade.Name = "btnInstallReShade";
             btnInstallReShade.Size = new Size(54, 23);
-            btnInstallReShade.TabIndex = 5;
+            btnInstallReShade.TabIndex = 8;
             btnInstallReShade.Text = "Install";
             btnInstallReShade.UseVisualStyleBackColor = true;
             btnInstallReShade.Visible = false;
             btnInstallReShade.Click += btnInstallReShade_Click;
+            btnInstallReShade.MouseEnter += btnInstallReShade_MouseEnter;
             // 
-            // textBox2
+            // txtReShadeStatus
             // 
-            textBox2.BorderStyle = BorderStyle.None;
-            textBox2.DataBindings.Add(new Binding("Text", mainSource, "ReShade.Status", true));
-            textBox2.Dock = DockStyle.Fill;
-            textBox2.Location = new Point(148, 41);
-            textBox2.Margin = new Padding(3, 7, 3, 3);
-            textBox2.Name = "textBox2";
-            textBox2.ReadOnly = true;
-            textBox2.Size = new Size(334, 16);
-            textBox2.TabIndex = 4;
-            textBox2.Text = "Not Installed";
+            txtReShadeStatus.BorderStyle = BorderStyle.None;
+            txtReShadeStatus.Dock = DockStyle.Fill;
+            txtReShadeStatus.Location = new Point(148, 41);
+            txtReShadeStatus.Margin = new Padding(3, 7, 3, 3);
+            txtReShadeStatus.Name = "txtReShadeStatus";
+            txtReShadeStatus.ReadOnly = true;
+            txtReShadeStatus.Size = new Size(334, 16);
+            txtReShadeStatus.TabIndex = 40;
             // 
             // label3
             // 
@@ -506,13 +557,12 @@
             // txtXivPath
             // 
             txtXivPath.BackColor = SystemColors.Control;
-            txtXivPath.BorderStyle = BorderStyle.FixedSingle;
-            txtXivPath.DataBindings.Add(new Binding("DataContext", mainSource, "XIVPath", true));
-            txtXivPath.DataBindings.Add(new Binding("Text", mainSource, "XIVPath", true));
+            txtXivPath.BorderStyle = BorderStyle.None;
             txtXivPath.Dock = DockStyle.Fill;
-            txtXivPath.Location = new Point(148, 8);
+            txtXivPath.Location = new Point(148, 12);
+            txtXivPath.Margin = new Padding(3, 7, 3, 3);
             txtXivPath.Name = "txtXivPath";
-            txtXivPath.Size = new Size(334, 23);
+            txtXivPath.Size = new Size(334, 16);
             txtXivPath.TabIndex = 1;
             // 
             // btnDetectSettings
@@ -520,17 +570,17 @@
             btnDetectSettings.Location = new Point(488, 8);
             btnDetectSettings.Name = "btnDetectSettings";
             btnDetectSettings.Size = new Size(54, 23);
-            btnDetectSettings.TabIndex = 2;
+            btnDetectSettings.TabIndex = 7;
             btnDetectSettings.Text = "Detect";
             btnDetectSettings.UseVisualStyleBackColor = true;
             btnDetectSettings.Click += btnDetectSettings_Click;
             // 
             // lblGrpSettings
             // 
-            lblGrpSettings.BackColor = SystemColors.ControlDarkDark;
+            lblGrpSettings.BackColor = SystemColors.Highlight;
             lblGrpSettings.Dock = DockStyle.Top;
             lblGrpSettings.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblGrpSettings.ForeColor = SystemColors.ButtonHighlight;
+            lblGrpSettings.ForeColor = SystemColors.Control;
             lblGrpSettings.Location = new Point(5, 5);
             lblGrpSettings.Name = "lblGrpSettings";
             lblGrpSettings.Padding = new Padding(3);
@@ -564,7 +614,6 @@
             pnlSettings.ResumeLayout(false);
             tableLayoutPanel1.ResumeLayout(false);
             tableLayoutPanel1.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)mainSource).EndInit();
             ((System.ComponentModel.ISupportInitialize)resourcePackageBindingSource).EndInit();
             ((System.ComponentModel.ISupportInitialize)instancesBindingSource).EndInit();
             ((System.ComponentModel.ISupportInitialize)instancesBindingSource1).EndInit();
@@ -582,10 +631,10 @@
         private Label label2;
         private TextBox txtXivPath;
         private Button btnInstallReShade;
-        private TextBox textBox2;
+        private TextBox txtReShadeStatus;
         private Button btnDetectSettings;
         private Button btnInstallGPosingway;
-        private TextBox textBox3;
+        private TextBox txtGPosingwayStatus;
         private Label label4;
         private Label label3;
         private Panel pnlPackages;
@@ -596,7 +645,6 @@
         private BindingSource instancesBindingSource;
         private BindingSource resourcePackageBindingSource;
         private BindingSource instancesBindingSource1;
-        private BindingSource mainSource;
         private FlowLayoutPanel flpPackageOptions;
         private Button btnInstallPackage;
         private Button btnRemove;
@@ -612,5 +660,8 @@
         private Label lblAnnouncement;
         private PictureBox pictureBox1;
         private FontAwesome.Sharp.IconButton btnDebug;
+        private FontAwesome.Sharp.IconButton btnFixIt;
+        private FontAwesome.Sharp.IconButton btnEmporium;
+        private Label label1;
     }
 }

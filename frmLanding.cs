@@ -2,208 +2,47 @@ using Bundlingway.Model;
 using Bundlingway.Utilities;
 using Bundlingway.Utilities.Handler;
 using Serilog;
+using static Bundlingway.Model.GPosingwayConfig;
 
 namespace Bundlingway
 {
     public partial class frmLanding : Form
     {
+
         public frmLanding()
         {
             UI._landing = this;
-
             InitializeComponent();
 
-            SwitchToDarkMode();
+            _ = UI.Announce(Constants.MessageCategory.ApplicationStart);
 
-            UI.Announce(Constants.MessageCategory.ApplicationStart);
-
-            Bootstrap.DetectSettings().ContinueWith(a => EvaluateButtonStates());
-
-            mainSource.DataSource = Instances.LocalConfigProvider.Configuration;
-            Instances.MainDataSource = mainSource;
+            _= Bootstrap.DetectSettings();
 
             PopulateGrid();
 
             ProcessHelper.NotificationReceived += ProcessHelper_NotificationReceived;
-            ProcessHelper.ListenForNotifications();
+            _ = ProcessHelper.ListenForNotifications();
 
-            UI.Announce(Constants.MessageCategory.Ready);
+            _ = UI.Announce(Constants.MessageCategory.Ready);
         }
-
-        private void SwitchToDarkMode()
-        {
-            // Dark Mode Colors
-            Color backColor = Color.FromArgb(32, 33, 36); // Dark background
-            Color foreColor = Color.FromArgb(220, 221, 225); // Light text
-            Color panelColor = Color.FromArgb(43, 44, 47); // Slightly lighter panel background
-            Color controlBackColor = Color.FromArgb(55, 56, 59); //Even Lighter Background for controls like textboxes.
-            Color gridBackColor = Color.FromArgb(48, 49, 52); //Background color for datagridview.
-            Color gridForeColor = Color.FromArgb(170, 171, 175); //Foreground color for datagridview.
-            Color borderColor = Color.FromArgb(68, 69, 72); //Border color for controls.
-
-
-            this.BackColor = backColor;
-            this.ForeColor = foreColor;
-
-            // Apply to controls
-            splitContainer1.Panel1.BackColor = backColor;
-            splitContainer1.Panel2.BackColor = backColor;
-            flpSideMenu.BackColor = panelColor;
-
-            foreach (Control control in this.Controls)
-            {
-                ApplyDarkMode(control, backColor, foreColor, panelColor, controlBackColor, gridBackColor, gridForeColor, borderColor);
-            }
-
-        }
-
-
-        private void ApplyDarkMode(Control control, Color backColor, Color foreColor, Color panelColor, Color controlBackColor, Color gridBackColor, Color gridForeColor, Color borderColor)
-        {
-
-            var originalBackColor = control.BackColor;
-            var originalForeColor = control.ForeColor;
-
-            control.BackColor = backColor;
-            control.ForeColor = foreColor;
-
-            if (control is Panel || control is FlowLayoutPanel || control is GroupBox)
-            {
-                control.BackColor = panelColor;
-            }
-            else if (control is TextBox)
-            {
-                control.BackColor = backColor;
-                ((TextBox)control).BorderStyle = BorderStyle.FixedSingle;
-                ((TextBox)control).ForeColor = foreColor;
-
-            }
-            else if (control is Button)
-            {
-                control.BackColor = controlBackColor;
-                ((Button)control).FlatStyle = FlatStyle.Flat;
-                ((Button)control).FlatAppearance.BorderColor = borderColor;
-                ((Button)control).FlatAppearance.BorderSize = 1;
-            }
-            else if (control is Label)
-            {
-                // Labels with a specific background color should keep it (e.g. Title Labels)
-                if (control.BackColor == SystemColors.Control)
-                {
-                    control.BackColor = panelColor;
-                }
-                else
-                {
-                    control.ForeColor = originalForeColor;
-                    control.BackColor = originalBackColor;
-                }
-            }
-            else if (control is DataGridView)
-            {
-                DataGridView dataGridView = (DataGridView)control;
-                dataGridView.BackgroundColor = gridBackColor;
-                dataGridView.ForeColor = gridForeColor;
-                dataGridView.GridColor = borderColor;
-                dataGridView.ColumnHeadersDefaultCellStyle.BackColor = gridBackColor;
-                dataGridView.ColumnHeadersDefaultCellStyle.ForeColor = gridForeColor;
-                dataGridView.RowHeadersDefaultCellStyle.BackColor = gridBackColor;
-                dataGridView.RowHeadersDefaultCellStyle.ForeColor = gridForeColor;
-                dataGridView.EnableHeadersVisualStyles = false; // Important for header styling
-                dataGridView.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-                dataGridView.RowHeadersBorderStyle = DataGridViewHeaderBorderStyle.Single;
-                dataGridView.BorderStyle = BorderStyle.FixedSingle;
-
-                foreach (DataGridViewColumn column in dataGridView.Columns)
-                {
-                    column.DefaultCellStyle.BackColor = gridBackColor;
-                    column.DefaultCellStyle.ForeColor = gridForeColor;
-                }
-
-            }
-            else if (control is FontAwesome.Sharp.IconButton)
-            {
-                control.BackColor = controlBackColor;
-                ((FontAwesome.Sharp.IconButton)control).FlatStyle = FlatStyle.Flat;
-                ((FontAwesome.Sharp.IconButton)control).FlatAppearance.BorderColor = borderColor;
-                ((FontAwesome.Sharp.IconButton)control).FlatAppearance.BorderSize = 1;
-            }
-            else if (control is PictureBox)
-            {
-                control.BackColor = panelColor;
-            }
-
-            foreach (Control child in control.Controls)
-            {
-                ApplyDarkMode(child, backColor, foreColor, panelColor, controlBackColor, gridBackColor, gridForeColor, borderColor);
-            }
-        }
-
 
         private void ProcessHelper_NotificationReceived(object? sender, string e)
         {
             if (e == Constants.Events.PackageInstalled)
             {
                 PopulateGrid();
-                UI.Announce(Constants.MessageCategory.Finished);
+                _ = UI.Announce(Constants.MessageCategory.Finished);
             }
         }
 
-        private void EvaluateButtonStates()
-        {
-            if (btnInstallReShade.InvokeRequired)
-            {
-                Invoke(new MethodInvoker(delegate
-                {
-                    btnInstallReShade.Visible = false;
-                    btnInstallGPosingway.Visible = false;
-                }));
-            }
-            else
-            {
-                btnInstallReShade.Visible = false;
-            }
-
-            if (Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion != null &&
-                Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion != "N/A" &&
-                Instances.LocalConfigProvider.Configuration.ReShade.RemoteVersion != null &&
-                Instances.LocalConfigProvider.Configuration.ReShade.RemoteVersion != "N/A" &&
-                Instances.LocalConfigProvider.Configuration.ReShade.LocalVersion != Instances.LocalConfigProvider.Configuration.ReShade.RemoteVersion)
-            {
-                if (btnInstallReShade.InvokeRequired)
-                {
-                    Invoke(new MethodInvoker(delegate { btnInstallReShade.Visible = true; }));
-                }
-                else
-                {
-                    btnInstallReShade.Visible = true;
-                }
-            }
-
-            if (Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion != null &&
-                Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion != "N/A" &&
-                Instances.LocalConfigProvider.Configuration.GPosingway.RemoteVersion != null &&
-                Instances.LocalConfigProvider.Configuration.GPosingway.RemoteVersion != "N/A" &&
-                Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion != Instances.LocalConfigProvider.Configuration.GPosingway.RemoteVersion)
-            {
-                if (btnInstallGPosingway.InvokeRequired)
-                {
-                    Invoke(new MethodInvoker(delegate { btnInstallGPosingway.Visible = true; }));
-                }
-                else
-                {
-                    btnInstallGPosingway.Visible = true;
-                }
-            }
-        }
 
         private void frmLanding_Load(object sender, EventArgs e)
         {
-            //lblGPosingwayVersion.Text = $"GPosingway {Instances.LocalConfigProvider.appVersion}";
         }
 
         private void btnDetectSettings_Click(object sender, EventArgs e)
         {
-            Bootstrap.DetectSettings().ContinueWith(a => EvaluateButtonStates());
+            _ = Bootstrap.DetectSettings();
         }
 
         private void TryInstalPackages(DragEventArgs e)
@@ -220,7 +59,7 @@ namespace Bundlingway
 
                     if (Constants.InstallableExtensions.Contains(fileExtension))
                     {
-                        Package.Onboard(file);
+                        _ = Package.Onboard(file);
                     }
                 }
             }
@@ -246,15 +85,16 @@ namespace Bundlingway
 
                     Package.Onboard(selectedFiles).ContinueWith(a =>
                     {
+                        Maintenance.RemoveTempDir();
                         Instances.LocalConfigProvider.Save();
                         PopulateGrid();
 
-                        UI.Announce(Constants.MessageCategory.Finished);
+                        _ = UI.Announce(Constants.MessageCategory.Finished);
                     });
                 }
                 else
                 {
-                    UI.Announce(Constants.MessageCategory.AddPackageSelectionCancelled);
+                    _ = UI.Announce(Constants.MessageCategory.AddPackageSelectionCancelled);
                 }
             }
         }
@@ -291,14 +131,12 @@ namespace Bundlingway
 
         private void Generic_DragDrop(object sender, DragEventArgs e)
         {
-            Log.Information("frmLanding: Generic_DragDrop - Drag and drop event");
             Name = "flowLayoutPanel1_DragDrop";
             TryInstalPackages(e);
         }
 
         private void Generic_DragEnter(object sender, DragEventArgs e)
         {
-            Log.Information("frmLanding: Generic_DragEnter - Drag enter event");
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 e.Effect = DragDropEffects.Copy; // You can set this to another effect if needed
@@ -311,7 +149,6 @@ namespace Bundlingway
 
         private void Generic_DragOver(object sender, DragEventArgs e)
         {
-            Log.Information("frmLanding: Generic_DragOver - Drag over event");
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
                 e.Effect = DragDropEffects.Copy; // You can set this to another effect if needed
@@ -331,7 +168,7 @@ namespace Bundlingway
 
             Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Remove(package)))).ContinueWith(t =>
             {
-                UI.Announce(Constants.MessageCategory.UninstallPackage);
+                _ = UI.Announce(Constants.MessageCategory.UninstallPackage);
                 PopulateGrid();
             });
 
@@ -346,7 +183,8 @@ namespace Bundlingway
 
             Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Uninstall(package)))).ContinueWith(t =>
             {
-                UI.Announce(Constants.MessageCategory.UninstallPackage);
+                Maintenance.RemoveTempDir();
+                _ = UI.Announce(Constants.MessageCategory.UninstallPackage);
                 PopulateGrid();
             });
         }
@@ -360,16 +198,23 @@ namespace Bundlingway
 
             Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Reinstall(package)))).ContinueWith(t =>
             {
-                UI.Announce(Constants.MessageCategory.ReinstallPackage);
+                Maintenance.RemoveTempDir();
+                _ = UI.Announce(Constants.MessageCategory.ReinstallPackage);
                 PopulateGrid();
             });
         }
 
         private void btnInstallReShade_Click(object sender, EventArgs e)
         {
+
+            btnInstallReShade.Enabled = false;
+
             ReShade.Update().ContinueWith(a =>
             {
-                Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
+                Bootstrap.DetectSettings().ContinueWith(b =>
+                {
+                    Maintenance.RemoveTempDir();
+                });
             });
         }
 
@@ -377,7 +222,10 @@ namespace Bundlingway
         {
             GPosingway.Update().ContinueWith(a =>
             {
-                Bootstrap.DetectSettings().ContinueWith(b => EvaluateButtonStates());
+                Bootstrap.DetectSettings().ContinueWith(b =>
+                {
+                    Maintenance.RemoveTempDir();
+                });
             });
         }
 
@@ -426,11 +274,190 @@ namespace Bundlingway
 
         private void btnDebug_Click(object sender, EventArgs e)
         {
-            string logFilePath = Path.Combine(Instances.BundlingwayDataFolder, Constants.WellKnown.LogFileName);
+            string logFilePath = Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.Log);
             if (File.Exists(logFilePath))
             {
                 System.Diagnostics.Process.Start("notepad.exe", logFilePath);
             }
+        }
+
+        private void btnEmporium_Click(object sender, EventArgs e)
+        {
+            ProcessHelper.OpenUrlInBrowser("https://gposingway.github.io/bundlingways-emporium");
+        }
+
+        private void btnAbout_Click(object sender, EventArgs e)
+        {
+            ProcessHelper.OpenUrlInBrowser("https://github.com/gposingway/bundlingway");
+        }
+
+        private void btnEmporium_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce("A Loporrit-approved selection of presets and shaders! Fluffy, fancy, and fantastic!");
+        }
+
+        private void btnDebug_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce("Oh dear, what have we here? A log full of secrets! (and probably some errors…)");
+        }
+
+        private void btnAbout_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce("About? About what? Oh! The project! Yes, yes, right this way!");
+        }
+
+        private void btnPackagesFolder_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce("Where all your precious presets and shaders live! Don’t worry, they’re well-fed.");
+        }
+
+        private void btnGameFolder_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce("Game files, game files everywhere! Tread carefully, adventurer!");
+        }
+
+        private void btnFixIt_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce("Duplicated shaders? green tint everywhere? No worries, 'Fix It' is here to save the day!");
+        }
+
+        internal async Task UpdateElements()
+        {
+
+            var c = Instances.LocalConfigProvider.Configuration;
+
+            txtXivPath.Text = (c.XIVPath != null) ? c.XIVPath : "Not Found";
+
+
+            var reShadeBtnEnabled = true;
+            var reShadeBtnVisible = true;
+            string reShadeBtnText = null;
+
+
+            btnInstallReShade.Enabled = true;
+            var reShadeText = c.ReShade.Status switch
+            {
+                EPackageStatus.Installed => "Installed",
+                EPackageStatus.NotInstalled => "Not Installed",
+                EPackageStatus.Outdated => "Outdated",
+                _ => "Unknown"
+            };
+
+            if (c.ReShade.Status == EPackageStatus.Installed)
+            {
+                var latestReShadeLabel = c.ReShade.LocalVersion == c.ReShade.RemoteVersion ? " - Latest" : "";
+
+                reShadeText += $" ({c.ReShade.LocalVersion}{latestReShadeLabel})";
+            }
+
+            if (c.ReShade.Status == EPackageStatus.Outdated)
+            {
+                reShadeText += $" (local: {c.ReShade.LocalVersion}, remote: {c.ReShade.RemoteVersion})";
+                reShadeBtnText = "Update";
+            }
+
+            if (c.ReShade.Status == EPackageStatus.NotInstalled)
+            {
+                reShadeBtnText = "Install";
+            }
+
+            reShadeBtnVisible = (c.ReShade.Status == EPackageStatus.NotInstalled) || (c.ReShade.Status == EPackageStatus.Outdated);
+
+            if (reShadeBtnVisible)
+            {
+                reShadeBtnEnabled = !Instances.IsGameRunning;
+                _ = UI.Announce("If you want to update ReShade, shut down the game first!");
+            }
+
+
+            if (txtReShadeStatus.InvokeRequired)
+            {
+                Invoke(new MethodInvoker(delegate
+                {
+                    txtReShadeStatus.Text = reShadeText;
+
+                    btnInstallReShade.Enabled = reShadeBtnEnabled;
+                    btnInstallReShade.Visible = reShadeBtnVisible;
+                    btnInstallReShade.Text = reShadeBtnText;
+                }));
+            }
+            else
+            {
+                txtReShadeStatus.Text = reShadeText;
+
+                btnInstallReShade.Enabled = reShadeBtnEnabled;
+                btnInstallReShade.Visible = reShadeBtnVisible;
+                btnInstallReShade.Text = reShadeBtnText;
+            }
+
+
+
+
+
+
+
+
+
+            var gPosingwayBtnEnabled = true;
+            var gPosingwayBtnVisible = true;
+            string gPosingwayBtnText = null;
+
+
+            btnInstallGPosingway.Enabled = true;
+            var GPosingwayText = c.GPosingway.Status switch
+            {
+                EPackageStatus.Installed => "Installed",
+                EPackageStatus.NotInstalled => "Not Installed",
+                EPackageStatus.Outdated => "Outdated",
+                _ => "Unknown"
+            };
+
+            if (c.GPosingway.Status == EPackageStatus.Installed)
+            {
+                var latestGPosingwayLabel = c.GPosingway.LocalVersion == c.GPosingway.RemoteVersion ? " - Latest" : "";
+
+                GPosingwayText += $" ({c.GPosingway.LocalVersion}{latestGPosingwayLabel})";
+            }
+
+            if (c.GPosingway.Status == EPackageStatus.Outdated)
+            {
+                GPosingwayText += $" (local: {c.GPosingway.LocalVersion}, remote: {c.GPosingway.RemoteVersion})";
+                gPosingwayBtnText = "Update";
+            }
+
+            if (c.GPosingway.Status == EPackageStatus.NotInstalled)
+            {
+                gPosingwayBtnText = "Install";
+            }
+
+            gPosingwayBtnVisible = (c.GPosingway.Status == EPackageStatus.NotInstalled) || (c.GPosingway.Status == EPackageStatus.Outdated);
+
+            if (txtGPosingwayStatus.InvokeRequired)
+            {
+                Invoke(new MethodInvoker(delegate
+                {
+                    txtGPosingwayStatus.Text = GPosingwayText;
+
+                    btnInstallGPosingway.Enabled = gPosingwayBtnEnabled;
+                    btnInstallGPosingway.Visible = gPosingwayBtnVisible;
+                    btnInstallGPosingway.Text = gPosingwayBtnText;
+
+
+                }));
+            }
+            else
+            {
+                txtGPosingwayStatus.Text = GPosingwayText;
+
+                btnInstallGPosingway.Enabled = gPosingwayBtnEnabled;
+                btnInstallGPosingway.Visible = gPosingwayBtnVisible;
+                btnInstallGPosingway.Text = gPosingwayBtnText;
+            }
+        }
+
+        private void btnInstallReShade_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce("You need to shut down the game client before you can update!");
         }
     }
 }

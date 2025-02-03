@@ -7,7 +7,6 @@ using System.Web;
 using System.Security.Cryptography;
 using System.Text;
 using SharpCompress.Common;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -15,8 +14,6 @@ namespace Bundlingway.Utilities.Handler
     {
         internal static async Task<ResourcePackage> OnboardSinglePresetFile(string filePath)
         {
-            Log.Information("Package.OnboardSinglePresetFile: Start");
-
             string fileName = Path.GetFileNameWithoutExtension(filePath);
             string fileExtension = Path.GetExtension(filePath);
 
@@ -30,7 +27,7 @@ namespace Bundlingway.Utilities.Handler
                 newFileName = $"{fileName} [{hashSignature}]{fileExtension}";
             }
 
-            var targetPath = Path.Combine(Instances.SinglePresetsFolder, Constants.WellKnown.PresetFolder);
+            var targetPath = Path.Combine(Instances.SinglePresetsFolder, Constants.Folders.PackagePresets);
 
             string targetFileName = Path.Combine(targetPath, newFileName);
 
@@ -47,7 +44,7 @@ namespace Bundlingway.Utilities.Handler
             await Task.Run(() => Install(Instances.SinglePresetsFolder));
             Log.Information("Package.Onboard: Package installation completed.");
 
-            return new ResourcePackage() { Name = fileName, Type = Constants.WellKnown.SinglePresetFile };
+            return new ResourcePackage() { Name = fileName, Type = Constants.PackageCategories.SinglePreset };
 
         }
 
@@ -70,12 +67,11 @@ namespace Bundlingway.Utilities.Handler
                 return OnboardSinglePresetFile(filePath).Result;
             }
 
-            Log.Information("Package.Onboard: Start");
             Log.Information($"Package.Onboard: Preparing package catalog for: {filePath}");
 
             var newCatalogEntry = new ResourcePackage
             {
-                Type = "Preset Collection",
+                Type = Constants.PackageCategories.PresetCollection,
                 Source = filePath
             };
 
@@ -118,10 +114,17 @@ namespace Bundlingway.Utilities.Handler
                 Log.Information("Package.Onboard: 7z file extracted.");
             }
 
+
+            if (!ValidatePackage(tempFolderPath))
+            {
+                Log.Information("Package.Onboard: Invalid package structure.");
+                return null;
+            }
+
             var changeEval = false;
             var isValidCatalogPayload = false;
 
-            string catalogFilePath = Path.Combine(tempFolderPath, Constants.WellKnown.CatalogEntryFile);
+            string catalogFilePath = Path.Combine(tempFolderPath, Constants.Files.CatalogEntry);
             if (File.Exists(catalogFilePath))
             {
                 try
@@ -149,7 +152,7 @@ namespace Bundlingway.Utilities.Handler
                 {
                     changeEval = false;
 
-                    var reshadePresetsDir = Directory.GetDirectories(tempFolderPath, Constants.WellKnown.GamePresetsFolder, SearchOption.AllDirectories).FirstOrDefault();
+                    var reshadePresetsDir = Directory.GetDirectories(tempFolderPath, Constants.Folders.GamePresets, SearchOption.AllDirectories).FirstOrDefault();
                     if (reshadePresetsDir != null)
                     {
                         tempFolderPath = reshadePresetsDir;
@@ -181,7 +184,7 @@ namespace Bundlingway.Utilities.Handler
                 File.Copy(filePath, target, true);
                 Log.Information("Package.Onboard: Original file copied to target folder.");
 
-                var presetsFolder = Path.Combine(targetPackagePath, Constants.WellKnown.PresetFolder);
+                var presetsFolder = Path.Combine(targetPackagePath, Constants.Folders.PackagePresets);
                 if (Directory.Exists(presetsFolder)) Directory.Delete(presetsFolder, true);
                 Directory.CreateDirectory(presetsFolder);
                 Log.Information("Package.Onboard: Presets folder created.");
@@ -197,7 +200,7 @@ namespace Bundlingway.Utilities.Handler
                 newCatalogEntry.LocalPresetFolder = presetsFolder;
 
                 // Now, handle Textures.
-                var shadersFolder = Path.Combine(targetPackagePath, Constants.WellKnown.ShaderFolder, Constants.WellKnown.TextureFolder);
+                var shadersFolder = Path.Combine(targetPackagePath, Constants.Folders.PackageShaders, Constants.Folders.PackageTextures);
                 if (Directory.Exists(shadersFolder)) Directory.Delete(shadersFolder, true);
                 Directory.CreateDirectory(shadersFolder);
                 Log.Information("Package.Onboard: Shaders/Textures folder created.");
@@ -209,7 +212,7 @@ namespace Bundlingway.Utilities.Handler
                     changeEval = false;
 
                     var reshadeShadersDir = Directory.GetDirectories(tempFolderPath, "*", SearchOption.AllDirectories)
-                        .FirstOrDefault(d => Path.GetFileName(d).Equals(Constants.WellKnown.GameShadersFolder, StringComparison.OrdinalIgnoreCase));
+                        .FirstOrDefault(d => Path.GetFileName(d).Equals(Constants.Folders.GameShaders, StringComparison.OrdinalIgnoreCase));
                     if (reshadeShadersDir != null)
                     {
                         tempFolderPath = reshadeShadersDir;
@@ -262,7 +265,7 @@ namespace Bundlingway.Utilities.Handler
                     }
                 }
 
-                string localCatalogFilePath = Path.Combine(targetPackagePath, Constants.WellKnown.CatalogEntryFile);
+                string localCatalogFilePath = Path.Combine(targetPackagePath, Constants.Files.CatalogEntry);
                 newCatalogEntry.ToJsonFile(localCatalogFilePath);
                 Log.Information("Package.Onboard: Catalog entry saved locally.");
             }
@@ -289,15 +292,50 @@ namespace Bundlingway.Utilities.Handler
             Log.Information("Package.Onboard: Package installation completed.");
 
             return newCatalogEntry;
+        }
 
+        private static bool ValidatePackage(string tempFolderPath)
+        {
+            // Validate if the directory exists
+            if (!Directory.Exists(tempFolderPath))
+            {
+                return false;
+            }
+
+            // Run individual validation methods
+            bool hasIniFiles = ValidateIniFiles(tempFolderPath);
+            bool hasFxFiles = ValidateFxFiles(tempFolderPath);
+
+            // A package with no INIs but with FX is a shader package.
+            bool validationFlag = hasIniFiles || (!hasIniFiles && hasFxFiles);
+
+            Console.WriteLine(validationFlag ? "Package is valid." : "Package is not valid.");
+            return validationFlag;
+        }
+
+        private static bool ValidateIniFiles(string tempFolderPath)
+        {
+            // Search for .INI files in the directory and its subdirectories
+            string[] iniFiles = Directory.GetFiles(tempFolderPath, "*.INI", SearchOption.AllDirectories);
+
+            // Validate if there is at least one .INI file
+            return iniFiles.Length > 0;
+        }
+
+        private static bool ValidateFxFiles(string tempFolderPath)
+        {
+            // Search for .fx files in the directory and its subdirectories
+            string[] fxFiles = Directory.GetFiles(tempFolderPath, "*.fx", SearchOption.AllDirectories);
+
+            // Validate if there is at least one .fx file
+            return fxFiles.Length > 0;
         }
 
         internal static async Task<ResourcePackage> Install(string targetPackagePath)
         {
-            Log.Information("Package.Install: Start");
             Log.Information($"Package.Install: Installing package at: {targetPackagePath}");
 
-            string localCatalogFilePath = Path.Combine(targetPackagePath, Constants.WellKnown.CatalogEntryFile);
+            string localCatalogFilePath = Path.Combine(targetPackagePath, Constants.Files.CatalogEntry);
 
             if (!File.Exists(localCatalogFilePath))
             {
@@ -314,11 +352,11 @@ namespace Bundlingway.Utilities.Handler
             Log.Information("Package.Install: GameFolder: " + Instances.LocalConfigProvider.Configuration.GameFolder);
 
             var collectionName = catalogEntry.Name;
-            var presetsFolder = Path.Combine(targetPackagePath, Constants.WellKnown.PresetFolder);
-            var shadersFolder = Path.Combine(targetPackagePath, Constants.WellKnown.ShaderFolder, Constants.WellKnown.TextureFolder);
+            var presetsFolder = Path.Combine(targetPackagePath, Constants.Folders.PackagePresets);
+            var shadersFolder = Path.Combine(targetPackagePath, Constants.Folders.PackageShaders, Constants.Folders.PackageTextures);
 
-            string gamePresetsFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.WellKnown.GamePresetsFolder, collectionName);
-            string gameTexturesFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.WellKnown.GameShadersFolder, Constants.WellKnown.TextureFolder, collectionName);
+            string gamePresetsFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.Folders.GamePresets, collectionName);
+            string gameTexturesFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.Folders.GameShaders, Constants.Folders.PackageTextures, collectionName);
 
             Log.Information("Package.Install: presetsFolder: " + presetsFolder);
             Log.Information("Package.Install: shadersFolder: " + shadersFolder);
@@ -362,9 +400,6 @@ namespace Bundlingway.Utilities.Handler
                 catalogEntry.Installed = true;
                 Log.Information("Package.Install: Updated catalog entry status to Installed.");
 
-                if (Directory.Exists(Instances.TempFolder)) Directory.Delete(Instances.TempFolder, true);
-                Log.Information("Package.Install: Deleted temporary folder.");
-
                 catalogEntry.ToJsonFile(localCatalogFilePath);
                 Log.Information("Package.Install: Saved updated catalog entry to file.");
                 Log.Information("Package.Install: Package installed successfully.");
@@ -380,14 +415,13 @@ namespace Bundlingway.Utilities.Handler
 
         public static async Task Scan()
         {
-            Log.Information("Package.Scan: Start");
             try
             {
                 if (!Directory.Exists(Instances.PackageFolder)) return;
 
                 Instances.ResourcePackages = [];
 
-                var packageFiles = Directory.GetFiles(Instances.PackageFolder, Constants.WellKnown.CatalogEntryFile, SearchOption.AllDirectories);
+                var packageFiles = Directory.GetFiles(Instances.PackageFolder, Constants.Files.CatalogEntry, SearchOption.AllDirectories);
                 Log.Information($"Package.Scan: Found {packageFiles.Length} package files.");
 
                 foreach (var packageFile in packageFiles)
@@ -406,13 +440,19 @@ namespace Bundlingway.Utilities.Handler
 
                 foreach (var iniFile in iniFiles)
                 {
-                    var gameProbeFile = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.WellKnown.GamePresetsFolder, Constants.SingleFileCatalog.Name, Path.GetFileName(iniFile));
+
+                    //Clearly a hack. If the game folder doesn't exist, we're in local mode (and it should always report as 'not installed'). Sooo... wrong folder on purpose.
+                    var baseFolder = Directory.Exists(Instances.LocalConfigProvider.Configuration.GameFolder) ?
+                        Instances.LocalConfigProvider.Configuration.GameFolder : 
+                        Instances.BundlingwayDataFolder;
+
+                    var gameProbeFile = Path.Combine(baseFolder, Constants.Folders.GamePresets, Constants.SingleFileCatalog.Name, Path.GetFileName(iniFile));
 
                     var singlePresetPackage = new ResourcePackage
                     {
                         Name = Path.GetFileNameWithoutExtension(iniFile),
                         Source = iniFile,
-                        Type = Constants.WellKnown.SinglePresetFile,
+                        Type = Constants.PackageCategories.SinglePreset,
                         Status = File.Exists(gameProbeFile) ? "Installed" : "Uninstalled",
                         Installed = File.Exists(gameProbeFile),
                         LocalPresetFolder = Path.GetDirectoryName(iniFile)
@@ -420,10 +460,11 @@ namespace Bundlingway.Utilities.Handler
 
                     Instances.ResourcePackages.Add(singlePresetPackage);
                 }
+
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error in ScanPackages: {ex.Message}");
+                Log.Error($"Error in ScanPackages: {ex.Message}");
             }
 
             Instances.ResourcePackages = Instances.ResourcePackages.OrderBy(p => p.Name).ToList();
@@ -438,7 +479,7 @@ namespace Bundlingway.Utilities.Handler
         internal static void Remove(ResourcePackage package)
         {
 
-            if (package.Type == Constants.WellKnown.SinglePresetFile)
+            if (package.Type == Constants.PackageCategories.SinglePreset)
             {
                 RemoveSinglePresetFile(package);
                 return;
@@ -458,7 +499,6 @@ namespace Bundlingway.Utilities.Handler
             {
                 Log.Information($"Package.Remove: Package {package.Name} not found.");
             }
-            if (Directory.Exists(Instances.TempFolder)) Directory.Delete(Instances.TempFolder, true);
 
         }
 
@@ -483,7 +523,7 @@ namespace Bundlingway.Utilities.Handler
         private static void UninstallSinglePresetFile(ResourcePackage package)
         {
             Log.Information($"Package.UninstallSinglePresetFile: Uninstalling single preset file: {package.Name}");
-            string targetPresetFile = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.WellKnown.GamePresetsFolder, Constants.WellKnown.SinglePresetsFolder, $"{package.Name}.ini");
+            string targetPresetFile = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.Folders.GamePresets, Constants.Folders.SinglePresets, $"{package.Name}.ini");
             if (File.Exists(targetPresetFile))
             {
                 File.Delete(targetPresetFile);
@@ -498,13 +538,12 @@ namespace Bundlingway.Utilities.Handler
         internal static void Uninstall(ResourcePackage package)
         {
 
-            if (package.Type == Constants.WellKnown.SinglePresetFile)
+            if (package.Type == Constants.PackageCategories.SinglePreset)
             {
                 UninstallSinglePresetFile(package);
                 return;
             }
 
-            Log.Information("Package.Uninstall: Start");
             Log.Information($"Package.Uninstall: Uninstalling package: {package.Name}");
 
             if (Directory.Exists(package.LocalPresetFolder))
@@ -515,20 +554,19 @@ namespace Bundlingway.Utilities.Handler
             package.Status = "Uninstalled";
             package.Installed = false;
 
-            string localCatalogFilePath = Path.Combine(Instances.PackageFolder, package.Name, Constants.WellKnown.CatalogEntryFile);
+            string localCatalogFilePath = Path.Combine(Instances.PackageFolder, package.Name, Constants.Files.CatalogEntry);
             package.ToJsonFile(localCatalogFilePath);
         }
 
         internal static void Reinstall(ResourcePackage? package)
         {
 
-            if (package.Type == Constants.WellKnown.SinglePresetFile)
+            if (package.Type == Constants.PackageCategories.SinglePreset)
             {
                 InstallSinglePresetFile(package);
                 return;
             }
 
-            Log.Information("Package.Reinstall: Start");
             string localCatalogFilePath = Path.Combine(Instances.PackageFolder, package.Name);
             Install(localCatalogFilePath);
         }
@@ -537,7 +575,7 @@ namespace Bundlingway.Utilities.Handler
         {
             Log.Information($"Package.InstallSinglePresetFile: Installing single preset file: {package.Name}");
             string source = package.Source;
-            string target = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.WellKnown.GamePresetsFolder, Constants.WellKnown.SinglePresetsFolder, $"{package.Name}.ini");
+            string target = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.Folders.GamePresets, Constants.Folders.SinglePresets, $"{package.Name}.ini");
 
             if (File.Exists(source))
             {
@@ -567,8 +605,6 @@ namespace Bundlingway.Utilities.Handler
         public static async Task<string> DownloadAndInstall(string url)
         {
             // Log the start of the method
-            Log.Information("DownloadAndInstall: Start");
-
             using (HttpClient client = new())
             {
                 try
@@ -578,9 +614,6 @@ namespace Bundlingway.Utilities.Handler
 
                     var response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
-
-                    // Log the successful download
-                    Log.Information("DownloadAndInstall: Download successful");
 
                     var filename = Path.GetFileName(HttpUtility.UrlDecode(url));
                     Directory.CreateDirectory(Instances.CacheFolder);
@@ -599,20 +632,15 @@ namespace Bundlingway.Utilities.Handler
 
                     Maintenance.RemoveTempDir();
 
-                    Log.Information("DownloadAndInstall: Success");
                     return package.Name;
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show(ex.Message); // Debugging message box
-                    // Log any errors that occur during download or installation
                     Log.Information($"Error downloading or installing file: {ex.Message}");
                 }
             }
 
             // Log the end of the method
-            Log.Information("DownloadAndInstall: End");
-
             return null;
         }
     }
