@@ -30,6 +30,7 @@ namespace Bundlingway
         {
             internal static readonly string PresetCollection = "Preset Collection";
             internal static readonly string ShaderCollection = "Shader Collection";
+            internal static readonly string MixedCollection = "Mixed Collection";
             internal static readonly string SinglePreset = "Single Preset";
         }
 
@@ -39,6 +40,7 @@ namespace Bundlingway
             public static readonly string PackagePresets = "Presets";
             public static readonly string PackageTextures = "Textures";
             public static readonly string Packages = "Packages";
+            public static readonly string SourcePackage = "Source";
             public static readonly string Cache = "Cache";
             public static readonly string SinglePresets = "Single Presets";
             public static readonly string GamePresets = "reshade-presets";
