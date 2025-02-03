@@ -21,7 +21,10 @@ namespace Bundlingway.Utilities
             if (!Directory.Exists(Instances.SinglePresetsFolder))
                 Directory.CreateDirectory(Instances.SinglePresetsFolder);
 
-            string localCatalogFilePath = Path.Combine(Instances.SinglePresetsFolder, Constants.WellKnown.CatalogEntryFile);
+
+            Instances.IsGameRunning = ProcessHelper.IsProcessRunning("ffxiv_dx11");
+
+            string localCatalogFilePath = Path.Combine(Instances.SinglePresetsFolder, Constants.Files.CatalogEntry);
 
             if (!File.Exists(localCatalogFilePath)) Constants.SingleFileCatalog.ToJsonFile(localCatalogFilePath);
 
@@ -29,8 +32,11 @@ namespace Bundlingway.Utilities
 
             Log.Logger = new LoggerConfiguration()
                       .WriteTo.File(
-                          Path.Combine(Instances.BundlingwayDataFolder, Constants.WellKnown.LogFileName),
-                          fileSizeLimitBytes: 8388608 // 8 MB
+                        Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.Log),
+                        fileSizeLimitBytes: 8388608, // 8 MB
+                        retainedFileCountLimit: 5,
+                        rollingInterval: RollingInterval.Day,
+                        rollOnFileSizeLimit: true
                       )
                       .CreateLogger();
 

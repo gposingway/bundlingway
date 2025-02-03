@@ -16,27 +16,21 @@ namespace Bundlingway.Utilities.ManagedResources
                 var content = await File.ReadAllTextAsync(file);
                 var signatureList = GetUniqueTechniqueIdentifiers(content);
 
-                foreach (var signature in signatureList)
-                {
-                        signatures[signature.Sha512()] = signature;
-                }
 
 
             }
             return signatures;
         }
 
-        public static List<string> GetUniqueTechniqueIdentifiers(string shaderFilePath)
+        public static Dictionary<string, string> GetUniqueTechniqueIdentifiers(string shaderFilePath)
         {
-            List<string> identifiers = [];
+            Dictionary<string, string> identifiers = [];
 
             try
             {
                 string fileName = Path.GetFileNameWithoutExtension(shaderFilePath).ToLower(); // Get file name without extension and lowercase it
                 string fileContent = File.ReadAllText(shaderFilePath);
 
-                // Regular expression to find technique blocks
-                // Improved regex to handle variations in whitespace and case-insensitivity
                 string techniquePattern = @"\btechnique\s+(?<techniqueName>\w+)\b\s*{[^}]*}"; // Matches "technique <name> { ... }"
 
                 MatchCollection techniqueMatches = Regex.Matches(fileContent, techniquePattern, RegexOptions.IgnoreCase);
@@ -45,14 +39,15 @@ namespace Bundlingway.Utilities.ManagedResources
                 {
                     string techniqueName = match.Groups["techniqueName"].Value.ToLower(); // Extract technique name and lowercase it
 
-                    identifiers.Add($"{fileName}.{techniqueName}");
+                    var entry = $"{fileName}.{techniqueName}";
+
+                    identifiers[entry.Sha512()] = entry;
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error reading or parsing shader file: {ex.Message}");
-                // Handle the exception appropriately, e.g., return an empty list or throw the exception.
-                return new List<string>(); // Return empty list in case of error.
+              
             }
 
             return identifiers;

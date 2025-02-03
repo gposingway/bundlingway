@@ -9,7 +9,7 @@ namespace Bundlingway
         public static List<string> InstallableExtensions { get; set; } = [".zip", ".rar", ".7z", ".ini"];
         public static ResourcePackage SingleFileCatalog { get; set; } = new ResourcePackage()
         {
-            LocalPresetFolder = Path.Combine(Instances.SinglePresetsFolder, WellKnown.PresetFolder),
+            LocalPresetFolder = Path.Combine(Instances.SinglePresetsFolder, Folders.PackagePresets),
             Name = "Single Presets",
             Source = "Local",
             Type = "Single",
@@ -25,23 +25,35 @@ namespace Bundlingway
         {
             public static string PackageInstalled = "package-installed";
         }
-        public static class WellKnown
-        {
-            public static readonly string ShaderFolder = "Shaders";
-            public static readonly string PresetFolder = "Presets";
-            public static readonly string TextureFolder = "Textures";
-            public static readonly string CatalogEntryFile = "catalog-entry.json";
-            public static readonly string GPosingwayConfigFileName = "gposingway-definitions.json";
-            public static readonly string PackagesFolder = "Packages";
-            public static readonly string CacheFolder = "Cache";
-            public static readonly string ConfigFileName = "config.json";
-            public static readonly string TempFolderName = "temp";
-            public static readonly string LogFileName = "bundlingway-log.txt";
-            public static readonly string SinglePresetsFolder = "Single Presets";
 
-            public static readonly string GamePresetsFolder = "reshade-presets";
-            public static readonly string GameShadersFolder = "reshade-shaders";
-            internal static readonly string SinglePresetFile = "Single Preset";
+        public static class PackageCategories
+        {
+            internal static readonly string PresetCollection = "Preset Collection";
+            internal static readonly string ShaderCollection = "Shader Collection";
+            internal static readonly string SinglePreset = "Single Preset";
+        }
+
+        public static class Folders
+        {
+            public static readonly string PackageShaders = "Shaders";
+            public static readonly string PackagePresets = "Presets";
+            public static readonly string PackageTextures = "Textures";
+            public static readonly string Packages = "Packages";
+            public static readonly string Cache = "Cache";
+            public static readonly string SinglePresets = "Single Presets";
+            public static readonly string GamePresets = "reshade-presets";
+            public static readonly string GameShaders = "reshade-shaders";
+            public static readonly string Temp = "temp";
+        }
+
+        public static class Files
+        {
+            public static readonly string CatalogEntry = "catalog-entry.json";
+            public static readonly string GPosingwayConfig = "gposingway-definitions.json";
+            public static readonly string BundlingwayConfig = "config.json";
+            public static readonly string Log = "bundlingway-log-.txt";
+            public static readonly string LocalReshadeBinary = "dxgi.dll";
+            public static readonly string GameProcess = "ffxiv_dx11.exe";
         }
 
         public static BundlingwayDialogueOptions Bundlingway = new();

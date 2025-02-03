@@ -1,5 +1,4 @@
 using Bundlingway.Utilities;
-using Serilog;
 using System.Diagnostics;
 
 namespace Bundlingway

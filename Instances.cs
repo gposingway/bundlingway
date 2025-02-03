@@ -12,13 +12,12 @@ namespace Bundlingway
         public static string AppVersion { get; private set; } = Assembly.GetExecutingAssembly().GetName().Version.ToString();
         public static string OSAppDataPath { get; private set; } = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
         public static string BundlingwayDataFolder { get; set; } = Path.Combine(OSAppDataPath, AppName);
-        public static string ConfigFilePath { get; private set; } = Path.Combine(BundlingwayDataFolder, Constants.WellKnown.ConfigFileName);
-        public static string TempFolder { get; private set; } = Path.Combine(BundlingwayDataFolder, Constants.WellKnown.TempFolderName);
-        public static string CacheFolder { get; set; } =  Path.Combine(BundlingwayDataFolder, Constants.WellKnown.CacheFolder);
-        public static string PackageFolder { get; set; } = Path.Combine(BundlingwayDataFolder, Constants.WellKnown.PackagesFolder);
-        public static string SinglePresetsFolder { get; set; } = Path.Combine(PackageFolder, Constants.WellKnown.SinglePresetsFolder);
-
-        public static BindingSource MainDataSource { get; set; }
+        public static string ConfigFilePath { get; private set; } = Path.Combine(BundlingwayDataFolder, Constants.Files.BundlingwayConfig);
+        public static string TempFolder { get; private set; } = Path.Combine(BundlingwayDataFolder, Constants.Folders.Temp);
+        public static string CacheFolder { get; set; } =  Path.Combine(BundlingwayDataFolder, Constants.Folders.Cache);
+        public static string PackageFolder { get; set; } = Path.Combine(BundlingwayDataFolder, Constants.Folders.Packages);
+        public static string SinglePresetsFolder { get; set; } = Path.Combine(PackageFolder, Constants.Folders.SinglePresets);
+        public static bool IsGameRunning = false;
 
         public static List<ResourcePackage> ResourcePackages { get; set; } = [];
         public static Dictionary<string, ShaderPackage> Packages { get; set; } = [];
