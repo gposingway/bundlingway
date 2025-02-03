@@ -599,7 +599,6 @@
             Name = "frmLanding";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Bundlingway Package Manager";
-            Load += frmLanding_Load;
             splitContainer1.Panel1.ResumeLayout(false);
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
