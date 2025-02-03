@@ -16,7 +16,7 @@ namespace Bundlingway
 
             _ = UI.Announce(Constants.MessageCategory.ApplicationStart);
 
-            _= Bootstrap.DetectSettings();
+            _ = Bootstrap.DetectSettings();
 
             PopulateGrid();
 
@@ -35,10 +35,6 @@ namespace Bundlingway
             }
         }
 
-
-        private void frmLanding_Load(object sender, EventArgs e)
-        {
-        }
 
         private void btnDetectSettings_Click(object sender, EventArgs e)
         {
@@ -67,10 +63,12 @@ namespace Bundlingway
 
         private void btnInstallPackage_Click(object sender, EventArgs e)
         {
-            UI.Announce(Constants.MessageCategory.BeforeAddPackageSelection);
+            _ = UI.Announce(Constants.MessageCategory.BeforeAddPackageSelection);
 
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
+
+
                 var filter = string.Join(";", Constants.InstallableExtensions.Select(ext => $"*{ext}"));
                 openFileDialog.Filter = $"Archive files ({filter})|{filter}";
                 openFileDialog.Title = "Select a Package File";
@@ -78,6 +76,8 @@ namespace Bundlingway
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
+                    SetPackageOpsAvailable(false);
+
                     var validExtensions = new HashSet<string>(Constants.InstallableExtensions);
                     var selectedFiles = openFileDialog.FileNames
                         .Where(file => validExtensions.Contains(Path.GetExtension(file).ToLower()))
@@ -88,6 +88,7 @@ namespace Bundlingway
                         Maintenance.RemoveTempDir();
                         Instances.LocalConfigProvider.Save();
                         PopulateGrid();
+                        SetPackageOpsAvailable(true);
 
                         _ = UI.Announce(Constants.MessageCategory.Finished);
                     });
@@ -97,6 +98,32 @@ namespace Bundlingway
                     _ = UI.Announce(Constants.MessageCategory.AddPackageSelectionCancelled);
                 }
             }
+        }
+
+        private void SetPackageOpsAvailable(bool v)
+        {
+
+            if (btnInstallPackage.InvokeRequired)
+            {
+                {
+                    Invoke(new MethodInvoker(delegate
+                {
+                    btnInstallPackage.Enabled = v;
+                    btnRemove.Enabled = v;
+                    btnUninstall.Enabled = v;
+                    btnReinstall.Enabled = v;
+                }));
+                }
+            }
+            else
+            {
+                btnInstallPackage.Enabled = v;
+                btnRemove.Enabled = v;
+                btnUninstall.Enabled = v;
+                btnReinstall.Enabled = v;
+            }
+
+
         }
 
         private void PopulateGrid()
@@ -161,6 +188,8 @@ namespace Bundlingway
 
         private void btnRemove_Click(object sender, EventArgs e)
         {
+            SetPackageOpsAvailable(false);
+
             var selectedPackages = dgvPackages.SelectedRows
                 .Cast<DataGridViewRow>()
                 .Select(row => (ResourcePackage)row.Tag)
@@ -170,12 +199,15 @@ namespace Bundlingway
             {
                 _ = UI.Announce(Constants.MessageCategory.UninstallPackage);
                 PopulateGrid();
+                SetPackageOpsAvailable(true);
             });
 
         }
 
         private void btnUninstall_Click(object sender, EventArgs e)
         {
+            SetPackageOpsAvailable(false);
+
             var selectedPackages = dgvPackages.SelectedRows
                 .Cast<DataGridViewRow>()
                 .Select(row => (ResourcePackage)row.Tag)
@@ -185,12 +217,15 @@ namespace Bundlingway
             {
                 Maintenance.RemoveTempDir();
                 _ = UI.Announce(Constants.MessageCategory.UninstallPackage);
+                SetPackageOpsAvailable(true);
                 PopulateGrid();
             });
         }
 
         private void btnReinstall_Click(object sender, EventArgs e)
         {
+            SetPackageOpsAvailable(false);
+
             var selectedPackages = dgvPackages.SelectedRows
                 .Cast<DataGridViewRow>()
                 .Select(row => (ResourcePackage)row.Tag)
@@ -201,6 +236,7 @@ namespace Bundlingway
                 Maintenance.RemoveTempDir();
                 _ = UI.Announce(Constants.MessageCategory.ReinstallPackage);
                 PopulateGrid();
+                SetPackageOpsAvailable(true);
             });
         }
 
@@ -274,10 +310,19 @@ namespace Bundlingway
 
         private void btnDebug_Click(object sender, EventArgs e)
         {
-            string logFilePath = Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.Log);
-            if (File.Exists(logFilePath))
+            var logDirectory = Instances.BundlingwayDataFolder;
+            var logFiles = Directory.GetFiles(logDirectory, Constants.Files.Log.Split('.')[0] + "*.txt");
+
+            if (logFiles.Length == 0)
             {
-                System.Diagnostics.Process.Start("notepad.exe", logFilePath);
+                return;
+            }
+
+            var latestLogFile = logFiles.OrderByDescending(f => new FileInfo(f).LastWriteTime).First();
+
+            if (File.Exists(latestLogFile))
+            {
+                System.Diagnostics.Process.Start("notepad.exe", latestLogFile);
             }
         }
 
