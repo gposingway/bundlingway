@@ -7,6 +7,7 @@ using System.Web;
 using System.Security.Cryptography;
 using System.Text;
 using SharpCompress.Common;
+using System.Collections.Concurrent;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -39,9 +40,9 @@ namespace Bundlingway.Utilities.Handler
 
             Log.Information($"Package.OnboardSinglePresetFile: File copied to {targetFileName}");
 
-            await Task.Run(() => PostProcessor.RunPipeline(Constants.SingleFileCatalog));
+            PostProcessor.RunPipeline(Constants.SingleFileCatalog);
 
-            await Task.Run(() => Install(Instances.SinglePresetsFolder));
+            await Install(Instances.SinglePresetsFolder);
             Log.Information("Package.Onboard: Package installation completed.");
 
             return new ResourcePackage() { Name = fileName, Type = Constants.PackageCategories.SinglePreset };
@@ -66,6 +67,10 @@ namespace Bundlingway.Utilities.Handler
             {
                 return OnboardSinglePresetFile(filePath).Result;
             }
+
+            var packageHasPresets = false;
+            var packageHasTextures = false;
+            var packageHasShaders = false;
 
             Log.Information($"Package.Onboard: Preparing package catalog for: {filePath}");
 
@@ -99,7 +104,7 @@ namespace Bundlingway.Utilities.Handler
                 await Task.Run(() =>
                 {
                     using var archive = SharpCompress.Archives.Rar.RarArchive.Open(filePath);
-                    archive.WriteToDirectory(tempFolderPath, new SharpCompress.Common.ExtractionOptions() { ExtractFullPath = true });
+                    archive.WriteToDirectory(tempFolderPath, new ExtractionOptions() { ExtractFullPath = true });
                 });
                 Log.Information("Package.Onboard: RAR file extracted.");
             }
@@ -148,6 +153,10 @@ namespace Bundlingway.Utilities.Handler
             {
                 newCatalogEntry.Status = "Installing...";
 
+
+
+                // First, handle Presets.
+
                 do
                 {
                     changeEval = false;
@@ -160,10 +169,20 @@ namespace Bundlingway.Utilities.Handler
                         Log.Information("Package.Onboard: Found 'reshade-presets' directory.");
                     }
 
-                    if (Directory.GetDirectories(tempFolderPath).Length == 1 && Directory.GetFiles(tempFolderPath).Length == 0)
+                    if (Directory.GetDirectories(tempFolderPath).Length == 1 && Directory.GetFiles(tempFolderPath, "*.ini").Length == 0)
                     {
                         var singleFolderPath = Directory.GetDirectories(tempFolderPath).First();
                         collectionName = Path.GetFileName(singleFolderPath);
+                        tempFolderPath = Path.Combine(tempFolderPath, collectionName);
+
+                        newCatalogEntry.Name = collectionName;
+                        changeEval = true;
+                        Log.Information($"Package.Onboard: Single folder found, updated collection name to: {collectionName}");
+                    }
+
+                    if (Directory.GetDirectories(tempFolderPath, "Presets").Length == 1 && Directory.GetFiles(tempFolderPath, "*.ini").Length == 0)
+                    {
+                        var singleFolderPath = Directory.GetDirectories(tempFolderPath).First();
                         tempFolderPath = Path.Combine(tempFolderPath, collectionName);
 
                         newCatalogEntry.Name = collectionName;
@@ -175,18 +194,17 @@ namespace Bundlingway.Utilities.Handler
 
                 targetPackagePath = Path.Combine(Instances.PackageFolder, newCatalogEntry.Name);
 
-                if (Directory.Exists(targetPackagePath)) Directory.Delete(targetPackagePath, true);
-                Directory.CreateDirectory(targetPackagePath);
+                if (!Directory.Exists(targetPackagePath)) Directory.CreateDirectory(targetPackagePath);
                 Log.Information($"Package.Onboard: Target package path created at: {targetPackagePath}");
 
-                var target = Path.Combine(targetPackagePath, "Source", Path.GetFileName(filePath));
-                Directory.CreateDirectory(Path.Combine(targetPackagePath, "Source"));
+                Directory.CreateDirectory(Path.Combine(targetPackagePath, Constants.Folders.SourcePackage));
+                var target = Path.Combine(targetPackagePath, Constants.Folders.SourcePackage, Path.GetFileName(filePath));
+
                 File.Copy(filePath, target, true);
                 Log.Information("Package.Onboard: Original file copied to target folder.");
 
                 var presetsFolder = Path.Combine(targetPackagePath, Constants.Folders.PackagePresets);
-                if (Directory.Exists(presetsFolder)) Directory.Delete(presetsFolder, true);
-                Directory.CreateDirectory(presetsFolder);
+                if (!Directory.Exists(presetsFolder)) Directory.CreateDirectory(presetsFolder);
                 Log.Information("Package.Onboard: Presets folder created.");
 
                 foreach (var file in Directory.GetFiles(tempFolderPath, "*.ini", SearchOption.AllDirectories))
@@ -195,14 +213,14 @@ namespace Bundlingway.Utilities.Handler
                     var targetPath = Path.Combine(presetsFolder, relativePath);
                     Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
                     File.Copy(file, targetPath, true);
+                    packageHasPresets = true;
                 }
                 Log.Information("Package.Onboard: INI files copied to presets folder: " + presetsFolder);
                 newCatalogEntry.LocalPresetFolder = presetsFolder;
 
                 // Now, handle Textures.
-                var shadersFolder = Path.Combine(targetPackagePath, Constants.Folders.PackageShaders, Constants.Folders.PackageTextures);
-                if (Directory.Exists(shadersFolder)) Directory.Delete(shadersFolder, true);
-                Directory.CreateDirectory(shadersFolder);
+                var texturesFolder = Path.Combine(targetPackagePath, Constants.Folders.PackageTextures);
+                if (!Directory.Exists(texturesFolder)) Directory.CreateDirectory(texturesFolder);
                 Log.Information("Package.Onboard: Shaders/Textures folder created.");
 
                 tempFolderPath = originalTempFolderPath;
@@ -245,24 +263,100 @@ namespace Bundlingway.Utilities.Handler
                 foreach (var file in Directory.GetFiles(tempFolderPath, "*.*", SearchOption.AllDirectories))
                 {
                     var textureFileExtension = Path.GetExtension(file).ToLower();
-                    if (textureFileExtension == ".jpg" || textureFileExtension == ".jpeg" || textureFileExtension == ".png")
+                    if (Constants.TextureExtensions.Contains(textureFileExtension))
                     {
                         var relativePath = Path.GetRelativePath(tempFolderPath, file);
-                        var targetPath = Path.Combine(shadersFolder, relativePath);
+                        var targetPath = Path.Combine(texturesFolder, relativePath);
                         Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
                         File.Copy(file, targetPath, true);
+                        packageHasTextures = true;
                     }
                 }
-                Log.Information("Package.Onboard: Texture files copied to shaders folder: " + shadersFolder);
-                newCatalogEntry.LocalTextureFolder = shadersFolder;
+                Log.Information("Package.Onboard: Texture files copied to shaders folder: " + texturesFolder);
+                newCatalogEntry.LocalTextureFolder = texturesFolder;
 
-                foreach (var dir in Directory.GetDirectories(shadersFolder, "*", SearchOption.AllDirectories))
+                foreach (var dir in Directory.GetDirectories(texturesFolder, "*", SearchOption.AllDirectories))
                 {
                     if (Path.GetFileName(dir).Equals("Previews", StringComparison.OrdinalIgnoreCase))
                     {
                         Directory.Delete(dir, true);
                         Log.Information("Package.Onboard: Removed 'Previews' directory.");
                     }
+                }
+
+                // Finally, handle Shader files.
+
+                var shadersFolder = Path.Combine(targetPackagePath, Constants.Folders.PackageShaders);
+                if (Directory.Exists(shadersFolder)) Directory.Delete(shadersFolder, true);
+                Directory.CreateDirectory(shadersFolder);
+                Log.Information("Package.Onboard: Shaders/shaders folder created.");
+
+                tempFolderPath = originalTempFolderPath;
+
+                do
+                {
+                    changeEval = false;
+
+                    var reshadeShadersDir = Directory.GetDirectories(tempFolderPath, "*", SearchOption.AllDirectories)
+                        .FirstOrDefault(d => Path.GetFileName(d).Equals(Constants.Folders.GameShaders, StringComparison.OrdinalIgnoreCase));
+                    if (reshadeShadersDir != null)
+                    {
+                        tempFolderPath = reshadeShadersDir;
+                        changeEval = true;
+                        Log.Information("Package.Onboard: Found 'reshade-shaders' directory.");
+                    }
+
+                    reshadeShadersDir = Directory.GetDirectories(tempFolderPath, "*", SearchOption.AllDirectories)
+                        .FirstOrDefault(d => Path.GetFileName(d).Equals("shaders", StringComparison.OrdinalIgnoreCase));
+                    if (reshadeShadersDir != null)
+                    {
+                        tempFolderPath = reshadeShadersDir;
+                        changeEval = true;
+                        Log.Information("Package.Onboard: Found 'shaders' directory.");
+                    }
+
+                    if (Directory.GetDirectories(tempFolderPath).Length == 1 && Directory.GetFiles(tempFolderPath).Length == 0)
+                    {
+                        var singleFolderPath = Directory.GetDirectories(tempFolderPath).First();
+
+                        if (Path.GetFileName(singleFolderPath).ToLower() != "shaders")
+                        {
+                            tempFolderPath = singleFolderPath;
+                            changeEval = true;
+                        }
+                    }
+
+                } while (changeEval);
+
+                foreach (var file in Directory.GetFiles(tempFolderPath, "*.*", SearchOption.AllDirectories))
+                {
+                    var shaderFileExtension = Path.GetExtension(file).ToLower();
+                    if (Constants.ShaderExtensions.Contains(shaderFileExtension))
+                    {
+                        var relativePath = Path.GetRelativePath(tempFolderPath, file);
+                        var targetPath = Path.Combine(shadersFolder, relativePath);
+                        Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                        File.Copy(file, targetPath, true);
+
+                        packageHasShaders = true;
+                    }
+                }
+                Log.Information("Package.Onboard: shader files copied to shaders folder: " + shadersFolder);
+                newCatalogEntry.LocalShaderFolder = shadersFolder;
+
+                if (packageHasPresets && !packageHasShaders)
+                {
+                    newCatalogEntry.Type = Constants.PackageCategories.PresetCollection;
+                }
+
+                if (!packageHasPresets && packageHasShaders)
+                {
+                    newCatalogEntry.Type = Constants.PackageCategories.ShaderCollection;
+                }
+
+                if (packageHasPresets && packageHasShaders)
+                {
+                    newCatalogEntry.Type = Constants.PackageCategories.MixedCollection;
                 }
 
                 string localCatalogFilePath = Path.Combine(targetPackagePath, Constants.Files.CatalogEntry);
@@ -443,7 +537,7 @@ namespace Bundlingway.Utilities.Handler
 
                     //Clearly a hack. If the game folder doesn't exist, we're in local mode (and it should always report as 'not installed'). Sooo... wrong folder on purpose.
                     var baseFolder = Directory.Exists(Instances.LocalConfigProvider.Configuration.GameFolder) ?
-                        Instances.LocalConfigProvider.Configuration.GameFolder : 
+                        Instances.LocalConfigProvider.Configuration.GameFolder :
                         Instances.BundlingwayDataFolder;
 
                     var gameProbeFile = Path.Combine(baseFolder, Constants.Folders.GamePresets, Constants.SingleFileCatalog.Name, Path.GetFileName(iniFile));
@@ -592,14 +686,34 @@ namespace Bundlingway.Utilities.Handler
         {
             var count = selectedFiles.Count;
             int current = 0;
+            int maxDegreeOfParallelism = 5;
 
-            foreach (var file in selectedFiles)
-            {
-                current++;
-                UI.Announce(Constants.MessageCategory.AddPackage, count.ToString(), current.ToString(), Path.GetFileName(file));
+            var tasks = Partitioner.Create(selectedFiles)
+                .GetPartitions(maxDegreeOfParallelism)
+                .Select(async partition =>
+                {
+                    using (partition)
+                    {
+                        while (partition.MoveNext())
+                        {
+                            var file = partition.Current;
+                            Interlocked.Increment(ref current);
+                            UI.Announce(Constants.MessageCategory.AddPackage, count.ToString(), current.ToString(), Path.GetFileName(file));
 
-                await Onboard(file);
-            }
+                            try
+                            {
+                                await Onboard(file);
+                            }
+                            catch (Exception e)
+                            {
+                                Log.Error(e, $"Error onboarding {file}: {e.Message}");
+                            }
+
+                        }
+                    }
+                });
+
+            await Task.WhenAll(tasks);
         }
 
         public static async Task<string> DownloadAndInstall(string url)
