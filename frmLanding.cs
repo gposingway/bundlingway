@@ -67,8 +67,6 @@ namespace Bundlingway
 
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-
-
                 var filter = string.Join(";", Constants.InstallableExtensions.Select(ext => $"*{ext}"));
                 openFileDialog.Filter = $"Archive files ({filter})|{filter}";
                 openFileDialog.Title = "Select a Package File";
@@ -283,7 +281,7 @@ namespace Bundlingway
         {
             // Open Game Folder in a new explorer window
 
-            string gamePath = Instances.LocalConfigProvider.Configuration.GameFolder;
+            string gamePath = Instances.LocalConfigProvider.Configuration.Game.InstallationFolder;
             if (Directory.Exists(gamePath))
             {
                 System.Diagnostics.Process.Start("explorer.exe", gamePath);
@@ -366,12 +364,17 @@ namespace Bundlingway
             _ = UI.Announce("Duplicated shaders? green tint everywhere? No worries, 'Fix It' is here to save the day!");
         }
 
+        private void btnInstallReShade_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce("You need to shut down the game client before you can update!");
+        }
+
         internal async Task UpdateElements()
         {
 
             var c = Instances.LocalConfigProvider.Configuration;
 
-            txtXivPath.Text = (c.XIVPath != null) ? c.XIVPath : "Not Found";
+            txtXivPath.Text = (c.Game.ClientLocation != null) ? c.Game.ClientLocation : "Not Found";
 
 
             var reShadeBtnEnabled = true;
@@ -435,18 +438,9 @@ namespace Bundlingway
                 btnInstallReShade.Text = reShadeBtnText;
             }
 
-
-
-
-
-
-
-
-
             var gPosingwayBtnEnabled = true;
             var gPosingwayBtnVisible = true;
             string gPosingwayBtnText = null;
-
 
             btnInstallGPosingway.Enabled = true;
             var GPosingwayText = c.GPosingway.Status switch
@@ -486,8 +480,6 @@ namespace Bundlingway
                     btnInstallGPosingway.Enabled = gPosingwayBtnEnabled;
                     btnInstallGPosingway.Visible = gPosingwayBtnVisible;
                     btnInstallGPosingway.Text = gPosingwayBtnText;
-
-
                 }));
             }
             else
@@ -498,11 +490,6 @@ namespace Bundlingway
                 btnInstallGPosingway.Visible = gPosingwayBtnVisible;
                 btnInstallGPosingway.Text = gPosingwayBtnText;
             }
-        }
-
-        private void btnInstallReShade_MouseEnter(object sender, EventArgs e)
-        {
-            _ = UI.Announce("You need to shut down the game client before you can update!");
         }
     }
 }

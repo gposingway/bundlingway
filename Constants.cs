@@ -5,6 +5,7 @@ namespace Bundlingway
     public static class Constants
     {
         public static List<string> TextureExtensions { get; set; } = [".jpg", ".jpeg", ".png", ".dds"];
+        public static List<string> NonTextureImageMarkers { get; set; } = ["[prev]", "[cover]", "[preview]", ".dds"];
         public static List<string> ShaderExtensions { get; set; } = [".fx", ".fxh"];
         public static List<string> InstallableExtensions { get; set; } = [".zip", ".rar", ".7z", ".ini"];
         public static ResourcePackage SingleFileCatalog { get; set; } = new ResourcePackage()
@@ -39,23 +40,27 @@ namespace Bundlingway
             public static readonly string PackageShaders = "Shaders";
             public static readonly string PackagePresets = "Presets";
             public static readonly string PackageTextures = "Textures";
+
             public static readonly string Packages = "Packages";
             public static readonly string SourcePackage = "Source";
+
+            public static readonly string Temp = "temp";
             public static readonly string Cache = "Cache";
             public static readonly string SinglePresets = "Single Presets";
+
             public static readonly string GamePresets = "reshade-presets";
             public static readonly string GameShaders = "reshade-shaders";
-            public static readonly string Temp = "temp";
         }
 
         public static class Files
         {
             public static readonly string CatalogEntry = "catalog-entry.json";
             public static readonly string GPosingwayConfig = "gposingway-definitions.json";
-            public static readonly string BundlingwayConfig = "config.json";
+            public static readonly string BundlingwayConfig = "bundlingway-config.json";
             public static readonly string Log = "bundlingway-log-.txt";
             public static readonly string LocalReshadeBinary = "dxgi.dll";
-            public static readonly string GameProcess = "ffxiv_dx11.exe";
+            public static readonly string GameProcess = "ffxiv_dx11";
+            public static readonly string ShaderAnalysis = "shader-analysis.json";
         }
 
         public static BundlingwayDialogueOptions Bundlingway = new();

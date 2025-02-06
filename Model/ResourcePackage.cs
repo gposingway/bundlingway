@@ -1,4 +1,6 @@
-﻿namespace Bundlingway.Model
+﻿using Bundlingway.Utilities.ManagedResources;
+
+namespace Bundlingway.Model
 {
     public class ResourcePackage
     {

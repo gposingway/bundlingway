@@ -29,6 +29,11 @@ namespace Bundlingway.Utilities.Handler
                 var baseline = Path.Combine(Instances.PackageFolder, package.Name);
 
                 var presetPath = Path.Combine(baseline, Constants.Folders.PackagePresets);
+
+                if (!Directory.Exists(presetPath)) return;
+
+
+
                 var texturePath = Path.Combine(baseline, Constants.Folders.PackageShaders);
 
                 var iniParser = new FileIniDataParser(iniDataParser);

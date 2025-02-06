@@ -22,13 +22,11 @@ namespace Bundlingway.Utilities
                 Directory.CreateDirectory(Instances.SinglePresetsFolder);
 
 
-            Instances.IsGameRunning = ProcessHelper.IsProcessRunning("ffxiv_dx11");
+            Instances.IsGameRunning = ProcessHelper.IsProcessRunning(Constants.Files.GameProcess);
 
             string localCatalogFilePath = Path.Combine(Instances.SinglePresetsFolder, Constants.Files.CatalogEntry);
 
             if (!File.Exists(localCatalogFilePath)) Constants.SingleFileCatalog.ToJsonFile(localCatalogFilePath);
-
-
 
             Log.Logger = new LoggerConfiguration()
                       .WriteTo.File(

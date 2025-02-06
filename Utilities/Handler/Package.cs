@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using SharpCompress.Common;
 using System.Collections.Concurrent;
+using Bundlingway.Utilities.ManagedResources;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -69,7 +70,6 @@ namespace Bundlingway.Utilities.Handler
             }
 
             var packageHasPresets = false;
-            var packageHasTextures = false;
             var packageHasShaders = false;
 
             Log.Information($"Package.Onboard: Preparing package catalog for: {filePath}");
@@ -153,8 +153,6 @@ namespace Bundlingway.Utilities.Handler
             {
                 newCatalogEntry.Status = "Installing...";
 
-
-
                 // First, handle Presets.
 
                 do
@@ -172,8 +170,13 @@ namespace Bundlingway.Utilities.Handler
                     if (Directory.GetDirectories(tempFolderPath).Length == 1 && Directory.GetFiles(tempFolderPath, "*.ini").Length == 0)
                     {
                         var singleFolderPath = Directory.GetDirectories(tempFolderPath).First();
-                        collectionName = Path.GetFileName(singleFolderPath);
-                        tempFolderPath = Path.Combine(tempFolderPath, collectionName);
+
+                        var probe = Path.GetFileName(singleFolderPath);
+
+                        if (probe != Constants.Folders.PackageShaders && probe != Constants.Folders.PackageTextures && probe != Constants.Folders.PackagePresets)
+                            collectionName = Path.GetFileName(singleFolderPath);
+
+                        tempFolderPath = Path.Combine(tempFolderPath, probe);
 
                         newCatalogEntry.Name = collectionName;
                         changeEval = true;
@@ -191,6 +194,12 @@ namespace Bundlingway.Utilities.Handler
                     }
 
                 } while (changeEval);
+
+
+                if (newCatalogEntry.Name.EndsWith("-main"))
+                {
+                    newCatalogEntry.Name = newCatalogEntry.Name.Replace("-main", "");
+                }
 
                 targetPackagePath = Path.Combine(Instances.PackageFolder, newCatalogEntry.Name);
 
@@ -211,10 +220,12 @@ namespace Bundlingway.Utilities.Handler
                 {
                     var relativePath = Path.GetRelativePath(tempFolderPath, file);
                     var targetPath = Path.Combine(presetsFolder, relativePath);
+
                     Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
                     File.Copy(file, targetPath, true);
                     packageHasPresets = true;
                 }
+
                 Log.Information("Package.Onboard: INI files copied to presets folder: " + presetsFolder);
                 newCatalogEntry.LocalPresetFolder = presetsFolder;
 
@@ -265,11 +276,13 @@ namespace Bundlingway.Utilities.Handler
                     var textureFileExtension = Path.GetExtension(file).ToLower();
                     if (Constants.TextureExtensions.Contains(textureFileExtension))
                     {
-                        var relativePath = Path.GetRelativePath(tempFolderPath, file);
-                        var targetPath = Path.Combine(texturesFolder, relativePath);
-                        Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
-                        File.Copy(file, targetPath, true);
-                        packageHasTextures = true;
+                        if (!Constants.NonTextureImageMarkers.Any(marker => file.ToLower().Contains(marker.ToLower())))
+                        {
+                            var relativePath = Path.GetRelativePath(tempFolderPath, file);
+                            var targetPath = Path.Combine(texturesFolder, relativePath);
+                            Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                            File.Copy(file, targetPath, true);
+                        }
                     }
                 }
                 Log.Information("Package.Onboard: Texture files copied to shaders folder: " + texturesFolder);
@@ -341,23 +354,20 @@ namespace Bundlingway.Utilities.Handler
                         packageHasShaders = true;
                     }
                 }
+
+                if (packageHasShaders) await Shader.SaveShaderAnalysisToPath(shadersFolder, Path.Combine(targetPackagePath, Constants.Files.ShaderAnalysis));
+
                 Log.Information("Package.Onboard: shader files copied to shaders folder: " + shadersFolder);
                 newCatalogEntry.LocalShaderFolder = shadersFolder;
 
                 if (packageHasPresets && !packageHasShaders)
-                {
                     newCatalogEntry.Type = Constants.PackageCategories.PresetCollection;
-                }
 
                 if (!packageHasPresets && packageHasShaders)
-                {
                     newCatalogEntry.Type = Constants.PackageCategories.ShaderCollection;
-                }
 
                 if (packageHasPresets && packageHasShaders)
-                {
                     newCatalogEntry.Type = Constants.PackageCategories.MixedCollection;
-                }
 
                 string localCatalogFilePath = Path.Combine(targetPackagePath, Constants.Files.CatalogEntry);
                 newCatalogEntry.ToJsonFile(localCatalogFilePath);
@@ -425,11 +435,11 @@ namespace Bundlingway.Utilities.Handler
             return fxFiles.Length > 0;
         }
 
-        internal static async Task<ResourcePackage> Install(string targetPackagePath)
+        internal static async Task<ResourcePackage> Install(string sourcePackagePath)
         {
-            Log.Information($"Package.Install: Installing package at: {targetPackagePath}");
+            Log.Information($"Package.Install: Installing package at: {sourcePackagePath}");
 
-            string localCatalogFilePath = Path.Combine(targetPackagePath, Constants.Files.CatalogEntry);
+            string localCatalogFilePath = Path.Combine(sourcePackagePath, Constants.Files.CatalogEntry);
 
             if (!File.Exists(localCatalogFilePath))
             {
@@ -440,55 +450,122 @@ namespace Bundlingway.Utilities.Handler
             ResourcePackage catalogEntry = new();
 
             catalogEntry = Serialization.FromJsonFile<ResourcePackage>(localCatalogFilePath);
+
+            string installationShaderAnalysisFilePath = Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.ShaderAnalysis);
+            string localShaderAnalysisFilePath = Path.Combine(sourcePackagePath, Constants.Files.ShaderAnalysis);
+
+            var installationShaderAnalysis = Serialization.FromJsonFile<Dictionary<string, ShaderSignature>>(installationShaderAnalysisFilePath);
+            var localShaderAnalysis = Serialization.FromJsonFile<Dictionary<string, ShaderSignature>>(localShaderAnalysisFilePath);
+
             Log.Information("Package.Install: Loaded catalog entry from file.");
 
-            Log.Information("Package.Install: presetsFolder: " + catalogEntry.Name);
-            Log.Information("Package.Install: GameFolder: " + Instances.LocalConfigProvider.Configuration.GameFolder);
+            Log.Information($"Package.Install: catalogEntry.Name: {catalogEntry.Name}");
+            Log.Information($"Package.Install: Game.InstallationFolder: {Instances.LocalConfigProvider.Configuration.Game.InstallationFolder}");
 
             var collectionName = catalogEntry.Name;
-            var presetsFolder = Path.Combine(targetPackagePath, Constants.Folders.PackagePresets);
-            var shadersFolder = Path.Combine(targetPackagePath, Constants.Folders.PackageShaders, Constants.Folders.PackageTextures);
+            var sourcePresetsFolder = Path.Combine(sourcePackagePath, Constants.Folders.PackagePresets);
+            var sourceTexturesFolder = Path.Combine(sourcePackagePath, Constants.Folders.PackageTextures);
+            var sourceShadersFolder = Path.Combine(sourcePackagePath, Constants.Folders.PackageShaders);
 
-            string gamePresetsFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.Folders.GamePresets, collectionName);
-            string gameTexturesFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.Folders.GameShaders, Constants.Folders.PackageTextures, collectionName);
+            string gamePresetsFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder, Constants.Folders.GamePresets, collectionName);
+            string gameTexturesFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder, Constants.Folders.GameShaders, Constants.Folders.PackageTextures, collectionName);
+            string gameShaderFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder, Constants.Folders.GameShaders, Constants.Folders.PackageShaders, collectionName);
 
-            Log.Information("Package.Install: presetsFolder: " + presetsFolder);
-            Log.Information("Package.Install: shadersFolder: " + shadersFolder);
-            Log.Information("Package.Install: gamePresetsFolder: " + gamePresetsFolder);
-            Log.Information("Package.Install: gameTexturesFolder: " + gameTexturesFolder);
+            Log.Information($"Package.Install: sourcePresetsFolder: {sourcePresetsFolder}");
+            Log.Information($"Package.Install: sourceTexturesFolder: {sourceTexturesFolder}");
+            Log.Information($"Package.Install: sourceShadersFolder: {sourceShadersFolder}");
+            Log.Information($"Package.Install: gamePresetsFolder: {gamePresetsFolder}");
+            Log.Information($"Package.Install: gameTexturesFolder: {gameTexturesFolder}");
 
             try
             {
-                Directory.CreateDirectory(gamePresetsFolder);
-                Log.Information($"Package.Install: Created game presets folder at: {gamePresetsFolder}");
 
                 catalogEntry.LocalPresetFolder = gamePresetsFolder;
                 catalogEntry.LocalTextureFolder = gameTexturesFolder;
+                catalogEntry.LocalShaderFolder = gameShaderFolder;
 
-                foreach (var file in Directory.GetFiles(presetsFolder, "*.ini", SearchOption.AllDirectories))
+
+                // Presets:
+
+                if (Directory.Exists(sourcePresetsFolder))
                 {
-                    var relativePath = Path.GetRelativePath(presetsFolder, file);
-                    var targetPath = Path.Combine(gamePresetsFolder, relativePath);
-                    Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
-                    File.Copy(file, targetPath, true);
-                    Log.Information($"Package.Install: Copied preset file {file} to {targetPath}");
+                    Directory.CreateDirectory(gamePresetsFolder);
+                    Log.Information($"Package.Install: Created game presets folder at: {gamePresetsFolder}");
+
+                    foreach (var file in Directory.GetFiles(sourcePresetsFolder, "*.ini", SearchOption.AllDirectories))
+                    {
+                        var relativePath = Path.GetRelativePath(sourcePresetsFolder, file);
+                        var targetPath = Path.Combine(gamePresetsFolder, relativePath);
+                        Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                        File.Copy(file, targetPath, true);
+                        Log.Information($"Package.Install: Copied preset file {file} to {targetPath}");
+                    }
                 }
 
-                if (Directory.Exists(shadersFolder))
-                    if (Directory.EnumerateFileSystemEntries(shadersFolder).ToList().Count != 0)
+
+                // Textures:
+
+                if (Directory.Exists(sourceTexturesFolder))
+                    if (Directory.EnumerateFileSystemEntries(sourceTexturesFolder).ToList().Count != 0)
                     {
                         Directory.CreateDirectory(gameTexturesFolder);
                         Log.Information($"Package.Install: Created game textures folder at: {gameTexturesFolder}");
 
-                        foreach (var file in Directory.GetFiles(shadersFolder, "*.*", SearchOption.AllDirectories))
+                        foreach (var file in Directory.GetFiles(sourceTexturesFolder, "*.*", SearchOption.AllDirectories))
                         {
-                            var relativePath = Path.GetRelativePath(shadersFolder, file);
+                            var relativePath = Path.GetRelativePath(sourceTexturesFolder, file);
                             var targetPath = Path.Combine(gameTexturesFolder, relativePath);
                             Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
                             File.Copy(file, targetPath, true);
                             Log.Information($"Package.Install: Copied texture file {file} to {targetPath}");
                         }
                     }
+
+                // Shaders:
+
+                if (catalogEntry.Type == Constants.PackageCategories.ShaderCollection)
+
+
+                    if (Directory.Exists(sourceShadersFolder))
+                    {
+                        Directory.CreateDirectory(gameShaderFolder);
+
+                        var referenceFolder = Path.Combine(Instances.PackageFolder, catalogEntry.Name, Constants.Folders.PackageShaders);
+
+
+                        foreach (var file in Directory.GetFiles(sourceShadersFolder, "*.*", SearchOption.AllDirectories))
+                        {
+                            var shaderFileExtension = Path.GetExtension(file).ToLower();
+                            if (Constants.ShaderExtensions.Contains(shaderFileExtension))
+                            {
+                                var relativePath = Path.GetRelativePath(referenceFolder, file);
+                                var targetPath = Path.Combine(gameShaderFolder, relativePath);
+                                Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                                File.Copy(file, targetPath, true);
+                                Log.Information($"Package.Install: Copied shader file {file} to {targetPath}");
+                            }
+                        }
+
+                        //var analysisResult = await installationShaderAnalysis.CheckForConflictsWith(localShaderAnalysis);
+
+                        //if (analysisResult.NonConflicting.Count > 0)
+                        //{
+                        //    // Copy non-conflicting files
+                        //    foreach (var file in analysisResult.NonConflicting)
+                        //    {
+                        //        var source = Path.Combine(file.Location, file.FileName);
+                        //        var target = Path.GetRelativePath(referenceFolder, source);
+
+                        //        var destination = Path.Combine(gameShaderFolder, target);
+
+                        //        Directory.CreateDirectory(Path.GetDirectoryName(destination));
+
+                        //        File.Copy(source, destination, true);
+                        //        Log.Information($"Package.Install: Copied texture file {file.FileName} to {gameShaderFolder}");
+                        //    }
+                        //}
+                    }
+
 
                 catalogEntry.Status = "Installed";
                 catalogEntry.Installed = true;
@@ -536,8 +613,8 @@ namespace Bundlingway.Utilities.Handler
                 {
 
                     //Clearly a hack. If the game folder doesn't exist, we're in local mode (and it should always report as 'not installed'). Sooo... wrong folder on purpose.
-                    var baseFolder = Directory.Exists(Instances.LocalConfigProvider.Configuration.GameFolder) ?
-                        Instances.LocalConfigProvider.Configuration.GameFolder :
+                    var baseFolder = Directory.Exists(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder) ?
+                        Instances.LocalConfigProvider.Configuration.Game.InstallationFolder :
                         Instances.BundlingwayDataFolder;
 
                     var gameProbeFile = Path.Combine(baseFolder, Constants.Folders.GamePresets, Constants.SingleFileCatalog.Name, Path.GetFileName(iniFile));
@@ -617,7 +694,7 @@ namespace Bundlingway.Utilities.Handler
         private static void UninstallSinglePresetFile(ResourcePackage package)
         {
             Log.Information($"Package.UninstallSinglePresetFile: Uninstalling single preset file: {package.Name}");
-            string targetPresetFile = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.Folders.GamePresets, Constants.Folders.SinglePresets, $"{package.Name}.ini");
+            string targetPresetFile = Path.Combine(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder, Constants.Folders.GamePresets, Constants.Folders.SinglePresets, $"{package.Name}.ini");
             if (File.Exists(targetPresetFile))
             {
                 File.Delete(targetPresetFile);
@@ -642,8 +719,12 @@ namespace Bundlingway.Utilities.Handler
 
             if (Directory.Exists(package.LocalPresetFolder))
                 Directory.Delete(package.LocalPresetFolder, true);
+
             if (Directory.Exists(package.LocalTextureFolder))
                 Directory.Delete(package.LocalTextureFolder, true);
+
+            if (Directory.Exists(package.LocalShaderFolder))
+                Directory.Delete(package.LocalShaderFolder, true);
 
             package.Status = "Uninstalled";
             package.Installed = false;
@@ -669,7 +750,7 @@ namespace Bundlingway.Utilities.Handler
         {
             Log.Information($"Package.InstallSinglePresetFile: Installing single preset file: {package.Name}");
             string source = package.Source;
-            string target = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.Folders.GamePresets, Constants.Folders.SinglePresets, $"{package.Name}.ini");
+            string target = Path.Combine(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder, Constants.Folders.GamePresets, Constants.Folders.SinglePresets, $"{package.Name}.ini");
 
             if (File.Exists(source))
             {
@@ -698,7 +779,7 @@ namespace Bundlingway.Utilities.Handler
                         {
                             var file = partition.Current;
                             Interlocked.Increment(ref current);
-                            UI.Announce(Constants.MessageCategory.AddPackage, count.ToString(), current.ToString(), Path.GetFileName(file));
+                            _ = UI.Announce(Constants.MessageCategory.AddPackage, count.ToString(), current.ToString(), Path.GetFileName(file));
 
                             try
                             {
