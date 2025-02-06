@@ -77,14 +77,14 @@ namespace Bundlingway.Utilities
             string methodName = ProcessHelper.GetCurrentMethodName();
             try
             {
-                if (Instances.LocalConfigProvider.Configuration.XIVPath != null)
+                if (Instances.LocalConfigProvider.Configuration.Game.ClientLocation != null)
                 {
                     var localGposingwayConfigProbe = Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.GPosingwayConfig);
                     var appDataGposingwayConfigExists = File.Exists(localGposingwayConfigProbe);
 
                     if (!appDataGposingwayConfigExists)
                     {
-                        var gameGposingwayConfigProbe = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, ".gposingway", Constants.Files.GPosingwayConfig);
+                        var gameGposingwayConfigProbe = Path.Combine(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder, ".gposingway", Constants.Files.GPosingwayConfig);
                         var gameGposingwayConfigExists = File.Exists(gameGposingwayConfigProbe);
 
                         if (gameGposingwayConfigExists)
@@ -157,7 +157,7 @@ namespace Bundlingway.Utilities
             }
 
             var tempFolder = Path.Combine(Instances.TempFolder, "GPosingway");
-            var gameFolder = Instances.LocalConfigProvider.Configuration.GameFolder;
+            var gameFolder = Instances.LocalConfigProvider.Configuration.Game.InstallationFolder;
 
             if (string.IsNullOrEmpty(definitions.gposingwayUrl) || string.IsNullOrEmpty(tempFolder) || string.IsNullOrEmpty(gameFolder))
             {

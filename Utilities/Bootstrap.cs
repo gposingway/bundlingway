@@ -1,6 +1,8 @@
 ﻿using Bundlingway.Model;
+using Bundlingway.Utilities.Extensions;
 using Bundlingway.Utilities.Handler;
 using Serilog;
+using System.Configuration;
 
 namespace Bundlingway.Utilities
 {
@@ -35,11 +37,16 @@ namespace Bundlingway.Utilities
                 if (Instances.ResourcePackages == null)
                     Instances.ResourcePackages = [];
 
-                await Task.WhenAll(
-                    CheckGameClient(), 
-                    CheckReShade(), 
-                    CheckGPosingway()
-                    );
+
+                await CheckGameClient().ContinueWith(async a =>
+                {
+                    await Task.WhenAll(
+                        CheckReShade(),
+                        CheckGPosingway()
+                        );
+
+                });
+
 
                 Instances.LocalConfigProvider.Save();
 
@@ -53,40 +60,44 @@ namespace Bundlingway.Utilities
             }
         }
 
-        private static bool ValidatePackageCatalog(ResourcePackage package)
-        {
-            Log.Information($"Bootstrap.ValidatePackageCatalog: Validating package {package.Name}.");
-            return true;
-        }
-
         public static async Task CheckGameClient()
         {
             try
             {
+                var c = Instances.LocalConfigProvider.Configuration.Game;
+
                 Log.Information("Bootstrap.CheckGameClient: Checking game client.");
                 if (Instances.IsGameRunning)
                 {
-                    var procPath = ProcessHelper.GetProcessPath("ffxiv_dx11");
+                    var procPath = ProcessHelper.GetProcessPath(Constants.Files.GameProcess);
 
                     if (procPath != null)
                     {
-                        Instances.LocalConfigProvider.Configuration.XIVPath = procPath;
+                        c.ClientLocation = procPath;
                     }
                 }
 
-                if (Instances.LocalConfigProvider.Configuration.XIVPath != null)
-                    if (!File.Exists(Instances.LocalConfigProvider.Configuration.XIVPath))
+                if (c.ClientLocation != null)
+                    if (!File.Exists(c.ClientLocation))
                     {
-                        Instances.LocalConfigProvider.Configuration.XIVPath = null;
-                        Instances.LocalConfigProvider.Configuration.GameFolder = null;
+                        c.ClientLocation = null;
+                        c.InstallationFolder = null;
                     }
                     else
                     {
-                        Instances.LocalConfigProvider.Configuration.GameFolder = Path.GetDirectoryName(Instances.LocalConfigProvider.Configuration.XIVPath);
+                        c.InstallationFolder = Path.GetDirectoryName(c.ClientLocation);
+
+                        var shaderFolderPath = Path.Combine(c.InstallationFolder, Constants.Folders.GameShaders);
+
+                        if (Directory.Exists(shaderFolderPath))
+                        {
+                            // In the background we will save the shader analysis to the data folder.
+                            // _ = ManagedResources.Shader.SaveShaderAnalysisToPath(shaderFolderPath, Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.ShaderAnalysis)).ContinueWith(i=> UI.Announce("Installed shaders analysis finished!"));
+                        }
                     }
 
-                
-                _= UI.UpdateElements();
+
+                _ = UI.UpdateElements();
 
                 Log.Information("Bootstrap.CheckGameClient: Game client check completed.");
             }

@@ -83,9 +83,9 @@ namespace Bundlingway.Utilities.Handler
         internal static async Task GetLocalInfo()
         {
             Log.Information("ReShadeParser.GetLocalInfo: Starting to get local info.");
-            if (Instances.LocalConfigProvider.Configuration.GameFolder != null)
+            if (Instances.LocalConfigProvider.Configuration.Game.InstallationFolder != null)
             {
-                var reShadeProbe = Path.Combine(Instances.LocalConfigProvider.Configuration.GameFolder, Constants.Files.LocalReshadeBinary);
+                var reShadeProbe = Path.Combine(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder, Constants.Files.LocalReshadeBinary);
 
                 if (!File.Exists(reShadeProbe))
                 {
@@ -109,7 +109,7 @@ namespace Bundlingway.Utilities.Handler
             Log.Information("ReShadeParser.Update: Starting update process.");
             var remoteLink = Instances.LocalConfigProvider.Configuration.ReShade.RemoteLink;
             var tempFolder = Path.Combine(Instances.TempFolder, "ReShade");
-            var gameFolder = Instances.LocalConfigProvider.Configuration.GameFolder;
+            var gameFolder = Instances.LocalConfigProvider.Configuration.Game.InstallationFolder;
 
             if (string.IsNullOrEmpty(remoteLink) || string.IsNullOrEmpty(tempFolder) || string.IsNullOrEmpty(gameFolder))
             {

@@ -3,11 +3,14 @@ using Bundlingway.Utilities.Extensions;
 using IniParser;
 using IniParser.Parser;
 using Serilog;
+using System.Numerics;
 
 namespace Bundlingway.Utilities.Handler
 {
     public static class PostProcessor
     {
+        private static readonly object _lock = new object();
+
         private static IniDataParser iniDataParser = new IniDataParser(new IniParser.Model.Configuration.IniParserConfiguration()
         {
             AllowCreateSectionsOnFly = true,
@@ -17,71 +20,91 @@ namespace Bundlingway.Utilities.Handler
             AssigmentSpacer = "",
         });
 
-
         internal static void RunPipeline(ResourcePackage package)
         {
-
-            Logging _logger = new();
-
-            var baseline = Path.Combine(Instances.PackageFolder, package.Name);
-
-            var presetPath = Path.Combine(baseline, "Presets");
-            var texturePath = Path.Combine(baseline, @"Shaders\Textures");
-
-            var iniParser = new FileIniDataParser(iniDataParser);
-
-            var iniFiles = Directory.GetFiles(presetPath, "*.ini", SearchOption.AllDirectories)
-                .Where(i => !i.EndsWith(@"\Off.ini")).ToList();
-
-            List<string> textureFiles = Directory.Exists(texturePath) ? Directory.GetFiles(texturePath, "*.*", SearchOption.AllDirectories).ToList() : new();
-
-            var techGraph = new Dictionary<string, int>();
-
-            package.RunRawFilePipeline(_logger);
-
-            foreach (string iniFile in iniFiles)
+            lock (_lock)
             {
-                IniParser.Model.IniData ini_filedata = iniParser.ReadFile(iniFile);
+                Logging _logger = new();
 
-                var preset = ini_filedata.ToPreset(iniFile);
+                var baseline = Path.Combine(Instances.PackageFolder, package.Name);
 
-                var techniqueList = string.Join(",", preset.Techniques.Select(i => i.Key).ToList());
+                var presetPath = Path.Combine(baseline, Constants.Folders.PackagePresets);
 
-                var techniques = techniqueList?
-                    .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                    .Where(i => i.Contains('@', StringComparison.CurrentCulture))
-                    .Select(i => i.Split('@')[1])
-                    .Where(i => !i.Contains(".fx+", StringComparison.CurrentCulture))
-                    .ToList() ?? [];
+                if (!Directory.Exists(presetPath)) return;
 
-                foreach (var item in techniques)
+
+
+                var texturePath = Path.Combine(baseline, Constants.Folders.PackageShaders);
+
+                var iniParser = new FileIniDataParser(iniDataParser);
+
+                var iniFiles = Directory.GetFiles(presetPath, "*.ini", SearchOption.AllDirectories)
+                    .Where(i => !i.EndsWith(@"\Off.ini")).ToList();
+
+                List<string> textureFiles = Directory.Exists(texturePath) ? Directory.GetFiles(texturePath, "*.*", SearchOption.AllDirectories).ToList() : new();
+
+                var techGraph = new Dictionary<string, int>();
+
+                package.RunRawFilePipeline(_logger);
+
+                foreach (string iniFile in iniFiles)
                 {
-
-                    if (!techGraph.ContainsKey(item))
-                        techGraph[item] = 0;
-
-                    techGraph[item]++;
-                }
-
-                // Validate texture names
-                foreach (var tex in preset.TextureFiles)
-                {
-                    if (!tex.Contains("/"))
+                    if (!File.Exists(iniFile))
                     {
-                        var textNotFound = !textureFiles.Any(i => i.EndsWith("\\" + tex, StringComparison.CurrentCulture));
+                        Log.Warning("File not found while running pipeline: " + iniFile);
+                        continue;
+                    }
 
-                        if (textNotFound)
+                    IniParser.Model.IniData ini_filedata = null;
+                    Preset preset = null;
+
+                    try
+                    {
+                        ini_filedata = iniParser.ReadFile(iniFile);
+                        preset = ini_filedata.ToPreset(iniFile);
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Warning("Failure to load INI: " + e.Message);
+                    }
+
+                    var techniqueList = string.Join(",", preset.Techniques.Select(i => i.Key).ToList());
+
+                    var techniques = techniqueList?
+                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                        .Where(i => i.Contains('@', StringComparison.CurrentCulture))
+                        .Select(i => i.Split('@')[1])
+                        .Where(i => !i.Contains(".fx+", StringComparison.CurrentCulture))
+                        .ToList() ?? [];
+
+                    foreach (var item in techniques)
+                    {
+                        if (!techGraph.ContainsKey(item))
+                            techGraph[item] = 0;
+
+                        techGraph[item]++;
+                    }
+
+                    // Validate texture names
+                    foreach (var tex in preset.TextureFiles)
+                    {
+                        if (!tex.Contains("/"))
                         {
-                            Log.Information("[Missing Textures] " + tex + " @ " + Path.GetFileName(iniFile));
+                            var textNotFound = !textureFiles.Any(i => i.EndsWith("\\" + tex, StringComparison.CurrentCulture));
+
+                            if (textNotFound)
+                            {
+                                Log.Information("[Missing Textures] " + tex + " @ " + Path.GetFileName(iniFile));
+                            }
                         }
                     }
+
+                    preset.RunPostProcessorPipeline(package, ini_filedata, _logger);
                 }
 
-                preset.RunPostProcessorPipeline(package, ini_filedata, _logger);
+                _logger.WriteLogToConsole();
+                _logger.WriteLogToFile(Path.Combine(baseline, "installation-log.txt"));
             }
-
-            _logger.WriteLogToConsole();
-            _logger.WriteLogToFile(Path.Combine(baseline, "installation-log.txt"));
         }
     }
 }

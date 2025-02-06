@@ -1,4 +1,6 @@
-﻿namespace Bundlingway.Model
+﻿using Bundlingway.Utilities.ManagedResources;
+
+namespace Bundlingway.Model
 {
     public class ResourcePackage
     {
@@ -10,6 +12,7 @@
         public bool Installed { get; set; }
         public string LocalPresetFolder { get; set; }
         public string LocalTextureFolder { get; set; }
+        public string LocalShaderFolder { get; set; }
         public bool Hidden { get; set; }
     }
 }

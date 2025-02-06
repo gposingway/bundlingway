@@ -16,7 +16,7 @@ namespace Bundlingway
 
             _ = UI.Announce(Constants.MessageCategory.ApplicationStart);
 
-            _= Bootstrap.DetectSettings();
+            _ = Bootstrap.DetectSettings();
 
             PopulateGrid();
 
@@ -35,10 +35,6 @@ namespace Bundlingway
             }
         }
 
-
-        private void frmLanding_Load(object sender, EventArgs e)
-        {
-        }
 
         private void btnDetectSettings_Click(object sender, EventArgs e)
         {
@@ -67,7 +63,7 @@ namespace Bundlingway
 
         private void btnInstallPackage_Click(object sender, EventArgs e)
         {
-            UI.Announce(Constants.MessageCategory.BeforeAddPackageSelection);
+            _ = UI.Announce(Constants.MessageCategory.BeforeAddPackageSelection);
 
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
@@ -78,6 +74,8 @@ namespace Bundlingway
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
+                    SetPackageOpsAvailable(false);
+
                     var validExtensions = new HashSet<string>(Constants.InstallableExtensions);
                     var selectedFiles = openFileDialog.FileNames
                         .Where(file => validExtensions.Contains(Path.GetExtension(file).ToLower()))
@@ -88,6 +86,7 @@ namespace Bundlingway
                         Maintenance.RemoveTempDir();
                         Instances.LocalConfigProvider.Save();
                         PopulateGrid();
+                        SetPackageOpsAvailable(true);
 
                         _ = UI.Announce(Constants.MessageCategory.Finished);
                     });
@@ -97,6 +96,32 @@ namespace Bundlingway
                     _ = UI.Announce(Constants.MessageCategory.AddPackageSelectionCancelled);
                 }
             }
+        }
+
+        private void SetPackageOpsAvailable(bool v)
+        {
+
+            if (btnInstallPackage.InvokeRequired)
+            {
+                {
+                    Invoke(new MethodInvoker(delegate
+                {
+                    btnInstallPackage.Enabled = v;
+                    btnRemove.Enabled = v;
+                    btnUninstall.Enabled = v;
+                    btnReinstall.Enabled = v;
+                }));
+                }
+            }
+            else
+            {
+                btnInstallPackage.Enabled = v;
+                btnRemove.Enabled = v;
+                btnUninstall.Enabled = v;
+                btnReinstall.Enabled = v;
+            }
+
+
         }
 
         private void PopulateGrid()
@@ -161,6 +186,8 @@ namespace Bundlingway
 
         private void btnRemove_Click(object sender, EventArgs e)
         {
+            SetPackageOpsAvailable(false);
+
             var selectedPackages = dgvPackages.SelectedRows
                 .Cast<DataGridViewRow>()
                 .Select(row => (ResourcePackage)row.Tag)
@@ -170,12 +197,15 @@ namespace Bundlingway
             {
                 _ = UI.Announce(Constants.MessageCategory.UninstallPackage);
                 PopulateGrid();
+                SetPackageOpsAvailable(true);
             });
 
         }
 
         private void btnUninstall_Click(object sender, EventArgs e)
         {
+            SetPackageOpsAvailable(false);
+
             var selectedPackages = dgvPackages.SelectedRows
                 .Cast<DataGridViewRow>()
                 .Select(row => (ResourcePackage)row.Tag)
@@ -185,12 +215,15 @@ namespace Bundlingway
             {
                 Maintenance.RemoveTempDir();
                 _ = UI.Announce(Constants.MessageCategory.UninstallPackage);
+                SetPackageOpsAvailable(true);
                 PopulateGrid();
             });
         }
 
         private void btnReinstall_Click(object sender, EventArgs e)
         {
+            SetPackageOpsAvailable(false);
+
             var selectedPackages = dgvPackages.SelectedRows
                 .Cast<DataGridViewRow>()
                 .Select(row => (ResourcePackage)row.Tag)
@@ -201,6 +234,7 @@ namespace Bundlingway
                 Maintenance.RemoveTempDir();
                 _ = UI.Announce(Constants.MessageCategory.ReinstallPackage);
                 PopulateGrid();
+                SetPackageOpsAvailable(true);
             });
         }
 
@@ -247,7 +281,7 @@ namespace Bundlingway
         {
             // Open Game Folder in a new explorer window
 
-            string gamePath = Instances.LocalConfigProvider.Configuration.GameFolder;
+            string gamePath = Instances.LocalConfigProvider.Configuration.Game.InstallationFolder;
             if (Directory.Exists(gamePath))
             {
                 System.Diagnostics.Process.Start("explorer.exe", gamePath);
@@ -274,10 +308,19 @@ namespace Bundlingway
 
         private void btnDebug_Click(object sender, EventArgs e)
         {
-            string logFilePath = Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.Log);
-            if (File.Exists(logFilePath))
+            var logDirectory = Instances.BundlingwayDataFolder;
+            var logFiles = Directory.GetFiles(logDirectory, Constants.Files.Log.Split('.')[0] + "*.txt");
+
+            if (logFiles.Length == 0)
             {
-                System.Diagnostics.Process.Start("notepad.exe", logFilePath);
+                return;
+            }
+
+            var latestLogFile = logFiles.OrderByDescending(f => new FileInfo(f).LastWriteTime).First();
+
+            if (File.Exists(latestLogFile))
+            {
+                System.Diagnostics.Process.Start("notepad.exe", latestLogFile);
             }
         }
 
@@ -321,12 +364,17 @@ namespace Bundlingway
             _ = UI.Announce("Duplicated shaders? green tint everywhere? No worries, 'Fix It' is here to save the day!");
         }
 
+        private void btnInstallReShade_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce("You need to shut down the game client before you can update!");
+        }
+
         internal async Task UpdateElements()
         {
 
             var c = Instances.LocalConfigProvider.Configuration;
 
-            txtXivPath.Text = (c.XIVPath != null) ? c.XIVPath : "Not Found";
+            txtXivPath.Text = (c.Game.ClientLocation != null) ? c.Game.ClientLocation : "Not Found";
 
 
             var reShadeBtnEnabled = true;
@@ -390,18 +438,9 @@ namespace Bundlingway
                 btnInstallReShade.Text = reShadeBtnText;
             }
 
-
-
-
-
-
-
-
-
             var gPosingwayBtnEnabled = true;
             var gPosingwayBtnVisible = true;
             string gPosingwayBtnText = null;
-
 
             btnInstallGPosingway.Enabled = true;
             var GPosingwayText = c.GPosingway.Status switch
@@ -441,8 +480,6 @@ namespace Bundlingway
                     btnInstallGPosingway.Enabled = gPosingwayBtnEnabled;
                     btnInstallGPosingway.Visible = gPosingwayBtnVisible;
                     btnInstallGPosingway.Text = gPosingwayBtnText;
-
-
                 }));
             }
             else
@@ -453,11 +490,6 @@ namespace Bundlingway
                 btnInstallGPosingway.Visible = gPosingwayBtnVisible;
                 btnInstallGPosingway.Text = gPosingwayBtnText;
             }
-        }
-
-        private void btnInstallReShade_MouseEnter(object sender, EventArgs e)
-        {
-            _ = UI.Announce("You need to shut down the game client before you can update!");
         }
     }
 }
