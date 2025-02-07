@@ -47,7 +47,6 @@ namespace Bundlingway.Utilities
 
                 });
 
-
                 Instances.LocalConfigProvider.Save();
 
                 Log.Information("Bootstrap.DetectSettings: Settings detection completed.");
