@@ -123,22 +123,23 @@ namespace Bundlingway.Utilities
         internal static async Task Update()
         {
             string methodName = ProcessHelper.GetCurrentMethodName();
+
             var downloadUrl = Instances.GPosingwayConfigFileUrl;
-            var destinationPath = Path.Combine(Instances.TempFolder, "gposingway-definitions.json");
+            var destinationPath = Path.Combine(Instances.TempFolder, Constants.Files.GPosingwayConfig);
 
             try
             {
-                using (var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
-                {
-                    response.EnsureSuccessStatusCode();
+                using var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
 
-                    Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)); // Create the directory if it doesn't exist
+                response.EnsureSuccessStatusCode();
 
-                    await using var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-                    await using var stream = await response.Content.ReadAsStreamAsync();
-                    await stream.CopyToAsync(fs);
-                    Log.Information($"{methodName}: Successfully downloaded the file as gposingway-definitions-new.json.");
-                }
+                Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)); // Create the directory if it doesn't exist
+
+                await using var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+                await using var stream = await response.Content.ReadAsStreamAsync();
+                await stream.CopyToAsync(fs);
+
+                Log.Information($"{methodName}: Successfully downloaded the file as gposingway-definitions-new.json.");
             }
             catch (Exception ex)
             {
@@ -156,7 +157,15 @@ namespace Bundlingway.Utilities
                 return;
             }
 
-            var tempFolder = Path.Combine(Instances.TempFolder, "GPosingway");
+            var storageFolder = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Core, Constants.Folders.GposingwayPackage);
+            var storageFile = Path.Combine(storageFolder, Constants.Files.GPosingwayPackage);
+
+            if (!Directory.Exists(storageFolder))
+                Directory.CreateDirectory(storageFolder);
+
+            var tempFolder = Path.Combine(Instances.TempFolder, Constants.Folders.GposingwayPackage);
+            Directory.CreateDirectory(tempFolder);
+
             var gameFolder = Instances.LocalConfigProvider.Configuration.Game.InstallationFolder;
 
             if (string.IsNullOrEmpty(definitions.gposingwayUrl) || string.IsNullOrEmpty(tempFolder) || string.IsNullOrEmpty(gameFolder))
@@ -167,26 +176,26 @@ namespace Bundlingway.Utilities
 
             try
             {
-                Directory.CreateDirectory(tempFolder);
-                var fileName = Path.Combine(tempFolder, "gposingway.zip");
+
+                _ = UI.Announce("Downloading the GPosingway package...");
 
                 using (var response = await client.GetAsync(definitions.gposingwayUrl, HttpCompletionOption.ResponseHeadersRead))
                 {
                     response.EnsureSuccessStatusCode();
-                    await using var fs = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None);
+                    await using var fs = new FileStream(storageFile, FileMode.Create, FileAccess.Write, FileShare.None);
                     await using var stream = await response.Content.ReadAsStreamAsync();
                     await stream.CopyToAsync(fs);
                     Log.Information($"{methodName}: Successfully downloaded the file.");
                 }
 
                 var extractPath = Path.Combine(tempFolder, "Extracted");
-                if (Directory.Exists(extractPath))
-                {
-                    Directory.Delete(extractPath, true);
-                }
+
+                if (Directory.Exists(extractPath)) Directory.Delete(extractPath, true);
                 Directory.CreateDirectory(extractPath);
 
-                using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read))
+                _ = UI.Announce("Unpacking GPosingway...");
+
+                using (var fs = new FileStream(storageFile, FileMode.Open, FileAccess.Read))
                 using (var zf = new ZipFile(fs))
                 {
                     foreach (ZipEntry entry in zf)
@@ -208,6 +217,8 @@ namespace Bundlingway.Utilities
                     }
                     Log.Information($"{methodName}: Successfully extracted the file.");
                 }
+
+                _ = UI.Announce("Installing GPosingway...");
 
                 // Copy the content from extractPath + "reshade-shaders" to the game's "reshade-shaders" folder
                 var sourcePath = Path.Combine(extractPath, Constants.Folders.GameShaders);
