@@ -40,7 +40,7 @@ namespace Bundlingway
 
         private void btnDetectSettings_Click(object sender, EventArgs e)
         {
-            _ = Bootstrap.DetectSettings();
+            _ = Bootstrap.DetectSettings().ContinueWith(async a => { await UpdateElements(); });
         }
 
         private void TryInstalPackages(DragEventArgs e)
@@ -247,7 +247,7 @@ namespace Bundlingway
 
             ReShade.Update().ContinueWith(a =>
             {
-                Bootstrap.DetectSettings().ContinueWith(b =>
+                Bootstrap.DetectSettings().ContinueWith(async b =>
                 {
                     Maintenance.RemoveTempDir();
                 });
@@ -379,8 +379,57 @@ namespace Bundlingway
 
             var c = Instances.LocalConfigProvider.Configuration;
 
-            txtXivPath.Text = (c.Game.ClientLocation != null) ? c.Game.ClientLocation : "Not Found";
 
+            var txtGamePathText = "";
+            var mustDetect = false;
+
+
+            if (c.Game.InstallationFolder != null)
+            {
+                txtGamePathText = c.Game.InstallationFolder;
+            }
+            else
+            {
+                txtGamePathText = "Click [Detect] with the game running";
+                mustDetect = true;
+            }
+
+
+            if (txtXivPath.InvokeRequired)
+            {
+                Invoke(new MethodInvoker(delegate { txtXivPath.Text = txtGamePathText; }));
+            }
+            else
+            {
+                txtXivPath.Text = txtGamePathText;
+            }
+
+            if (mustDetect)
+            {
+
+                if (txtReShadeStatus.InvokeRequired)
+                {
+                    Invoke(new MethodInvoker(delegate
+                    {
+
+                        txtReShadeStatus.Text = "Waiting...";
+                        txtGPosingwayStatus.Text = "Waiting...";
+
+                        btnInstallReShade.Visible = false;
+                        btnInstallGPosingway.Visible = false;
+                    }));
+                }
+                else
+                {
+                    txtReShadeStatus.Text = "Waiting...";
+                    txtGPosingwayStatus.Text = "Waiting...";
+
+                    btnInstallReShade.Visible = false;
+                    btnInstallGPosingway.Visible = false;
+                }
+
+                return;
+            }
 
             var reShadeBtnEnabled = true;
             var reShadeBtnVisible = true;
@@ -418,8 +467,11 @@ namespace Bundlingway
 
             if (reShadeBtnVisible)
             {
-                reShadeBtnEnabled = !Instances.IsGameRunning;
-                _ = UI.Announce("If you want to update ReShade, shut down the game first!");
+                if (c.ReShade.Status != EPackageStatus.NotInstalled)
+                {
+                    reShadeBtnEnabled = !Instances.IsGameRunning;
+                    _ = UI.Announce("If you want to update ReShade, shut down the game first!");
+                }
             }
 
 
