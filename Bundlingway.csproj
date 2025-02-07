@@ -14,9 +14,9 @@
     <Product>Bundlingway</Product>
     <!-- Set initial version numbers -->
     <MajorVersion>0</MajorVersion>
-    <MinorVersion>1</MinorVersion>
-    <BuildVersion>$([System.DateTime]::Now.ToString("yyMM"))</BuildVersion>
-    <RevisionVersion>$([System.DateTime]::Now.ToString("ddHHmm"))</RevisionVersion>
+    <MinorVersion>$([System.DateTime]::Now.ToString("yyyy"))</MinorVersion>
+    <BuildVersion>$([System.DateTime]::Now.ToString("MMdd"))</BuildVersion>
+    <RevisionVersion>$([System.DateTime]::Now.ToString("HHmm"))</RevisionVersion>
 
     <!-- Form the complete version strings -->
     <ApplicationVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</ApplicationVersion>
