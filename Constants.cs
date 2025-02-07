@@ -41,21 +41,27 @@ namespace Bundlingway
             public static readonly string PackagePresets = "Presets";
             public static readonly string PackageTextures = "Textures";
 
+            public static readonly string Core = "CorePackages";
             public static readonly string Packages = "Packages";
             public static readonly string SourcePackage = "Source";
 
             public static readonly string Temp = "temp";
             public static readonly string Cache = "Cache";
+
             public static readonly string SinglePresets = "Single Presets";
 
             public static readonly string GamePresets = "reshade-presets";
             public static readonly string GameShaders = "reshade-shaders";
+
+            public static readonly string GposingwayPackage = "GPosingway";
+
         }
 
         public static class Files
         {
             public static readonly string CatalogEntry = "catalog-entry.json";
             public static readonly string GPosingwayConfig = "gposingway-definitions.json";
+            public static readonly string GPosingwayPackage = "gposingway.zip";
             public static readonly string BundlingwayConfig = "bundlingway-config.json";
             public static readonly string Log = "bundlingway-log-.txt";
             public static readonly string LocalReshadeBinary = "dxgi.dll";
