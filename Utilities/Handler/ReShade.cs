@@ -107,6 +107,7 @@ namespace Bundlingway.Utilities.Handler
         internal static async Task Update()
         {
             Log.Information("ReShadeParser.Update: Starting update process.");
+
             var remoteLink = Instances.LocalConfigProvider.Configuration.ReShade.RemoteLink;
             var tempFolder = Path.Combine(Instances.TempFolder, "ReShade");
             var gameFolder = Instances.LocalConfigProvider.Configuration.Game.InstallationFolder;
