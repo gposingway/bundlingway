@@ -14,6 +14,8 @@ namespace Bundlingway
             UI._landing = this;
             InitializeComponent();
 
+            this.Text = $"Bundlingway · v{Instances.AppVersion}";
+
             _ = UI.Announce(Constants.MessageCategory.ApplicationStart);
 
             _ = Bootstrap.DetectSettings();
@@ -254,6 +256,9 @@ namespace Bundlingway
 
         private void btnInstallGPosingway_Click(object sender, EventArgs e)
         {
+
+            btnInstallGPosingway.Enabled = false;
+
             GPosingway.Update().ContinueWith(a =>
             {
                 Bootstrap.DetectSettings().ContinueWith(b =>
