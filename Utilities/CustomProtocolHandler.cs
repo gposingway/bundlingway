@@ -9,8 +9,8 @@ namespace Bundlingway.Utilities
         {
             var isExtensionRegistered = true;
             var isMainProtocolRegistered = true;
-            var ass = System.Reflection.Assembly.GetExecutingAssembly();
-            string appPath = ass.Location.Replace(".dll", ".exe");
+
+            var appPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
 
             // Check if the protocol is already registered
             using (RegistryKey existingKey = Registry.ClassesRoot.OpenSubKey(protocolName))
