@@ -1,8 +1,6 @@
 ﻿using Bundlingway.Model;
-using Bundlingway.Utilities.Extensions;
 using Bundlingway.Utilities.Handler;
 using Serilog;
-using System.Configuration;
 
 namespace Bundlingway.Utilities
 {
@@ -29,8 +27,7 @@ namespace Bundlingway.Utilities
         {
             try
             {
-                UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.DetectingSettings));
-
+                _ = UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.DetectingSettings));
                 Log.Information("Bootstrap.DetectSettings: Starting settings detection.");
                 Instances.LocalConfigProvider.Load();
 
@@ -44,14 +41,16 @@ namespace Bundlingway.Utilities
                         CheckReShade(),
                         CheckGPosingway()
                         );
-
                 });
 
                 Instances.LocalConfigProvider.Save();
 
-                Log.Information("Bootstrap.DetectSettings: Settings detection completed.");
-                UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.Ready));
+                
 
+                Log.Information("Bootstrap.DetectSettings: Settings detection completed.");
+                _ = UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.Ready));
+
+                _ = UI.UpdateElements();
             }
             catch (Exception ex)
             {
@@ -66,6 +65,9 @@ namespace Bundlingway.Utilities
                 var c = Instances.LocalConfigProvider.Configuration.Game;
 
                 Log.Information("Bootstrap.CheckGameClient: Checking game client.");
+
+                Instances.IsGameRunning = ProcessHelper.IsProcessRunning(Constants.Files.GameProcess);
+
                 if (Instances.IsGameRunning)
                 {
                     var procPath = ProcessHelper.GetProcessPath(Constants.Files.GameProcess);
@@ -94,9 +96,6 @@ namespace Bundlingway.Utilities
                             // _ = ManagedResources.Shader.SaveShaderAnalysisToPath(shaderFolderPath, Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.ShaderAnalysis)).ContinueWith(i=> UI.Announce("Installed shaders analysis finished!"));
                         }
                     }
-
-
-                _ = UI.UpdateElements();
 
                 Log.Information("Bootstrap.CheckGameClient: Game client check completed.");
             }
