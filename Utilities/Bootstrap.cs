@@ -34,12 +34,13 @@ namespace Bundlingway.Utilities
                 if (Instances.ResourcePackages == null)
                     Instances.ResourcePackages = [];
 
+                await CheckBundlingway();
+
                 await CheckGameClient().ContinueWith(async a =>
                 {
                     await Task.WhenAll(
                         CheckReShade(),
-                        CheckGPosingway(),
-                        CheckBundlingway()
+                        CheckGPosingway()
                         );
                 });
 

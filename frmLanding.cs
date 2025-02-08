@@ -430,24 +430,18 @@ namespace Bundlingway
                 return;
             }
 
-
             if (c.Bundlingway.RemoteVersion != c.Bundlingway.LocalVersion)
             {
-                if (btnUpdate.InvokeRequired)
-                {
-                    Invoke(new MethodInvoker(delegate { btnUpdate.Visible = true; }));
-                }
-                else
-                {
-                    btnUpdate.Visible = true;
-                }
-
+                if (btnUpdate.InvokeRequired) { Invoke(new MethodInvoker(delegate { btnUpdate.Visible = true; })); }
+                else { btnUpdate.Visible = true; }
 
                 _ = UI.Announce($"A new Bundlingway version ({c.Bundlingway.RemoteVersion}) is out!");
             }
-
-
-
+            else
+            {
+                if (btnUpdate.InvokeRequired) { Invoke(new MethodInvoker(delegate { btnUpdate.Visible = false; })); }
+                else { btnUpdate.Visible = false; }
+            }
 
             var reShadeBtnEnabled = true;
             var reShadeBtnVisible = true;
