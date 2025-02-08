@@ -45,5 +45,5 @@ We’d love to hear from you! Whether you have suggestions, find a burrow that n
 
 ## 📜 License
 
-Bundlingway is released under the Creative Commons Attribution 4.0 International License (CC BY 4.0). You can check out all the details in the [LICENSE](LICENSE.md) file.
+Bundlingway is released under the Creative Commons Attribution 4.0 International License (CC BY 4.0). You can check out all the details in the [license.md](license.md) file.
 
