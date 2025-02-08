@@ -260,6 +260,7 @@
             btnUpdate.Text = "Update Available!";
             btnUpdate.TextAlign = ContentAlignment.MiddleRight;
             btnUpdate.UseVisualStyleBackColor = true;
+            btnUpdate.Visible = false;
             btnUpdate.Click += btnUpdate_Click;
             btnUpdate.MouseEnter += btnUpdate_MouseEnter;
             // 

@@ -569,6 +569,8 @@ namespace Bundlingway
 
         private void btnUpdate_Click(object sender, EventArgs e)
         {
+            btnUpdate.Text = "Updating...";
+            btnUpdate.Enabled = false;
             Utilities.Handler.Bundlingway.Update();
         }
 
