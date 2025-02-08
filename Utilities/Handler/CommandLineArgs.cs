@@ -34,6 +34,23 @@ namespace Bundlingway.Utilities.Handler
                 {
                     var currentExePath = Process.GetCurrentProcess().MainModule.FileName;
                     Log.Information($"Copying current executable from {currentExePath} to {targetFile}");
+
+                    // Wait for any existing process with the same name to exit
+                    var processName = Path.GetFileNameWithoutExtension(currentExePath);
+                    var existingProcesses = Process.GetProcessesByName(processName).Where(p => p.Id != Process.GetCurrentProcess().Id).ToList();
+                    if (existingProcesses.Any())
+                    {
+                        Log.Information($"Waiting for existing process {processName} to exit.");
+                        var waitTask = Task.Run(() =>
+                        {
+                            foreach (var process in existingProcesses)
+                            {
+                                process.WaitForExit(10000); // Wait up to 10 seconds
+                            }
+                        });
+                        await waitTask;
+                    }
+
                     File.Copy(currentExePath, targetFile, true);
 
                     var process = new Process { StartInfo = new ProcessStartInfo { FileName = targetFile, UseShellExecute = true } };

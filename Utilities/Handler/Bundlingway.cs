@@ -84,7 +84,7 @@ namespace Bundlingway.Utilities.Handler
                 // Start the executable with "update-client" command line argument
                 System.Diagnostics.Process.Start(executablePath, Constants.CommandLineOptions.UpdateClient);
                 Log.Information($"Bundlingway.Update: Started {executablePath} with 'update-client' argument.");
-                client.Dispose();
+                Environment.Exit(0);
             }
         }
     }
