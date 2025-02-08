@@ -11,6 +11,7 @@ namespace Bundlingway.Model
             public string LocalVersion { get; set; }
             public string RemoteVersion { get; set; }
             public string RemoteLink { get; set; }
+            public string Location { get; set; }
         }
 
         public class GameData
@@ -21,7 +22,8 @@ namespace Bundlingway.Model
 
         public CorePackageStatus ReShade { get; set; } = new CorePackageStatus();
         public CorePackageStatus GPosingway { get; set; } = new CorePackageStatus();
-        public GameData Game { get; set; } = new GameData();
+        public CorePackageStatus Bundlingway { get; set; } = new CorePackageStatus();
 
+        public GameData Game { get; set; } = new GameData();
     }
 }

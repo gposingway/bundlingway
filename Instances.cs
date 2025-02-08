@@ -21,7 +21,6 @@ namespace Bundlingway
 
         public static List<ResourcePackage> ResourcePackages { get; set; } = [];
         public static Dictionary<string, ShaderPackage> Packages { get; set; } = [];
-        public static string GPosingwayConfigFileUrl = "https://github.com/gposingway/gposingway/releases/latest/download/gposingway-definitions.json";
 
         public static List<IRawFileProcess> RawFileProcessors = IoC.GetClassesByInterface<IRawFileProcess>().CreateInstances<IRawFileProcess>().ToList();
         public static List<IPresetProcess> PresetProcessors = IoC.GetClassesByInterface<IPresetProcess>().CreateInstances<IPresetProcess>().ToList();

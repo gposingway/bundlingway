@@ -34,12 +34,12 @@ namespace Bundlingway.Utilities
                 if (Instances.ResourcePackages == null)
                     Instances.ResourcePackages = [];
 
-
                 await CheckGameClient().ContinueWith(async a =>
                 {
                     await Task.WhenAll(
                         CheckReShade(),
-                        CheckGPosingway()
+                        CheckGPosingway(),
+                        CheckBundlingway()
                         );
                 });
 
@@ -55,6 +55,22 @@ namespace Bundlingway.Utilities
             catch (Exception ex)
             {
                 Log.Information($"Bootstrap.DetectSettings: Error in DetectSettings: {ex.Message}");
+            }
+        }
+
+        private static async Task CheckBundlingway()
+        {
+            try
+            {
+                Log.Information("Bootstrap.CheckBundlingway: Checking Bundlingway.");
+                await Handler.Bundlingway.GetLocalInfo();
+                await Handler.Bundlingway.GetRemoteInfo();
+                Instances.LocalConfigProvider.Save();
+                Log.Information("Bootstrap.CheckBundlingway: Bundlingway check completed.");
+            }
+            catch (Exception ex)
+            {
+                Log.Information($"Bootstrap.CheckBundlingway: Error in CheckBundlingway: {ex.Message}");
             }
         }
 

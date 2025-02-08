@@ -379,7 +379,6 @@ namespace Bundlingway
 
             var c = Instances.LocalConfigProvider.Configuration;
 
-
             var txtGamePathText = "";
             var mustDetect = false;
 
@@ -430,6 +429,25 @@ namespace Bundlingway
 
                 return;
             }
+
+
+            if (c.Bundlingway.RemoteVersion != c.Bundlingway.LocalVersion)
+            {
+                if (btnUpdate.InvokeRequired)
+                {
+                    Invoke(new MethodInvoker(delegate { btnUpdate.Visible = true; }));
+                }
+                else
+                {
+                    btnUpdate.Visible = true;
+                }
+
+
+                _ = UI.Announce($"A new Bundlingway version ({c.Bundlingway.RemoteVersion}) is out!");
+            }
+
+
+
 
             var reShadeBtnEnabled = true;
             var reShadeBtnVisible = true;
@@ -547,6 +565,16 @@ namespace Bundlingway
                 btnInstallGPosingway.Visible = gPosingwayBtnVisible;
                 btnInstallGPosingway.Text = gPosingwayBtnText;
             }
+        }
+
+        private void btnUpdate_Click(object sender, EventArgs e)
+        {
+            Utilities.Handler.Bundlingway.Update();
+        }
+
+        private void btnUpdate_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce($"A new Bundlingway version ({Instances.LocalConfigProvider.Configuration.Bundlingway.RemoteVersion}) is out!");
         }
     }
 }

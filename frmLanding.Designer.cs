@@ -33,14 +33,14 @@
             contextMenuStrip1 = new ContextMenuStrip(components);
             splitContainer1 = new SplitContainer();
             flpSideMenu = new FlowLayoutPanel();
-            btnFixIt = new FontAwesome.Sharp.IconButton();
-            lblSpacing1 = new Label();
             btnGameFolder = new FontAwesome.Sharp.IconButton();
             btnPackagesFolder = new FontAwesome.Sharp.IconButton();
             btnDebug = new FontAwesome.Sharp.IconButton();
             label1 = new Label();
             btnEmporium = new FontAwesome.Sharp.IconButton();
             btnAbout = new FontAwesome.Sharp.IconButton();
+            label5 = new Label();
+            btnUpdate = new FontAwesome.Sharp.IconButton();
             pnlAbout = new Panel();
             lblAnnouncement = new Label();
             pictureBox1 = new PictureBox();
@@ -119,14 +119,14 @@
             flpSideMenu.AllowDrop = true;
             flpSideMenu.AutoScroll = true;
             flpSideMenu.BackColor = SystemColors.ControlLight;
-            flpSideMenu.Controls.Add(btnFixIt);
-            flpSideMenu.Controls.Add(lblSpacing1);
             flpSideMenu.Controls.Add(btnGameFolder);
             flpSideMenu.Controls.Add(btnPackagesFolder);
             flpSideMenu.Controls.Add(btnDebug);
             flpSideMenu.Controls.Add(label1);
             flpSideMenu.Controls.Add(btnEmporium);
             flpSideMenu.Controls.Add(btnAbout);
+            flpSideMenu.Controls.Add(label5);
+            flpSideMenu.Controls.Add(btnUpdate);
             flpSideMenu.Dock = DockStyle.Fill;
             flpSideMenu.Location = new Point(0, 0);
             flpSideMenu.Name = "flpSideMenu";
@@ -135,34 +135,6 @@
             flpSideMenu.DragDrop += Generic_DragDrop;
             flpSideMenu.DragEnter += Generic_DragEnter;
             // 
-            // btnFixIt
-            // 
-            btnFixIt.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnFixIt.IconChar = FontAwesome.Sharp.IconChar.WandMagicSparkles;
-            btnFixIt.IconColor = SystemColors.Highlight;
-            btnFixIt.IconFont = FontAwesome.Sharp.IconFont.Auto;
-            btnFixIt.IconSize = 32;
-            btnFixIt.ImageAlign = ContentAlignment.MiddleLeft;
-            btnFixIt.Location = new Point(3, 3);
-            btnFixIt.Margin = new Padding(3, 3, 3, 0);
-            btnFixIt.Name = "btnFixIt";
-            btnFixIt.Size = new Size(145, 37);
-            btnFixIt.TabIndex = 1;
-            btnFixIt.Text = "Fix It!";
-            btnFixIt.TextAlign = ContentAlignment.MiddleRight;
-            btnFixIt.UseVisualStyleBackColor = true;
-            btnFixIt.MouseEnter += btnFixIt_MouseEnter;
-            // 
-            // lblSpacing1
-            // 
-            lblSpacing1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            lblSpacing1.AutoSize = true;
-            lblSpacing1.Font = new Font("Segoe UI", 12F);
-            lblSpacing1.Location = new Point(3, 40);
-            lblSpacing1.Name = "lblSpacing1";
-            lblSpacing1.Size = new Size(0, 21);
-            lblSpacing1.TabIndex = 6;
-            // 
             // btnGameFolder
             // 
             btnGameFolder.IconChar = FontAwesome.Sharp.IconChar.FolderOpen;
@@ -170,7 +142,7 @@
             btnGameFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnGameFolder.IconSize = 32;
             btnGameFolder.ImageAlign = ContentAlignment.MiddleLeft;
-            btnGameFolder.Location = new Point(3, 64);
+            btnGameFolder.Location = new Point(3, 3);
             btnGameFolder.Margin = new Padding(3, 3, 3, 0);
             btnGameFolder.Name = "btnGameFolder";
             btnGameFolder.Size = new Size(145, 37);
@@ -188,7 +160,7 @@
             btnPackagesFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnPackagesFolder.IconSize = 32;
             btnPackagesFolder.ImageAlign = ContentAlignment.MiddleLeft;
-            btnPackagesFolder.Location = new Point(3, 104);
+            btnPackagesFolder.Location = new Point(3, 43);
             btnPackagesFolder.Margin = new Padding(3, 3, 3, 0);
             btnPackagesFolder.Name = "btnPackagesFolder";
             btnPackagesFolder.Size = new Size(145, 37);
@@ -206,7 +178,7 @@
             btnDebug.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnDebug.IconSize = 32;
             btnDebug.ImageAlign = ContentAlignment.MiddleLeft;
-            btnDebug.Location = new Point(3, 144);
+            btnDebug.Location = new Point(3, 83);
             btnDebug.Margin = new Padding(3, 3, 3, 0);
             btnDebug.Name = "btnDebug";
             btnDebug.Size = new Size(145, 37);
@@ -222,7 +194,7 @@
             label1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label1.AutoSize = true;
             label1.Font = new Font("Segoe UI", 12F);
-            label1.Location = new Point(3, 181);
+            label1.Location = new Point(3, 120);
             label1.Name = "label1";
             label1.Size = new Size(0, 21);
             label1.TabIndex = 20;
@@ -234,7 +206,7 @@
             btnEmporium.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnEmporium.IconSize = 32;
             btnEmporium.ImageAlign = ContentAlignment.MiddleLeft;
-            btnEmporium.Location = new Point(3, 205);
+            btnEmporium.Location = new Point(3, 144);
             btnEmporium.Margin = new Padding(3, 3, 3, 0);
             btnEmporium.Name = "btnEmporium";
             btnEmporium.Size = new Size(145, 37);
@@ -252,7 +224,7 @@
             btnAbout.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnAbout.IconSize = 32;
             btnAbout.ImageAlign = ContentAlignment.MiddleLeft;
-            btnAbout.Location = new Point(3, 245);
+            btnAbout.Location = new Point(3, 184);
             btnAbout.Margin = new Padding(3, 3, 3, 0);
             btnAbout.Name = "btnAbout";
             btnAbout.Size = new Size(145, 37);
@@ -262,6 +234,34 @@
             btnAbout.UseVisualStyleBackColor = true;
             btnAbout.Click += btnAbout_Click;
             btnAbout.MouseEnter += btnAbout_MouseEnter;
+            // 
+            // label5
+            // 
+            label5.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            label5.AutoSize = true;
+            label5.Font = new Font("Segoe UI", 12F);
+            label5.Location = new Point(3, 221);
+            label5.Name = "label5";
+            label5.Size = new Size(0, 21);
+            label5.TabIndex = 21;
+            // 
+            // btnUpdate
+            // 
+            btnUpdate.IconChar = FontAwesome.Sharp.IconChar.Download;
+            btnUpdate.IconColor = Color.Red;
+            btnUpdate.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnUpdate.IconSize = 32;
+            btnUpdate.ImageAlign = ContentAlignment.MiddleLeft;
+            btnUpdate.Location = new Point(3, 245);
+            btnUpdate.Margin = new Padding(3, 3, 3, 0);
+            btnUpdate.Name = "btnUpdate";
+            btnUpdate.Size = new Size(145, 37);
+            btnUpdate.TabIndex = 22;
+            btnUpdate.Text = "Update Available!";
+            btnUpdate.TextAlign = ContentAlignment.MiddleRight;
+            btnUpdate.UseVisualStyleBackColor = true;
+            btnUpdate.Click += btnUpdate_Click;
+            btnUpdate.MouseEnter += btnUpdate_MouseEnter;
             // 
             // pnlAbout
             // 
@@ -652,15 +652,15 @@
         private DataGridViewTextBoxColumn NameCol;
         private DataGridViewTextBoxColumn StatusCol;
         private Button btnUninstall;
-        private Label lblSpacing1;
         private FontAwesome.Sharp.IconButton btnPackagesFolder;
         private FontAwesome.Sharp.IconButton btnGameFolder;
         private FontAwesome.Sharp.IconButton btnAbout;
         private Label lblAnnouncement;
         private PictureBox pictureBox1;
         private FontAwesome.Sharp.IconButton btnDebug;
-        private FontAwesome.Sharp.IconButton btnFixIt;
         private FontAwesome.Sharp.IconButton btnEmporium;
         private Label label1;
+        private Label label5;
+        private FontAwesome.Sharp.IconButton btnUpdate;
     }
 }

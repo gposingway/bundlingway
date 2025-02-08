@@ -16,7 +16,7 @@ namespace Bundlingway.Utilities
             string methodName = ProcessHelper.GetCurrentMethodName();
 
             // Fetch the webpage HTML content
-            string htmlContent = await FetchHtmlContent(Instances.GPosingwayConfigFileUrl);
+            string htmlContent = await FetchHtmlContent(Constants.Urls.GPosingwayConfigFileUrl);
 
             if (string.IsNullOrEmpty(htmlContent))
             {
@@ -124,7 +124,7 @@ namespace Bundlingway.Utilities
         {
             string methodName = ProcessHelper.GetCurrentMethodName();
 
-            var downloadUrl = Instances.GPosingwayConfigFileUrl;
+            var downloadUrl = Constants.Urls.GPosingwayConfigFileUrl;
             var destinationPath = Path.Combine(Instances.TempFolder, Constants.Files.GPosingwayConfig);
 
             try

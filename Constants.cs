@@ -20,7 +20,21 @@ namespace Bundlingway
             Hidden = true,
         };
 
+
+
         public static string AppUserModelId = "BundlingwayPackageManager";
+
+        public static class Urls
+        {
+            public static string GPosingwayConfigFileUrl = "https://github.com/gposingway/gposingway/releases/latest/download/gposingway-definitions.json";
+            public static string BundlingwayPackageLatestTag = "https://api.github.com/repos/gposingway/bundlingway/releases/latest";
+        }
+
+        public static class CommandLineOptions
+        {
+            public static string UpdateClient = "update-client";
+        }
+
 
         public static class Events
         {
@@ -54,7 +68,7 @@ namespace Bundlingway
             public static readonly string GameShaders = "reshade-shaders";
 
             public static readonly string GposingwayPackage = "GPosingway";
-
+            public static readonly string BundlingwayPackage = "Bundlingway";
         }
 
         public static class Files
