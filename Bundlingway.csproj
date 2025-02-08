@@ -22,6 +22,7 @@
     <ApplicationVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</ApplicationVersion>
     <AssemblyVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</AssemblyVersion>
     <FileVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</FileVersion>
+    <ApplicationIcon>carrot.ico</ApplicationIcon>
   </PropertyGroup>
   
   <Target Name="UpdateBuildInfo" BeforeTargets="BeforeBuild">
@@ -30,6 +31,10 @@
       <Revision>$([System.DateTime]::Now.ToString("yyyyMMddHHmmss"))</Revision>
     </PropertyGroup>
   </Target>
+  
+  <ItemGroup>
+    <Content Include="carrot.ico" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FontAwesome.Sharp" Version="6.6.0" />
