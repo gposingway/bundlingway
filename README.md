@@ -39,7 +39,7 @@ Oh, hello there, friend! Welcome to **Bundlingway**, the coziest little package 
   - Click **`Uninstall`** to remove the preset collection from your game while keeping it stored for future use.
   - Click **`Remove`** to permanently delete the collection from your list, ensuring a clutter-free setup.
 
-## 🐾 Join the Warren!
+## 🐾 Join the Burrow!
 
 We’d love to hear from you! Whether you have suggestions, find a burrow that needs patching (aka a bug), or want to share your ideas, hop on over to our [issues](https://github.com/gposingway/bundlingway/issues) page or submit a pull request!
 
