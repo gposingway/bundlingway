@@ -827,11 +827,12 @@ namespace Bundlingway.Utilities.Handler
 
                     Maintenance.RemoveTempDir();
 
-                    return package.Name;
+                    return package.Name + " installed successfully";
                 }
                 catch (Exception ex)
                 {
                     Log.Information($"Error downloading or installing file: {ex.Message}");
+                    return "Error installing from " + url + ": " + ex.Message;
                 }
             }
 

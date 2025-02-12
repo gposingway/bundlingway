@@ -77,9 +77,9 @@ namespace Bundlingway.Utilities
         public static async Task ListenForNotifications()
         {
             Log.Information("Listening for notifications.");
-            using NamedPipeServerStream pipeServer = new("BundlingwayEventNotification", PipeDirection.In);
             while (true)
             {
+                using NamedPipeServerStream pipeServer = new("BundlingwayEventNotification", PipeDirection.In);
                 await pipeServer.WaitForConnectionAsync();
                 using (StreamReader reader = new(pipeServer, Encoding.UTF8))
                 {
@@ -87,7 +87,16 @@ namespace Bundlingway.Utilities
                     while ((message = await reader.ReadLineAsync()) != null)
                     {
                         Log.Information($"Notification received: {message}");
-                        NotificationReceived?.Invoke(null, message);
+
+                        try
+                        {
+                            NotificationReceived?.Invoke(null, message);
+
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e, "Error while handling notification.");
+                        }
                     }
                 }
                 pipeServer.Disconnect();
