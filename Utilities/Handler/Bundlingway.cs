@@ -1,11 +1,12 @@
-﻿using Serilog;
+﻿using Bundlingway.Utilities.Extensions;
+using Serilog;
 using System.Text.Json;
-using Windows.Storage;
 
 namespace Bundlingway.Utilities.Handler
 {
     public static class Bundlingway
     {
+
 
         internal static async Task GetLocalInfo()
         {
@@ -47,7 +48,7 @@ namespace Bundlingway.Utilities.Handler
             }
         }
 
-        internal static async Task Update()
+        internal static async Task Update(Control control)
         {
             var b = Instances.LocalConfigProvider.Configuration.Bundlingway;
 
@@ -57,6 +58,8 @@ namespace Bundlingway.Utilities.Handler
             var storageFolder = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Core, Constants.Folders.BundlingwayPackage);
 
             if (!Directory.Exists(storageFolder)) Directory.CreateDirectory(storageFolder);
+
+            control.DoAction(() => control.Text = "Downloading update...");
 
             using HttpClient client = new();
             HttpResponseMessage response = await client.GetAsync(b.RemoteLink);
@@ -71,6 +74,8 @@ namespace Bundlingway.Utilities.Handler
 
             var tempFolder = Path.Combine(Instances.TempFolder, Constants.Folders.BundlingwayPackage);
             if (!Directory.Exists(tempFolder)) Directory.CreateDirectory(tempFolder);
+
+            control.DoAction(() => control.Text = "Unzipping update...");
 
             // Unzip the downloaded file to the temp folder
             System.IO.Compression.ZipFile.ExtractToDirectory(filePath, tempFolder, true);

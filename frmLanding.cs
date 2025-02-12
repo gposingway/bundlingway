@@ -565,7 +565,7 @@ namespace Bundlingway
         {
             btnUpdate.Text = "Updating...";
             btnUpdate.Enabled = false;
-            Utilities.Handler.Bundlingway.Update();
+            _ = Utilities.Handler.Bundlingway.Update(btnUpdate);
         }
 
         private void btnUpdate_MouseEnter(object sender, EventArgs e)
