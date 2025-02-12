@@ -1,6 +1,6 @@
 ﻿namespace Bundlingway.Utilities.Extensions
 {
-    public static class UI
+    public static class UIExtensions
     {
         public static void DoAction(this Control control, Action action)
         {

@@ -3,7 +3,7 @@ using System.Text.Json;
 
 namespace Bundlingway.Utilities.Extensions
 {
-    public static class Serialization
+    public static class SerializationExtensions
     {
 
         private static readonly JsonSerializerOptions _options = new() { WriteIndented = true };

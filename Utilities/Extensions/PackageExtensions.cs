@@ -5,7 +5,7 @@ namespace Bundlingway.Utilities.Extensions
     /// <summary>
     /// Utility class for file hashing and package comparison.
     /// </summary>
-    public static class Package
+    public static class PackageExtensions
     {
         /// <summary>
         /// Replaces a key in the dictionary with a new key.

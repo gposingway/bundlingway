@@ -6,7 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace Bundlingway.Utilities.Extensions
 {
-    public static class PostProcessor
+    public static class PostProcessorExtensions
     {
 
         public static void ReplaceValues(string folderPath, Dictionary<string, string> replacements)

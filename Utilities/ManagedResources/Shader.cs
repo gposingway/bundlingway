@@ -170,7 +170,7 @@ namespace Bundlingway.Utilities.ManagedResources
 
             result.Location = Path.GetDirectoryName(shaderFilePath);
             result.FileName = Path.GetFileName(shaderFilePath);
-            result.Hash = Criptography.MD5FromFile(shaderFilePath);
+            result.Hash = CriptographyExtensions.MD5FromFile(shaderFilePath);
 
 
             return result;

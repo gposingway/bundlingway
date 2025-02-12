@@ -134,7 +134,7 @@ namespace Bundlingway.Utilities.Handler
             {
                 try
                 {
-                    var catalogEntry = Serialization.FromJsonFile<ResourcePackage>(catalogFilePath);
+                    var catalogEntry = SerializationExtensions.FromJsonFile<ResourcePackage>(catalogFilePath);
                     if (catalogEntry != null && !string.IsNullOrEmpty(catalogEntry.Name))
                     {
                         newCatalogEntry = catalogEntry;
@@ -449,13 +449,13 @@ namespace Bundlingway.Utilities.Handler
 
             ResourcePackage catalogEntry = new();
 
-            catalogEntry = Serialization.FromJsonFile<ResourcePackage>(localCatalogFilePath);
+            catalogEntry = SerializationExtensions.FromJsonFile<ResourcePackage>(localCatalogFilePath);
 
             string installationShaderAnalysisFilePath = Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.ShaderAnalysis);
             string localShaderAnalysisFilePath = Path.Combine(sourcePackagePath, Constants.Files.ShaderAnalysis);
 
-            var installationShaderAnalysis = Serialization.FromJsonFile<Dictionary<string, ShaderSignature>>(installationShaderAnalysisFilePath);
-            var localShaderAnalysis = Serialization.FromJsonFile<Dictionary<string, ShaderSignature>>(localShaderAnalysisFilePath);
+            var installationShaderAnalysis = SerializationExtensions.FromJsonFile<Dictionary<string, ShaderSignature>>(installationShaderAnalysisFilePath);
+            var localShaderAnalysis = SerializationExtensions.FromJsonFile<Dictionary<string, ShaderSignature>>(localShaderAnalysisFilePath);
 
             Log.Information("Package.Install: Loaded catalog entry from file.");
 
@@ -597,7 +597,7 @@ namespace Bundlingway.Utilities.Handler
 
                 foreach (var packageFile in packageFiles)
                 {
-                    var package = Serialization.FromJsonFile<ResourcePackage>(packageFile);
+                    var package = SerializationExtensions.FromJsonFile<ResourcePackage>(packageFile);
 
                     if (package != null && Validate(package))
                     {

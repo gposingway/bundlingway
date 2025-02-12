@@ -1,8 +1,9 @@
 using Bundlingway.Model;
 using Bundlingway.Utilities;
+using Bundlingway.Utilities.Extensions;
 using Bundlingway.Utilities.Handler;
 using Serilog;
-using static Bundlingway.Model.GPosingwayConfig;
+using System.Windows.Forms;
 
 namespace Bundlingway
 {
@@ -102,28 +103,13 @@ namespace Bundlingway
 
         private void SetPackageOpsAvailable(bool v)
         {
-
-            if (btnInstallPackage.InvokeRequired)
-            {
-                {
-                    Invoke(new MethodInvoker(delegate
-                {
-                    btnInstallPackage.Enabled = v;
-                    btnRemove.Enabled = v;
-                    btnUninstall.Enabled = v;
-                    btnReinstall.Enabled = v;
-                }));
-                }
-            }
-            else
+            btnInstallPackage?.DoAction(() =>
             {
                 btnInstallPackage.Enabled = v;
                 btnRemove.Enabled = v;
                 btnUninstall.Enabled = v;
                 btnReinstall.Enabled = v;
-            }
-
-
+            });
         }
 
         private void PopulateGrid()
@@ -131,8 +117,9 @@ namespace Bundlingway
             Log.Information("frmLanding: PopulateGrid - Populating the grid with resource packages");
             Package.Scan().Wait();
 
-            if (dgvPackages.InvokeRequired) { Invoke(new MethodInvoker(dgvPackages.Rows.Clear)); }
-            else { dgvPackages.Rows.Clear(); }
+
+            dgvPackages?.DoAction(dgvPackages.Rows.Clear);
+
 
             foreach (var package in Instances.ResourcePackages)
             {
@@ -140,19 +127,12 @@ namespace Bundlingway
                 rowObj.CreateCells(dgvPackages, package.Type, package.Name, package.Status);
                 rowObj.Tag = package;
 
-                if (dgvPackages.InvokeRequired)
-                {
-                    Invoke(new MethodInvoker(delegate
-                    {
-                        dgvPackages.Rows.Add(rowObj);
-                        lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
-                    }));
-                }
-                else
+
+                dgvPackages?.DoAction(() =>
                 {
                     dgvPackages.Rows.Add(rowObj);
                     lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
-                }
+                });
             }
         }
 
@@ -301,14 +281,7 @@ namespace Bundlingway
         {
             if (lblAnnouncement == null) return;
 
-            if (lblAnnouncement.InvokeRequired)
-            {
-                Invoke(new MethodInvoker(delegate { lblAnnouncement.Text = message; }));
-            }
-            else
-            {
-                lblAnnouncement.Text = message;
-            }
+            lblAnnouncement?.DoAction(() => { lblAnnouncement.Text = message; });
         }
 
         private void btnDebug_Click(object sender, EventArgs e)
@@ -394,53 +367,30 @@ namespace Bundlingway
             }
 
 
-            if (txtXivPath.InvokeRequired)
-            {
-                Invoke(new MethodInvoker(delegate { txtXivPath.Text = txtGamePathText; }));
-            }
-            else
-            {
-                txtXivPath.Text = txtGamePathText;
-            }
+            txtXivPath?.DoAction(() => { txtXivPath.Text = txtGamePathText; });
 
             if (mustDetect)
             {
-
-                if (txtReShadeStatus.InvokeRequired)
-                {
-                    Invoke(new MethodInvoker(delegate
-                    {
-
-                        txtReShadeStatus.Text = "Waiting...";
-                        txtGPosingwayStatus.Text = "Waiting...";
-
-                        btnInstallReShade.Visible = false;
-                        btnInstallGPosingway.Visible = false;
-                    }));
-                }
-                else
+                txtReShadeStatus?.DoAction(() =>
                 {
                     txtReShadeStatus.Text = "Waiting...";
                     txtGPosingwayStatus.Text = "Waiting...";
-
                     btnInstallReShade.Visible = false;
                     btnInstallGPosingway.Visible = false;
-                }
+                });
 
                 return;
             }
 
             if (c.Bundlingway.RemoteVersion != c.Bundlingway.LocalVersion)
             {
-                if (btnUpdate.InvokeRequired) { Invoke(new MethodInvoker(delegate { btnUpdate.Visible = true; })); }
-                else { btnUpdate.Visible = true; }
+                btnUpdate?.DoAction(() => { btnUpdate.Visible = true; });
 
                 _ = UI.Announce($"A new Bundlingway version ({c.Bundlingway.RemoteVersion}) is out!");
             }
             else
             {
-                if (btnUpdate.InvokeRequired) { Invoke(new MethodInvoker(delegate { btnUpdate.Visible = false; })); }
-                else { btnUpdate.Visible = false; }
+                btnUpdate?.DoAction(() => { btnUpdate.Visible = false; });
             }
 
             var reShadeBtnEnabled = true;
@@ -486,26 +436,12 @@ namespace Bundlingway
                 }
             }
 
-
-            if (txtReShadeStatus.InvokeRequired)
-            {
-                Invoke(new MethodInvoker(delegate
-                {
-                    txtReShadeStatus.Text = reShadeText;
-
-                    btnInstallReShade.Enabled = reShadeBtnEnabled;
-                    btnInstallReShade.Visible = reShadeBtnVisible;
-                    btnInstallReShade.Text = reShadeBtnText;
-                }));
-            }
-            else
-            {
+            txtReShadeStatus?.DoAction(() => {
                 txtReShadeStatus.Text = reShadeText;
-
                 btnInstallReShade.Enabled = reShadeBtnEnabled;
                 btnInstallReShade.Visible = reShadeBtnVisible;
                 btnInstallReShade.Text = reShadeBtnText;
-            }
+            });
 
             var gPosingwayBtnEnabled = true;
             var gPosingwayBtnVisible = true;
@@ -540,25 +476,12 @@ namespace Bundlingway
 
             gPosingwayBtnVisible = (c.GPosingway.Status == EPackageStatus.NotInstalled) || (c.GPosingway.Status == EPackageStatus.Outdated);
 
-            if (txtGPosingwayStatus.InvokeRequired)
-            {
-                Invoke(new MethodInvoker(delegate
-                {
-                    txtGPosingwayStatus.Text = GPosingwayText;
-
-                    btnInstallGPosingway.Enabled = gPosingwayBtnEnabled;
-                    btnInstallGPosingway.Visible = gPosingwayBtnVisible;
-                    btnInstallGPosingway.Text = gPosingwayBtnText;
-                }));
-            }
-            else
-            {
+            txtGPosingwayStatus?.DoAction(() => {
                 txtGPosingwayStatus.Text = GPosingwayText;
-
                 btnInstallGPosingway.Enabled = gPosingwayBtnEnabled;
                 btnInstallGPosingway.Visible = gPosingwayBtnVisible;
                 btnInstallGPosingway.Text = gPosingwayBtnText;
-            }
+            });
         }
 
         private void btnUpdate_Click(object sender, EventArgs e)

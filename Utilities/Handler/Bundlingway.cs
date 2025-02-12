@@ -59,7 +59,7 @@ namespace Bundlingway.Utilities.Handler
 
             if (!Directory.Exists(storageFolder)) Directory.CreateDirectory(storageFolder);
 
-            control.DoAction(() => control.Text = "Downloading update...");
+            control?.DoAction(() => control.Text = "Downloading...");
 
             using HttpClient client = new();
             HttpResponseMessage response = await client.GetAsync(b.RemoteLink);
@@ -75,7 +75,7 @@ namespace Bundlingway.Utilities.Handler
             var tempFolder = Path.Combine(Instances.TempFolder, Constants.Folders.BundlingwayPackage);
             if (!Directory.Exists(tempFolder)) Directory.CreateDirectory(tempFolder);
 
-            control.DoAction(() => control.Text = "Unzipping update...");
+            control?.DoAction(() => control.Text = "Unzipping...");
 
             // Unzip the downloaded file to the temp folder
             System.IO.Compression.ZipFile.ExtractToDirectory(filePath, tempFolder, true);

@@ -1,6 +1,6 @@
 namespace Bundlingway.Utilities.Extensions
 {
-    public static class Dictionary
+    public static class DictionaryExtensions
     {
         /// <summary>
         /// Retrieves the value associated with the specified key from the dictionary.

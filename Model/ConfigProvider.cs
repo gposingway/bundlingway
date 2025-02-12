@@ -31,7 +31,7 @@ namespace Bundlingway.Model
             {
                 try
                 {
-                    Configuration = Serialization.FromJsonFile<T>(Instances.ConfigFilePath);
+                    Configuration = SerializationExtensions.FromJsonFile<T>(Instances.ConfigFilePath);
                 }
                 catch (Exception ex)
                 {

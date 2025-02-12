@@ -2,7 +2,7 @@
 
 namespace Bundlingway.Utilities.Extensions
 {
-    public static class Criptography
+    public static class CriptographyExtensions
     {
         public static string Sha512(this string input)
         {
