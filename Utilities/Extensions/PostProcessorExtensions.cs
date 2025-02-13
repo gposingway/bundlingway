@@ -11,11 +11,14 @@ namespace Bundlingway.Utilities.Extensions
 
         public static void ReplaceValues(string folderPath, Dictionary<string, string> replacements)
         {
+            if (replacements == null || replacements.Count == 0) return;
+
             if (!Directory.Exists(folderPath))
             {
                 Log.Information($"Folder '{folderPath}' does not exist.");
                 return;
             }
+
 
             foreach (var filePath in Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories))
             {
@@ -25,9 +28,7 @@ namespace Bundlingway.Utilities.Extensions
                     string content = File.ReadAllText(filePath);
 
                     foreach (var kvp in replacements)
-                    {
                         content = content.Replace(kvp.Key, kvp.Value);
-                    }
 
                     if (originalContent != content)
                     {
@@ -45,7 +46,7 @@ namespace Bundlingway.Utilities.Extensions
         public static void RunRawFilePipeline(this ResourcePackage package, Logging _logger)
         {
             var baseline = Path.Combine(Instances.PackageFolder, package.Name);
-            var presetPath = Path.Combine(baseline, "Presets");
+            var presetPath = Path.Combine(baseline, Constants.Folders.PackagePresets);
 
             List<string> textureFiles = Directory.GetFiles(presetPath, "*.*", SearchOption.AllDirectories).ToList();
 
@@ -63,8 +64,8 @@ namespace Bundlingway.Utilities.Extensions
         public static Preset RunPostProcessorPipeline(this Preset preset, ResourcePackage package, IniParser.Model.IniData iniData, Logging _logger)
         {
             var baseline = Path.Combine(Instances.PackageFolder, package.Name);
-            var presetPath = Path.Combine(baseline, "Presets");
-            List<string> textureFiles = Directory.GetFiles(presetPath, "*.*", SearchOption.AllDirectories).ToList();
+            var presetPath = Path.Combine(baseline, Constants.Folders.PackagePresets);
+            List<string> textureFiles = [.. Directory.GetFiles(presetPath, "*.*", SearchOption.AllDirectories)];
             var parser = new FileIniDataParser();
             var mustUpdate = false;
 
@@ -72,8 +73,8 @@ namespace Bundlingway.Utilities.Extensions
             {
                 ITemplatePostProcess templateProcess = null;
 
-                if (process is ITemplatePostProcess)
-                    templateProcess = (ITemplatePostProcess)process;
+                if (process is ITemplatePostProcess tpp)
+                    templateProcess = tpp;
 
                 var techniqueList = preset.Techniques.ToList();
 
