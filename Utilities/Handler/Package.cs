@@ -374,6 +374,25 @@ namespace Bundlingway.Utilities.Handler
                 Log.Information("Package.Onboard: Catalog entry saved locally.");
             }
 
+            // Remove all directories and files whose name contain any of the parts mentioned in Constants.NonTextureImageMarkers
+            foreach (var dir in Directory.GetDirectories(targetPackagePath, "*", SearchOption.AllDirectories))
+            {
+                if (Constants.NonTextureImageMarkers.Any(marker => dir.Contains(marker, StringComparison.OrdinalIgnoreCase)))
+                {
+                    Directory.Delete(dir, true);
+                    Log.Information($"Package.Onboard: Removed directory containing marker: {dir}");
+                }
+            }
+
+            foreach (var file in Directory.GetFiles(targetPackagePath, "*", SearchOption.AllDirectories))
+            {
+                if (Constants.NonTextureImageMarkers.Any(marker => Path.GetFileName(file).Contains(marker, StringComparison.OrdinalIgnoreCase)))
+                {
+                    File.Delete(file);
+                    Log.Information($"Package.Onboard: Removed file containing marker: {file}");
+                }
+            }
+
             // Clean all empty directories under targetPackagePath
             bool emptyDirFound = false;
             do
@@ -810,7 +829,11 @@ namespace Bundlingway.Utilities.Handler
                     var response = await client.GetAsync(url);
                     response.EnsureSuccessStatusCode();
 
-                    var filename = Path.GetFileName(HttpUtility.UrlDecode(url));
+                    var contentDisposition = response.Content.Headers.ContentDisposition;
+                    var filename = contentDisposition != null && !string.IsNullOrEmpty(contentDisposition.FileName)
+                        ? contentDisposition.FileName.Trim('"')
+                        : Path.GetFileName(HttpUtility.UrlDecode(url));
+
                     Directory.CreateDirectory(Instances.CacheFolder);
 
                     var filePath = Path.Combine(Instances.CacheFolder, filename);

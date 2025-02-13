@@ -5,7 +5,7 @@ namespace Bundlingway
     public static class Constants
     {
         public static List<string> TextureExtensions { get; set; } = [".jpg", ".jpeg", ".png", ".dds"];
-        public static List<string> NonTextureImageMarkers { get; set; } = ["[prev]", "[cover]", "[preview]", ".dds"];
+        public static List<string> NonTextureImageMarkers { get; set; } = ["[prev]", "[cover]", "[preview]", ".dds","preview"];
         public static List<string> ShaderExtensions { get; set; } = [".fx", ".fxh"];
         public static List<string> InstallableExtensions { get; set; } = [".zip", ".rar", ".7z", ".ini"];
         public static ResourcePackage SingleFileCatalog { get; set; } = new ResourcePackage()
