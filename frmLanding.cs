@@ -1,8 +1,9 @@
-using Bundlingway.Model;
+ï»¿using Bundlingway.Model;
 using Bundlingway.Utilities;
 using Bundlingway.Utilities.Extensions;
 using Bundlingway.Utilities.Handler;
 using Serilog;
+using System.ComponentModel;
 using System.Windows.Forms;
 
 namespace Bundlingway
@@ -15,7 +16,7 @@ namespace Bundlingway
             UI._landing = this;
             InitializeComponent();
 
-            this.Text = $"Bundlingway · v{Instances.AppVersion}";
+            this.Text = $"Bundlingway Â· v{Instances.AppVersion}";
 
             _ = UI.Announce(Constants.MessageCategory.ApplicationStart);
 
@@ -117,16 +118,41 @@ namespace Bundlingway
             Log.Information("frmLanding: PopulateGrid - Populating the grid with resource packages");
             Package.Scan().Wait();
 
+            List<SortOrder> sortOrders = new List<SortOrder>();
+            List<string> sortColumnNames = new List<string>();
+            List<object> selectedPackages = new List<object>(); // Replace 'object' with your actual package type
 
-            dgvPackages?.DoAction(dgvPackages.Rows.Clear);
+            dgvPackages?.DoAction(() =>
+            {
+                // 1. Store selected packages *before* clearing
+                foreach (DataGridViewRow row in dgvPackages.SelectedRows)
+                {
+                    if (row.Tag != null)
+                    {
+                        selectedPackages.Add(((ResourcePackage)row.Tag).Name);
+                    }
+                }
+
+                dgvPackages.Rows.Clear(); // Clear rows *after* saving selection
+
+                foreach (DataGridViewColumn column in dgvPackages.Columns)
+                {
+                    sortOrders.Add(column.HeaderCell.SortGlyphDirection);
+                    sortColumnNames.Add(column.Name);
+                }
+            });
 
 
             foreach (var package in Instances.ResourcePackages)
             {
                 var rowObj = new DataGridViewRow();
-                rowObj.CreateCells(dgvPackages, package.Type, package.Name, package.Status);
+                rowObj.CreateCells(dgvPackages,
+                    package.Favorite ? "â˜…" : "",
+                    package.Type,
+                    package.Name,
+                    package.Status
+                );
                 rowObj.Tag = package;
-
 
                 dgvPackages?.DoAction(() =>
                 {
@@ -134,8 +160,42 @@ namespace Bundlingway
                     lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
                 });
             }
-        }
 
+            dgvPackages?.DoAction(() =>
+            {
+                // 2. Re-select rows *after* repopulating
+                foreach (DataGridViewRow row in dgvPackages.Rows)
+                {
+                    if (row.Tag != null && selectedPackages.Contains(((ResourcePackage)row.Tag).Name)) // Or use custom comparison if needed (see previous response)
+                    {
+                        row.Selected = true;
+                    }
+                    else
+                    {
+                        row.Selected = false;
+                    }
+                }
+
+                // 3. Sort the grid *after* re-selecting
+                for (int i = 0; i < sortColumnNames.Count; i++)
+                {
+                    var columnName = sortColumnNames[i];
+                    var sortOrder = sortOrders[i];
+
+                    if (sortOrder != SortOrder.None)
+                    {
+                        DataGridViewColumn column = dgvPackages.Columns[columnName];
+                        ListSortDirection listSortDirection = sortOrder == SortOrder.Ascending ?
+                            ListSortDirection.Ascending :
+                            ListSortDirection.Descending;
+
+                        dgvPackages.Sort(column, listSortDirection);
+                        column.HeaderCell.SortGlyphDirection = sortOrder;
+                        break; // Remove for multi-column sorting (and implement a DataGridViewColumnComparer)
+                    }
+                }
+            });
+        }
         private void Generic_DragDrop(object sender, DragEventArgs e)
         {
             Name = "flowLayoutPanel1_DragDrop";
@@ -199,24 +259,6 @@ namespace Bundlingway
                 _ = UI.Announce(Constants.MessageCategory.UninstallPackage);
                 SetPackageOpsAvailable(true);
                 PopulateGrid();
-            });
-        }
-
-        private void btnReinstall_Click(object sender, EventArgs e)
-        {
-            SetPackageOpsAvailable(false);
-
-            var selectedPackages = dgvPackages.SelectedRows
-                .Cast<DataGridViewRow>()
-                .Select(row => (ResourcePackage)row.Tag)
-                .ToList();
-
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Reinstall(package)))).ContinueWith(t =>
-            {
-                Maintenance.RemoveTempDir();
-                _ = UI.Announce(Constants.MessageCategory.ReinstallPackage);
-                PopulateGrid();
-                SetPackageOpsAvailable(true);
             });
         }
 
@@ -319,7 +361,7 @@ namespace Bundlingway
 
         private void btnDebug_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce("Oh dear, what have we here? A log full of secrets! (and probably some errors…)");
+            _ = UI.Announce("Oh dear, what have we here? A log full of secrets! (and probably some errorsâ€¦)");
         }
 
         private void btnAbout_MouseEnter(object sender, EventArgs e)
@@ -329,7 +371,7 @@ namespace Bundlingway
 
         private void btnPackagesFolder_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce("Where all your precious presets and shaders live! Don’t worry, they’re well-fed.");
+            _ = UI.Announce("Where all your precious presets and shaders live! Donâ€™t worry, theyâ€™re well-fed.");
         }
 
         private void btnGameFolder_MouseEnter(object sender, EventArgs e)
@@ -436,7 +478,8 @@ namespace Bundlingway
                 }
             }
 
-            txtReShadeStatus?.DoAction(() => {
+            txtReShadeStatus?.DoAction(() =>
+            {
                 txtReShadeStatus.Text = reShadeText;
                 btnInstallReShade.Enabled = reShadeBtnEnabled;
                 btnInstallReShade.Visible = reShadeBtnVisible;
@@ -476,7 +519,8 @@ namespace Bundlingway
 
             gPosingwayBtnVisible = (c.GPosingway.Status == EPackageStatus.NotInstalled) || (c.GPosingway.Status == EPackageStatus.Outdated);
 
-            txtGPosingwayStatus?.DoAction(() => {
+            txtGPosingwayStatus?.DoAction(() =>
+            {
                 txtGPosingwayStatus.Text = GPosingwayText;
                 btnInstallGPosingway.Enabled = gPosingwayBtnEnabled;
                 btnInstallGPosingway.Visible = gPosingwayBtnVisible;
@@ -495,5 +539,42 @@ namespace Bundlingway
         {
             _ = UI.Announce($"A new Bundlingway version ({Instances.LocalConfigProvider.Configuration.Bundlingway.RemoteVersion}) is out!");
         }
+
+        private void btnReinstall_Click(object sender, EventArgs e)
+        {
+            SetPackageOpsAvailable(false);
+
+            var selectedPackages = dgvPackages.SelectedRows
+                .Cast<DataGridViewRow>()
+                .Select(row => (ResourcePackage)row.Tag)
+                .ToList();
+
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Reinstall(package)))).ContinueWith(t =>
+            {
+                Maintenance.RemoveTempDir();
+                _ = UI.Announce(Constants.MessageCategory.ReinstallPackage);
+                PopulateGrid();
+                SetPackageOpsAvailable(true);
+            });
+        }
+
+        private void btnFavPackage_Click(object sender, EventArgs e)
+        {
+
+            var selectedPackages = dgvPackages.SelectedRows
+                .Cast<DataGridViewRow>()
+                .Select(row => (ResourcePackage)row.Tag)
+                .ToList();
+
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.ToggleFavorite(package)))).ContinueWith(t =>
+            {
+                PopulateGrid();
+            });
+
+
+
+        }
+
+
     }
 }

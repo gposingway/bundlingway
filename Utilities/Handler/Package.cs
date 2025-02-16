@@ -862,5 +862,18 @@ namespace Bundlingway.Utilities.Handler
             // Log the end of the method
             return null;
         }
+
+        public static void ToggleFavorite(ResourcePackage package)
+        {
+            package.Favorite = !package.Favorite;
+            package.Save();
+        }
+
+        public static void Save(this ResourcePackage package)
+        {
+            string localCatalogFilePath = Path.Combine(Instances.PackageFolder, package.Name, Constants.Files.CatalogEntry);
+            package.ToJsonFile(localCatalogFilePath);
+        }
+
     }
 }

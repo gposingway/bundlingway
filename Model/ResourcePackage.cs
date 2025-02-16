@@ -14,5 +14,6 @@ namespace Bundlingway.Model
         public string LocalTextureFolder { get; set; }
         public string LocalShaderFolder { get; set; }
         public bool Hidden { get; set; }
+        public bool Favorite { get; set; }
     }
 }
