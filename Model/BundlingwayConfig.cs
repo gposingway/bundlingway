@@ -1,8 +1,6 @@
-﻿using Bundlingway.Utilities.ManagedResources;
-
-namespace Bundlingway.Model
+﻿namespace Bundlingway.Model
 {
-    public class GPosingwayConfig
+    public class BundlingwayConfig
     {
 
         public class CorePackageStatus
@@ -25,5 +23,7 @@ namespace Bundlingway.Model
         public CorePackageStatus Bundlingway { get; set; } = new CorePackageStatus();
 
         public GameData Game { get; set; } = new GameData();
+
+        public Dictionary<string, string> Shortcuts { get; set; } = new Dictionary<string, string>();
     }
 }

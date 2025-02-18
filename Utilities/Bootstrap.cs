@@ -13,7 +13,7 @@ namespace Bundlingway.Utilities
                 await ProcessHelper.PinToStartScreenAsync();
                 await CustomProtocolHandler.RegisterCustomProtocolAsync("gwpreset", "A collection of presets for GPosingway", true);
 
-                Instances.LocalConfigProvider = new ConfigProvider<GPosingwayConfig>();
+                Instances.LocalConfigProvider = new ConfigProvider<BundlingwayConfig>();
 
                 Log.Information("Bootstrap.Initialize: Initialization completed.");
             }

@@ -20,7 +20,16 @@ namespace Bundlingway
             Hidden = true,
         };
 
-
+        public static Dictionary<string, string> DefaultShortcuts = new()
+        {
+            { "KeyAspectRatioComposition@AspectRatioComposition.fx", "107,1,0,0" },
+            { "KeyVertical_Previewer@VerticalPreviewer.fx", "107,0,0,0" },
+            { "KeyStageDepth@StageDepth.fx", "109,0,0,0" },
+            { "KeyEffects", "114,0,1,0" },
+            { "KeyOverlay", "113,0,1,0" },
+            { "KeyReload", "115,0,1,0" },
+            { "KeyScreenshot", "123,0,1,0" }
+        };
 
         public static string AppUserModelId = "BundlingwayPackageManager";
 

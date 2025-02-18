@@ -7,5 +7,8 @@
     <Compile Update="frmLanding.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Update="frmShortcuts.cs">
+      <SubType>Form</SubType>
+    </Compile>
   </ItemGroup>
 </Project>

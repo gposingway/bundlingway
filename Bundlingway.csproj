@@ -22,7 +22,7 @@
     <ApplicationVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</ApplicationVersion>
     <AssemblyVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</AssemblyVersion>
     <FileVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</FileVersion>
-    <ApplicationIcon>carrot.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\IMG_0922.ico</ApplicationIcon>
   </PropertyGroup>
   
   <Target Name="UpdateBuildInfo" BeforeTargets="BeforeBuild">
@@ -33,7 +33,7 @@
   </Target>
   
   <ItemGroup>
-    <Content Include="carrot.ico" />
+    <Content Include="Resources\IMG_0922.ico" />
   </ItemGroup>
 
   <ItemGroup>

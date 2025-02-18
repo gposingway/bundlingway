@@ -575,6 +575,10 @@ namespace Bundlingway
 
         }
 
-
+        private void btnShortcuts_Click(object sender, EventArgs e)
+        {
+            frmShortcuts shortcutsForm = new frmShortcuts();
+            shortcutsForm.ShowDialog();
+        }
     }
 }

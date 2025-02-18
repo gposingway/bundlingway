@@ -34,6 +34,8 @@
             contextMenuStrip1 = new ContextMenuStrip(components);
             splitContainer1 = new SplitContainer();
             flpSideMenu = new FlowLayoutPanel();
+            btnShortcuts = new FontAwesome.Sharp.IconButton();
+            label6 = new Label();
             btnGameFolder = new FontAwesome.Sharp.IconButton();
             btnPackagesFolder = new FontAwesome.Sharp.IconButton();
             btnDebug = new FontAwesome.Sharp.IconButton();
@@ -122,6 +124,8 @@
             flpSideMenu.AllowDrop = true;
             flpSideMenu.AutoScroll = true;
             flpSideMenu.BackColor = SystemColors.ControlLight;
+            flpSideMenu.Controls.Add(btnShortcuts);
+            flpSideMenu.Controls.Add(label6);
             flpSideMenu.Controls.Add(btnGameFolder);
             flpSideMenu.Controls.Add(btnPackagesFolder);
             flpSideMenu.Controls.Add(btnDebug);
@@ -138,6 +142,33 @@
             flpSideMenu.DragDrop += Generic_DragDrop;
             flpSideMenu.DragEnter += Generic_DragEnter;
             // 
+            // btnShortcuts
+            // 
+            btnShortcuts.IconChar = FontAwesome.Sharp.IconChar.Keyboard;
+            btnShortcuts.IconColor = SystemColors.Highlight;
+            btnShortcuts.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnShortcuts.IconSize = 32;
+            btnShortcuts.ImageAlign = ContentAlignment.MiddleLeft;
+            btnShortcuts.Location = new Point(3, 3);
+            btnShortcuts.Margin = new Padding(3, 3, 3, 0);
+            btnShortcuts.Name = "btnShortcuts";
+            btnShortcuts.Size = new Size(145, 37);
+            btnShortcuts.TabIndex = 23;
+            btnShortcuts.Text = "In-game Shortcuts";
+            btnShortcuts.TextAlign = ContentAlignment.MiddleRight;
+            btnShortcuts.UseVisualStyleBackColor = true;
+            btnShortcuts.Click += btnShortcuts_Click;
+            // 
+            // label6
+            // 
+            label6.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            label6.AutoSize = true;
+            label6.Font = new Font("Segoe UI", 12F);
+            label6.Location = new Point(3, 40);
+            label6.Name = "label6";
+            label6.Size = new Size(0, 21);
+            label6.TabIndex = 24;
+            // 
             // btnGameFolder
             // 
             btnGameFolder.IconChar = FontAwesome.Sharp.IconChar.FolderOpen;
@@ -145,7 +176,7 @@
             btnGameFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnGameFolder.IconSize = 32;
             btnGameFolder.ImageAlign = ContentAlignment.MiddleLeft;
-            btnGameFolder.Location = new Point(3, 3);
+            btnGameFolder.Location = new Point(3, 64);
             btnGameFolder.Margin = new Padding(3, 3, 3, 0);
             btnGameFolder.Name = "btnGameFolder";
             btnGameFolder.Size = new Size(145, 37);
@@ -163,7 +194,7 @@
             btnPackagesFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnPackagesFolder.IconSize = 32;
             btnPackagesFolder.ImageAlign = ContentAlignment.MiddleLeft;
-            btnPackagesFolder.Location = new Point(3, 43);
+            btnPackagesFolder.Location = new Point(3, 104);
             btnPackagesFolder.Margin = new Padding(3, 3, 3, 0);
             btnPackagesFolder.Name = "btnPackagesFolder";
             btnPackagesFolder.Size = new Size(145, 37);
@@ -181,7 +212,7 @@
             btnDebug.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnDebug.IconSize = 32;
             btnDebug.ImageAlign = ContentAlignment.MiddleLeft;
-            btnDebug.Location = new Point(3, 83);
+            btnDebug.Location = new Point(3, 144);
             btnDebug.Margin = new Padding(3, 3, 3, 0);
             btnDebug.Name = "btnDebug";
             btnDebug.Size = new Size(145, 37);
@@ -197,7 +228,7 @@
             label1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label1.AutoSize = true;
             label1.Font = new Font("Segoe UI", 12F);
-            label1.Location = new Point(3, 120);
+            label1.Location = new Point(3, 181);
             label1.Name = "label1";
             label1.Size = new Size(0, 21);
             label1.TabIndex = 20;
@@ -209,7 +240,7 @@
             btnEmporium.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnEmporium.IconSize = 32;
             btnEmporium.ImageAlign = ContentAlignment.MiddleLeft;
-            btnEmporium.Location = new Point(3, 144);
+            btnEmporium.Location = new Point(3, 205);
             btnEmporium.Margin = new Padding(3, 3, 3, 0);
             btnEmporium.Name = "btnEmporium";
             btnEmporium.Size = new Size(145, 37);
@@ -227,7 +258,7 @@
             btnAbout.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnAbout.IconSize = 32;
             btnAbout.ImageAlign = ContentAlignment.MiddleLeft;
-            btnAbout.Location = new Point(3, 184);
+            btnAbout.Location = new Point(3, 245);
             btnAbout.Margin = new Padding(3, 3, 3, 0);
             btnAbout.Name = "btnAbout";
             btnAbout.Size = new Size(145, 37);
@@ -243,7 +274,7 @@
             label5.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label5.AutoSize = true;
             label5.Font = new Font("Segoe UI", 12F);
-            label5.Location = new Point(3, 221);
+            label5.Location = new Point(3, 282);
             label5.Name = "label5";
             label5.Size = new Size(0, 21);
             label5.TabIndex = 21;
@@ -255,7 +286,7 @@
             btnUpdate.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnUpdate.IconSize = 32;
             btnUpdate.ImageAlign = ContentAlignment.MiddleLeft;
-            btnUpdate.Location = new Point(3, 245);
+            btnUpdate.Location = new Point(3, 306);
             btnUpdate.Margin = new Padding(3, 3, 3, 0);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(145, 37);
@@ -695,5 +726,7 @@
         private DataGridViewTextBoxColumn TypeCol;
         private DataGridViewTextBoxColumn NameCol;
         private DataGridViewTextBoxColumn StatusCol;
+        private FontAwesome.Sharp.IconButton btnShortcuts;
+        private Label label6;
     }
 }
