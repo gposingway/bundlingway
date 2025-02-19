@@ -21,6 +21,8 @@ namespace Bundlingway
 
             Instances.LocalConfigProvider.Load();
 
+            Maintenance.EnsureConfiguration().Wait();
+
             if (args.Length > 0)
             {
                 Utilities.Handler.CommandLineArgs.ProcessAsync(args).Wait();

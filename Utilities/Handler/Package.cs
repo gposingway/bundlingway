@@ -454,7 +454,7 @@ namespace Bundlingway.Utilities.Handler
             return fxFiles.Length > 0;
         }
 
-        internal static async Task<ResourcePackage> Install(string sourcePackagePath)
+        public static async Task<ResourcePackage> Install(string sourcePackagePath)
         {
             Log.Information($"Package.Install: Installing package at: {sourcePackagePath}");
 
@@ -519,6 +519,10 @@ namespace Bundlingway.Utilities.Handler
                         File.Copy(file, targetPath, true);
                         Log.Information($"Package.Install: Copied preset file {file} to {targetPath}");
                     }
+
+                    var replacements = Instances.LocalConfigProvider.Configuration.Shortcuts.ToDictionary(k => "%" + k.Key + "%", v => v.Value);
+
+                    PostProcessorExtensions.ReplaceValues(gamePresetsFolder, replacements);
                 }
 
 
@@ -601,6 +605,35 @@ namespace Bundlingway.Utilities.Handler
             }
 
             return catalogEntry;
+        }
+
+        public static async Task RefreshInstalled()
+        {
+            Log.Information("Package.RefreshInstalled: Refreshing installed packages.");
+            var installedPackages = Instances.ResourcePackages.Where(p => p.Installed).ToList();
+
+
+            _= UI.Announce($"Updating {installedPackages.Count} installed packages, please wait...");
+
+            int maxDegreeOfParallelism = 10;
+
+            var tasks = Partitioner.Create(installedPackages)
+                .GetPartitions(maxDegreeOfParallelism)
+                .Select(async partition =>
+                {
+                    using (partition)
+                    {
+                        while (partition.MoveNext())
+                        {
+                            var package = partition.Current;
+                            Log.Information($"Package.RefreshInstalled: Refreshing package: {package.Name}");
+                            Reinstall(package);
+                        }
+                    }
+                });
+
+            await Task.WhenAll(tasks);
+            Log.Information("Package.RefreshInstalled: Installed packages refreshed.");
         }
 
         public static async Task Scan()

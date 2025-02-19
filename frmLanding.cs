@@ -570,15 +570,65 @@ namespace Bundlingway
             {
                 PopulateGrid();
             });
-
-
-
         }
 
         private void btnShortcuts_Click(object sender, EventArgs e)
         {
             frmShortcuts shortcutsForm = new frmShortcuts();
             shortcutsForm.ShowDialog();
+        }
+
+        private void btnBackup_Click(object sender, EventArgs e)
+        {
+            var target = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Backup);
+            if (!Directory.Exists(target))
+            {
+                Directory.CreateDirectory(target);
+            }
+
+            _ = UI.Announce("Backing up cache and packages...");
+
+            var source1 = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Cache);
+
+            //Copy all files from the cache folder to backup
+            foreach (var file in Directory.GetFiles(source1))
+            {
+                var destFile = Path.Combine(target, Path.GetFileName(file));
+                File.Copy(file, destFile, true);
+            }
+
+            var source2 = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Packages);
+
+            // for each folder in source2, copy the contents of its 'source' folder to the target folder
+            foreach (var folder in Directory.GetDirectories(source2))
+            {
+                var source = Path.Combine(folder, Constants.Folders.SourcePackage);
+
+                if (Path.GetFileName(folder).Equals(Constants.Folders.SinglePresets))
+                {
+                    foreach (var file in Directory.GetFiles(folder, "*.ini"))
+                    {
+                        var destFile = Path.Combine(target, Path.GetFileName(file));
+                        File.Copy(file, destFile, true);
+                    }
+
+                }
+                else
+                {
+                    foreach (var file in Directory.GetFiles(source))
+                    {
+                        var destFile = Path.Combine(target, Path.GetFileName(file));
+                        File.Copy(file, destFile, true);
+                    }
+                }
+            }
+
+            _ = UI.Announce("Backup complete!");
+
+            //Open the backup folder
+            System.Diagnostics.Process.Start("explorer.exe", target);
+
+
         }
     }
 }

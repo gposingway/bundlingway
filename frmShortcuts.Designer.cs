@@ -47,7 +47,7 @@
             lblGrpShortcuts = new Label();
             btnSave = new FontAwesome.Sharp.IconButton();
             btnCancel = new FontAwesome.Sharp.IconButton();
-            btnApplyAll = new FontAwesome.Sharp.IconButton();
+            btnDefault = new FontAwesome.Sharp.IconButton();
             tableLayoutPanel1.SuspendLayout();
             SuspendLayout();
             // 
@@ -247,7 +247,7 @@
             lblGrpShortcuts.Location = new Point(0, 0);
             lblGrpShortcuts.Name = "lblGrpShortcuts";
             lblGrpShortcuts.Padding = new Padding(3);
-            lblGrpShortcuts.Size = new Size(313, 25);
+            lblGrpShortcuts.Size = new Size(314, 25);
             lblGrpShortcuts.TabIndex = 1;
             lblGrpShortcuts.Text = "Shortcuts";
             // 
@@ -260,7 +260,7 @@
             btnSave.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnSave.IconSize = 32;
             btnSave.ImageAlign = ContentAlignment.MiddleLeft;
-            btnSave.Location = new Point(171, 279);
+            btnSave.Location = new Point(168, 319);
             btnSave.Margin = new Padding(3, 3, 3, 0);
             btnSave.Name = "btnSave";
             btnSave.Size = new Size(133, 37);
@@ -280,7 +280,7 @@
             btnCancel.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnCancel.IconSize = 32;
             btnCancel.ImageAlign = ContentAlignment.MiddleLeft;
-            btnCancel.Location = new Point(171, 239);
+            btnCancel.Location = new Point(168, 239);
             btnCancel.Margin = new Padding(3, 3, 3, 0);
             btnCancel.Name = "btnCancel";
             btnCancel.Size = new Size(133, 37);
@@ -292,31 +292,32 @@
             btnCancel.Click += btnCancel_Click;
             btnCancel.MouseEnter += btnCancel_MouseEnter;
             // 
-            // btnApplyAll
+            // btnDefault
             // 
-            btnApplyAll.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnApplyAll.IconChar = FontAwesome.Sharp.IconChar.Clone;
-            btnApplyAll.IconColor = SystemColors.Highlight;
-            btnApplyAll.IconFont = FontAwesome.Sharp.IconFont.Auto;
-            btnApplyAll.IconSize = 32;
-            btnApplyAll.ImageAlign = ContentAlignment.MiddleLeft;
-            btnApplyAll.Location = new Point(171, 319);
-            btnApplyAll.Margin = new Padding(3, 3, 3, 0);
-            btnApplyAll.Name = "btnApplyAll";
-            btnApplyAll.Size = new Size(133, 37);
-            btnApplyAll.TabIndex = 26;
-            btnApplyAll.Tag = "One click to rule them all! (Your presets, that is). Apply your current changes to every preset in your presets folder, including those not managed by Bundlingway.";
-            btnApplyAll.Text = "Apply to All";
-            btnApplyAll.TextAlign = ContentAlignment.MiddleRight;
-            btnApplyAll.UseVisualStyleBackColor = true;
-            btnApplyAll.MouseEnter += btnApplyAll_MouseEnter;
+            btnDefault.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnDefault.IconChar = FontAwesome.Sharp.IconChar.Refresh;
+            btnDefault.IconColor = SystemColors.Highlight;
+            btnDefault.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnDefault.IconSize = 32;
+            btnDefault.ImageAlign = ContentAlignment.MiddleLeft;
+            btnDefault.Location = new Point(168, 279);
+            btnDefault.Margin = new Padding(3, 3, 3, 0);
+            btnDefault.Name = "btnDefault";
+            btnDefault.Size = new Size(133, 37);
+            btnDefault.TabIndex = 26;
+            btnDefault.Tag = "Return all shortcut settings to their original, Bundlingway-approved defaults. A fresh start, friend!";
+            btnDefault.Text = "Use Default";
+            btnDefault.TextAlign = ContentAlignment.MiddleRight;
+            btnDefault.UseVisualStyleBackColor = true;
+            btnDefault.Click += btnDefault_Click;
+            btnDefault.MouseEnter += btnDefault_MouseEnter;
             // 
             // frmShortcuts
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(313, 364);
-            Controls.Add(btnApplyAll);
+            ClientSize = new Size(314, 368);
+            Controls.Add(btnDefault);
             Controls.Add(btnCancel);
             Controls.Add(btnSave);
             Controls.Add(lblGrpShortcuts);
@@ -352,6 +353,6 @@
         private TextBox txtSrtRatio;
         private FontAwesome.Sharp.IconButton btnSave;
         private FontAwesome.Sharp.IconButton btnCancel;
-        private FontAwesome.Sharp.IconButton btnApplyAll;
+        private FontAwesome.Sharp.IconButton btnDefault;
     }
 }

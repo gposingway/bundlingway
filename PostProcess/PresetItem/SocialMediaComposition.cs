@@ -7,7 +7,7 @@ namespace Bundlingway.PostProcess.PresetItem
         public int Order { get; set; } = 0;
         public ParameterList Techniques { get; set; } = new ParameterList() { EndWith = ["AspectRatioComposition@AspectRatioComposition.fx"] };
         public Dictionary<string, string> RootElements { get; set; } = new Dictionary<string, string> {
-            { "KeyAspectRatioComposition@AspectRatioComposition.fx", "107,1,0,0" }
+            { "KeyAspectRatioComposition@AspectRatioComposition.fx", "%KeyAspectRatioComposition@AspectRatioComposition.fx%" }
         };
         public List<Section> Sections { get; set; } = [new()
         {

@@ -13,6 +13,31 @@ namespace Bundlingway.Utilities
                 Directory.Delete(Instances.TempFolder, true);
         }
 
+        internal static async Task EnsureConfiguration()
+        {
+
+            var mustRefresh = false;
+
+            if (Instances.LocalConfigProvider.Configuration.Shortcuts == null)
+            {
+                Instances.LocalConfigProvider.Configuration.Shortcuts = [];
+                mustRefresh = true;
+            }
+
+            foreach (var kvp in Constants.DefaultShortcuts)
+            {
+                if (!Instances.LocalConfigProvider.Configuration.Shortcuts.ContainsKey(kvp.Key))
+                {
+                    Instances.LocalConfigProvider.Configuration.Shortcuts.Add(kvp.Key, kvp.Value);
+                    mustRefresh = true;
+
+                }
+
+            }
+
+            if (mustRefresh) Instances.LocalConfigProvider.Save();
+        }
+
         internal static async Task PrepareEnvironmentAsync()
         {
             if (!Directory.Exists(Instances.BundlingwayDataFolder))

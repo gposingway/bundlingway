@@ -45,7 +45,7 @@ namespace Bundlingway.PostProcess.PresetItem
             EndWith = ["Vertical_Previewer@VerticalPreviewer.fx"]
         };
         public Dictionary<string, string> RootElements { get; set; } = new Dictionary<string, string> {
-            { "KeyVertical_Previewer@VerticalPreviewer.fx", "107,0,0,0" }
+            { "KeyVertical_Previewer@VerticalPreviewer.fx", "%KeyVertical_Previewer@VerticalPreviewer.fx%" }
         };
 
 
@@ -61,15 +61,11 @@ namespace Bundlingway.PostProcess.PresetItem
 
         public bool PostProcess(Preset preset)
         {
-            // Only enable the VerticalPreviewer if layered textures are present.
-
 
             preset.Techniques["Vertical_Previewer@VerticalPreviewer.fx"] = false;
             if (ExcludePresets.Any(preset.Filename.EndsWith)) return false;
 
-
             preset.IniHandler.Global.RemoveKey("KeyLayer@Layer.fx");
-
 
             // First remove all previous keys.
             foreach (var tt in textureTechniques2)
@@ -79,7 +75,7 @@ namespace Bundlingway.PostProcess.PresetItem
             var elligibleTechniques = preset.Techniques.Where(i => textureTechniques.Any(t => i.Value && i.Key.StartsWith(t + "@"))).OrderBy(i => i.Key).ToList();
 
             foreach (var kvp in elligibleTechniques)
-                RootElements["Key" + kvp.Key] = "109,0,0,0";
+                RootElements["Key" + kvp.Key] = "%KeyStageDepth@StageDepth.fx%";
 
 
 

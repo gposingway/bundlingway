@@ -66,6 +66,7 @@ namespace Bundlingway
 
             public static readonly string Core = "CorePackages";
             public static readonly string Packages = "Packages";
+            public static readonly string Backup = "Backup";
             public static readonly string SourcePackage = "Source";
 
             public static readonly string Temp = "temp";

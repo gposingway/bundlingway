@@ -30,7 +30,13 @@ namespace Bundlingway
 
             foreach (TextBox textBox in textBoxes)
             {
-                string shortcutKey = GetShortcutKeyFromSettings(textBox.Tag.ToString());
+
+                var key = textBox.Tag.ToString();
+
+                string shortcutKey = GetShortcutKeyFromSettings(key);
+
+                temporaryShortcuts[key] = shortcutKey;
+
                 if (!string.IsNullOrEmpty(shortcutKey))
                 {
                     textBox.Text = FormatShortcutString(shortcutKey);
@@ -145,13 +151,28 @@ namespace Bundlingway
 
         private void btnSave_Click(object sender, EventArgs e)
         {
+            DisableAllElements();
+
             foreach (var kvp in temporaryShortcuts)
                 Instances.LocalConfigProvider.Configuration.Shortcuts[kvp.Key] = kvp.Value;
 
             Instances.LocalConfigProvider.Save();
 
-            _ = UI.Announce("Shortcuts saved!");
+            _ = UI.Announce("Shortcuts saved! Updating installed presets...");
+
+            _ = Utilities.Handler.Package.RefreshInstalled();
+
+            _ = UI.Announce("Installed presets updated!");
+
             Close();
+        }
+
+        private void DisableAllElements()
+        {
+            foreach (Control control in Controls)
+            {
+                control.Enabled = false;
+            }
         }
 
         private void btnCancel_Click(object sender, EventArgs e)
@@ -173,6 +194,33 @@ namespace Bundlingway
         private void btnApplyAll_MouseEnter(object sender, EventArgs e)
         {
             _ = UI.Announce(((Control)sender).Tag.ToString());
+        }
+
+        private void btnDefault_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce(((Control)sender).Tag.ToString());
+        }
+
+        private void btnDefault_Click(object sender, EventArgs e)
+        {
+            var textBoxes = GetAllTextBoxes(this).ToList();
+
+            foreach (var kvp in Constants.DefaultShortcuts)
+            {
+                if (temporaryShortcuts.TryGetValue(kvp.Key, out string currentShortcut) && currentShortcut != kvp.Value)
+                {
+                    temporaryShortcuts[kvp.Key] = kvp.Value;
+
+                    var textBox = textBoxes.FirstOrDefault(tb => tb.Tag.ToString() == kvp.Key);
+                    if (textBox != null)
+                    {
+                        textBox.Text = FormatShortcutString(kvp.Value);
+                        textBox.Font = new Font(textBox.Font, FontStyle.Bold);
+
+                        btnSave.Enabled = true;
+                    }
+                }
+            }
         }
     }
 }
