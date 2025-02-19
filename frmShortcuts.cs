@@ -153,6 +153,10 @@ namespace Bundlingway
         {
             DisableAllElements();
 
+            btnSave.Text = "Updating...";
+
+            Refresh();
+
             foreach (var kvp in temporaryShortcuts)
                 Instances.LocalConfigProvider.Configuration.Shortcuts[kvp.Key] = kvp.Value;
 
@@ -160,7 +164,7 @@ namespace Bundlingway
 
             _ = UI.Announce("Shortcuts saved! Updating installed presets...");
 
-            _ = Utilities.Handler.Package.RefreshInstalled();
+            _= Utilities.Handler.Package.RefreshInstalled();
 
             _ = UI.Announce("Installed presets updated!");
 
