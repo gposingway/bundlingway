@@ -1,7 +1,9 @@
 using Bundlingway.Model;
+using Bundlingway.Properties;
 using ICSharpCode.SharpZipLib.Zip;
 using Serilog;
 using System.Diagnostics;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Bundlingway.Utilities.Handler
@@ -166,6 +168,15 @@ namespace Bundlingway.Utilities.Handler
                 {
                     File.Copy(sourceDll, destinationDll, true);
                     Log.Information("ReShadeParser.Update: Successfully copied the DLL.");
+                }
+
+                var destinationIni = Path.Combine(gameFolder, Constants.Files.LocalReshadeConfig);
+                if (!File.Exists(destinationIni))
+                {
+                    var placeholderFile = Resources.ReShade_ini;
+
+                    File.WriteAllText(destinationIni, Encoding.UTF8.GetString(placeholderFile));
+                    Log.Information("ReShadeParser.Update: Successfully created the INI file.");
                 }
             }
             catch (Exception ex)

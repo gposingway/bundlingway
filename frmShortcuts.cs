@@ -6,6 +6,53 @@ namespace Bundlingway
     {
         private Dictionary<string, string> temporaryShortcuts = new Dictionary<string, string>();
 
+        private bool _mustPropagate = false;
+
+        private static readonly List<Keys> IgnoredKeys =
+        [
+            Keys.ShiftKey,
+            Keys.ControlKey,
+            Keys.Menu,
+            Keys.Tab,
+            Keys.CapsLock,
+            Keys.Enter,
+            Keys.Apps,
+            Keys.LWin,
+            Keys.RWin
+        ];
+
+
+
+        private static readonly Dictionary<string, string> KeyNameMappings = new()
+        {
+            { "Add", "Plus" },
+            { "Subtract", "Minus" },
+            { "OemPeriod", "." },
+            { "Oem2", "/" },
+            { "Oem7", "\"" },
+            { "OemSemicolon", ";" },
+            { "Oem4", "[" },
+            { "Oem6", "]" },
+            { "Oemcomma", "," },
+            { "OemMinus", "-" },
+            { "Oemplus", "=" },
+            { "Oem1", ";" },
+            { "Oem5", "\\" },
+            { "Oem102", "<" },
+            { "Oem3", "`" },
+            { "OemPipe", "|" },
+            { "D1", "1" },
+            { "D2", "2" },
+            { "D3", "3" },
+            { "D4", "4" },
+            { "D5", "5" },
+            { "D6", "6" },
+            { "D7", "7" },
+            { "D8", "8" },
+            { "D9", "9" },
+            { "D0", "0" }
+        };
+
         public frmShortcuts()
         {
             InitializeComponent();
@@ -51,6 +98,12 @@ namespace Bundlingway
                 return shortcutKey;
             }
 
+            if (Utilities.Handler.ReShadeConfig.Shortcuts.TryGetValue(textBoxName, out shortcutKey))
+            {
+                return shortcutKey;
+            }
+
+
             if (Instances.LocalConfigProvider.Configuration.Shortcuts.TryGetValue(textBoxName, out shortcutKey))
             {
                 return shortcutKey;
@@ -80,14 +133,10 @@ namespace Bundlingway
                 if (alt) formattedString += "Alt+";
 
                 string keyName = ((Keys)keyCode).ToString();
-                switch (keyName)
+
+                if (KeyNameMappings.TryGetValue(keyName, out string mappedName))
                 {
-                    case "Add":
-                        keyName = "Plus";
-                        break;
-                    case "Subtract":
-                        keyName = "Minus";
-                        break;
+                    keyName = mappedName;
                 }
 
                 formattedString += keyName;
@@ -129,7 +178,7 @@ namespace Bundlingway
                 textBox.Text = string.Empty;
                 btnSave.Enabled = true;
             }
-            else if (e.KeyCode != Keys.ShiftKey && e.KeyCode != Keys.ControlKey && e.KeyCode != Keys.Menu)
+            else if (!IgnoredKeys.Contains(e.KeyCode))
             {
                 string shortcut = ((int)e.KeyCode).ToString();
                 if (e.Control) shortcut += ",1"; else shortcut += ",0";
@@ -140,6 +189,12 @@ namespace Bundlingway
                 e.SuppressKeyPress = true;
 
                 textBox.Font = new Font(textBox.Font, FontStyle.Bold);
+
+                if (textBox.Tag.ToString().Contains("@"))
+                {
+                    _mustPropagate = true;
+                    lblWarning.Visible = true;
+                }
 
                 temporaryShortcuts[textBox.Tag.ToString()] = shortcut;
 
@@ -162,11 +217,14 @@ namespace Bundlingway
 
             Instances.LocalConfigProvider.Save();
 
-            _ = UI.Announce("Shortcuts saved! Updating installed presets...");
+            Utilities.Handler.ReShadeConfig.SaveShortcuts(temporaryShortcuts);
 
-            _= Utilities.Handler.Package.RefreshInstalled();
-
-            _ = UI.Announce("Installed presets updated!");
+            if (_mustPropagate)
+            {
+                _ = UI.Announce("Shortcuts saved! Updating installed presets...");
+                _ = Utilities.Handler.Package.RefreshInstalled();
+                _ = UI.Announce("Installed presets updated!");
+            }
 
             Close();
         }
@@ -220,6 +278,12 @@ namespace Bundlingway
                     {
                         textBox.Text = FormatShortcutString(kvp.Value);
                         textBox.Font = new Font(textBox.Font, FontStyle.Bold);
+
+                        if (textBox.Tag.ToString().Contains("@"))
+                        {
+                            _mustPropagate = true;
+                            lblWarning.Visible = true;
+                        }
 
                         btnSave.Enabled = true;
                     }

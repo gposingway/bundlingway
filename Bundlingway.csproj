@@ -33,7 +33,14 @@
   </Target>
   
   <ItemGroup>
+    <None Remove="Resources\ReShade.ini" />
+  </ItemGroup>
+  
+  <ItemGroup>
     <Content Include="Resources\IMG_0922.ico" />
+    <Resource Include="Resources\ReShade.ini">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Resource>
   </ItemGroup>
 
   <ItemGroup>

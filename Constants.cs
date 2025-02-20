@@ -28,7 +28,9 @@ namespace Bundlingway
             { "KeyEffects", "114,0,1,0" },
             { "KeyOverlay", "113,0,1,0" },
             { "KeyReload", "115,0,1,0" },
-            { "KeyScreenshot", "123,0,1,0" }
+            { "KeyScreenshot", "123,0,1,0" },
+            { "KeyPreviousPreset", "186,0,0,0" },
+            { "KeyNextPreset", "222,0,0,0" }
         };
 
         public static string AppUserModelId = "BundlingwayPackageManager";
@@ -89,6 +91,7 @@ namespace Bundlingway
             public static readonly string BundlingwayConfig = "bundlingway-config.json";
             public static readonly string Log = "bundlingway-log-.txt";
             public static readonly string LocalReshadeBinary = "dxgi.dll";
+            public static readonly string LocalReshadeConfig = "ReShade.ini";
             public static readonly string GameProcess = "ffxiv_dx11";
             public static readonly string ShaderAnalysis = "shader-analysis.json";
         }

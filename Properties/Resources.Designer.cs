@@ -79,5 +79,15 @@ namespace Bundlingway.Properties {
                 return ((System.Drawing.Bitmap)(obj));
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Byte[].
+        /// </summary>
+        internal static byte[] ReShade_ini {
+            get {
+                object obj = ResourceManager.GetObject("ReShade-ini", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
     }
 }
