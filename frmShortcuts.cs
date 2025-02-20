@@ -21,8 +21,6 @@ namespace Bundlingway
             Keys.RWin
         ];
 
-
-
         private static readonly Dictionary<string, string> KeyNameMappings = new()
         {
             { "Add", "Plus" },

@@ -1,15 +1,18 @@
-﻿using Microsoft.Win32;
+﻿using Bundlingway.Model;
+using Bundlingway.Utilities.Extensions;
+using Microsoft.Win32;
 using Serilog;
 using System.Diagnostics;
 using System.IO.Pipes;
 using System.Reflection;
 using System.Text;
+using Windows.UI.Notifications;
 
 namespace Bundlingway.Utilities
 {
     public static class ProcessHelper
     {
-        public static event EventHandler<string> NotificationReceived;
+        public static event EventHandler<IPCNotification> NotificationReceived;
 
         public static void OpenUrlInBrowser(string url)
         {
@@ -53,9 +56,9 @@ namespace Bundlingway.Utilities
             }
         }
 
-        public static void NotifyOtherInstances(string eventName)
+        public static void NotifyOtherInstances(IPCNotification notification)
         {
-            Log.Information($"Notifying other instances with event: {eventName}");
+            Log.Information($"Notifying other instances with event: {notification}");
             using NamedPipeClientStream pipeClient = new(".", "BundlingwayEventNotification", PipeDirection.Out);
 
             try
@@ -63,7 +66,8 @@ namespace Bundlingway.Utilities
                 pipeClient.Connect(1000); // Wait for 1 second to connect
                 using (StreamWriter writer = new(pipeClient, Encoding.UTF8))
                 {
-                    writer.WriteLine(eventName);
+                    var payload = notification.ToSingleLineJson();
+                    writer.Write(payload);
                 }
                 Log.Information("Notification sent successfully.");
             }
@@ -76,32 +80,82 @@ namespace Bundlingway.Utilities
 
         public static async Task ListenForNotifications()
         {
-            Log.Information("Listening for notifications.");
+            Log.Information("Listening for notifications - Recreating Pipe in Loop.");
+            NamedPipeServerStream pipeServer = null;
+            StreamReader reader = null; // Declare StreamReader outside using block
+
             while (true)
             {
-                using NamedPipeServerStream pipeServer = new("BundlingwayEventNotification", PipeDirection.In);
-                await pipeServer.WaitForConnectionAsync();
-                using (StreamReader reader = new(pipeServer, Encoding.UTF8))
+                try
                 {
+                    pipeServer = new NamedPipeServerStream("BundlingwayEventNotification", PipeDirection.In);
+
+                    Log.Information("Before WaitForConnectionAsync - Pipe Server IsConnected: {IsConnected}, IsHandleInvalid: {IsHandleInvalid}", pipeServer.IsConnected, pipeServer.SafePipeHandle.IsInvalid);
+
+                    await pipeServer.WaitForConnectionAsync();
+
+                    Log.Information("After WaitForConnectionAsync - Client connected. Pipe Server IsConnected: {IsConnected}, IsHandleInvalid: {IsHandleInvalid}", pipeServer.IsConnected, pipeServer.SafePipeHandle.IsInvalid);
+                    Log.Information("Client connected.");
+
+                    reader = new StreamReader(pipeServer, Encoding.UTF8); // Initialize StreamReader here
+
                     string message;
                     while ((message = await reader.ReadLineAsync()) != null)
                     {
-                        Log.Information($"Notification received: {message}");
+                        var ipcNotification = message.FromJson<IPCNotification>();
 
+                        Log.Information($"Notification received: {ipcNotification.Topic} / {ipcNotification.Message}");
+                        try { NotificationReceived?.Invoke(null, ipcNotification); } catch (Exception e) { Log.Error(e, "Error while handling notification."); }
+                    }
+
+                    Log.Information("Client disconnected. Waiting for new connection.");
+                    bool isHandleInvalidAfterDisconnect = pipeServer.SafePipeHandle.IsInvalid; // **GET IsHandleInvalid BEFORE LOGGING**
+                    Log.Information("After Client Disconnect - Pipe Server IsConnected: {IsConnected}, IsHandleInvalid: {IsHandleInvalid}", pipeServer.IsConnected, isHandleInvalidAfterDisconnect); // Log it
+                }
+                catch (ObjectDisposedException disposedEx)
+                {
+                    Log.Error(disposedEx, "ObjectDisposedException in ListenForNotifications loop.");
+                    break; // Exit loop on ObjectDisposedException
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "General Error in ListenForNotifications loop.");
+                    await Task.Delay(1000);
+                }
+                finally
+                {
+                    if (reader != null) // Dispose of StreamReader first
+                    {
                         try
                         {
-                            NotificationReceived?.Invoke(null, message);
-
+                            reader.Close(); // Close StreamReader
+                            reader.Dispose(); // Dispose StreamReader
+                            Log.Information("StreamReader Disposed in finally block.");
                         }
-                        catch (Exception e)
+                        catch (Exception disposeEx)
                         {
-                            Log.Error(e, "Error while handling notification.");
+                            Log.Error(disposeEx, "Error disposing reader in finally block.");
+                        }
+                    }
+                    if (pipeServer != null) // Then dispose of pipeServer
+                    {
+                        try
+                        {
+                            pipeServer.Close();
+                            pipeServer.Dispose();
+                            Log.Information("Pipe Server Disposed in finally block.");
+                        }
+                        catch (Exception disposeEx)
+                        {
+                            Log.Error(disposeEx, "Error disposing pipeServer in finally block.");
                         }
                     }
                 }
-                pipeServer.Disconnect();
             }
+            Log.Information("ListenForNotifications loop exited.");
         }
+
+
 
         public static async Task PinToStartScreenAsync()
         {

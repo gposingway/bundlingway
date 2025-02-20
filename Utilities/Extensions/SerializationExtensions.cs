@@ -22,6 +22,11 @@ namespace Bundlingway.Utilities.Extensions
             return JsonSerializer.Serialize(obj, _options);
         }
 
+        public static string ToSingleLineJson<T>(this T obj)
+        {
+            return JsonSerializer.Serialize(obj);
+        }
+
         /// <summary>
         /// Deserializes a JSON string to an object of type T.
         /// </summary>

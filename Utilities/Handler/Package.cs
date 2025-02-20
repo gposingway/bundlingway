@@ -96,7 +96,7 @@ namespace Bundlingway.Utilities.Handler
 
             if (fileExtension == ".zip")
             {
-                await Task.Run(() => ZipFile.ExtractToDirectory(filePath, tempFolderPath));
+                await Task.Run(() => ZipFile.ExtractToDirectory(filePath, tempFolderPath, true));
                 Log.Information("Package.Onboard: ZIP file extracted.");
             }
             else if (fileExtension == ".rar")
@@ -883,7 +883,7 @@ namespace Bundlingway.Utilities.Handler
 
                     Maintenance.RemoveTempDir();
 
-                    return package.Name + " installed successfully";
+                    return package.Name + " installed successfully!";
                 }
                 catch (Exception ex)
                 {

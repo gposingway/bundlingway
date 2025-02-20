@@ -6,9 +6,9 @@ namespace Bundlingway.Utilities.Handler
 {
     public static class CommandLineArgs
     {
-        public static async Task ProcessAsync(string[] args)
+        public static async Task<string> ProcessAsync(string[] args)
         {
-            if (args == null || args.Length == 0) return;
+            if (args == null || args.Length == 0) return null;
 
             var firstArg = args[0];
             Log.Information($"Processing command line argument: {firstArg}");
@@ -24,7 +24,9 @@ namespace Bundlingway.Utilities.Handler
                 var packageName = Package.DownloadAndInstall(firstArg).Result;
 
                 await UI.NotifyAsync("Installation", packageName);
-                Log.Information($"Package {packageName} installed successfully.");
+                Log.Information(packageName);
+
+                return packageName;
             }
 
             if (firstArg == Constants.CommandLineOptions.UpdateClient)
@@ -66,6 +68,8 @@ namespace Bundlingway.Utilities.Handler
                     Log.Error($"CommandLineArgs.ProcessAsync: {targetFile} not found.");
                 }
             }
+
+            return null;
         }
     }
 }

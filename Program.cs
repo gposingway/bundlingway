@@ -25,13 +25,13 @@ namespace Bundlingway
 
             if (args.Length > 0)
             {
-                Utilities.Handler.CommandLineArgs.ProcessAsync(args).Wait();
+                var result = Utilities.Handler.CommandLineArgs.ProcessAsync(args).Result;
 
                 // Check if another instance of the application is already running
                 if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
                 {
                     // Notify other instances and close the client
-                    ProcessHelper.NotifyOtherInstances(Constants.Events.PackageInstalled);
+                    ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.PackageInstalled, Message = result });
                     Process.GetCurrentProcess().Kill();
                 }
 

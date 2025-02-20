@@ -25,17 +25,17 @@ namespace Bundlingway
             PopulateGrid();
 
             ProcessHelper.NotificationReceived += ProcessHelper_NotificationReceived;
-            _ = ProcessHelper.ListenForNotifications();
+            _= ProcessHelper.ListenForNotifications();
 
             _ = UI.Announce(Constants.MessageCategory.Ready);
         }
 
-        private void ProcessHelper_NotificationReceived(object? sender, string e)
+        private void ProcessHelper_NotificationReceived(object? sender, IPCNotification e)
         {
-            if (e == Constants.Events.PackageInstalled)
+            if (e.Topic == Constants.Events.PackageInstalled)
             {
                 PopulateGrid();
-                _ = UI.Announce(Constants.MessageCategory.Finished);
+                _ = UI.Announce(e.Message);
             }
         }
 
