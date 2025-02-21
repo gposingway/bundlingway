@@ -16,6 +16,12 @@ namespace Bundlingway
             UI._landing = this;
             InitializeComponent();
 
+            this.AllowDrop = true; // Make sure this line is present
+            this.DragEnter += Generic_DragEnter; // Add these lines
+            this.DragOver += Generic_DragOver;  // Add these lines
+            this.DragDrop += Generic_DragDrop;  // Add these lines
+
+
             this.Text = $"Bundlingway · v{Instances.AppVersion}";
 
             _ = UI.Announce(Constants.MessageCategory.ApplicationStart);
@@ -25,7 +31,7 @@ namespace Bundlingway
             PopulateGrid();
 
             ProcessHelper.NotificationReceived += ProcessHelper_NotificationReceived;
-            _= ProcessHelper.ListenForNotifications();
+            _ = ProcessHelper.ListenForNotifications();
 
             _ = UI.Announce(Constants.MessageCategory.Ready);
         }
@@ -146,8 +152,13 @@ namespace Bundlingway
             foreach (var package in Instances.ResourcePackages)
             {
                 var rowObj = new DataGridViewRow();
+
+                var tagLine = "";
+                if (package.Favorite) tagLine += "★";
+                if (package.Locked) tagLine += "🔒";
+
                 rowObj.CreateCells(dgvPackages,
-                    package.Favorite ? "★" : "",
+                    tagLine,
                     package.Type,
                     package.Name,
                     package.Status
@@ -196,13 +207,13 @@ namespace Bundlingway
                 }
             });
         }
-        private void Generic_DragDrop(object sender, DragEventArgs e)
+        private void Generic_DragDrop(object? sender, DragEventArgs e)
         {
             Name = "flowLayoutPanel1_DragDrop";
             TryInstalPackages(e);
         }
 
-        private void Generic_DragEnter(object sender, DragEventArgs e)
+        private void Generic_DragEnter(object? sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
@@ -214,7 +225,7 @@ namespace Bundlingway
             }
         }
 
-        private void Generic_DragOver(object sender, DragEventArgs e)
+        private void Generic_DragOver(object? sender, DragEventArgs e)
         {
             if (e.Data.GetDataPresent(DataFormats.FileDrop))
             {
@@ -558,20 +569,6 @@ namespace Bundlingway
             });
         }
 
-        private void btnFavPackage_Click(object sender, EventArgs e)
-        {
-
-            var selectedPackages = dgvPackages.SelectedRows
-                .Cast<DataGridViewRow>()
-                .Select(row => (ResourcePackage)row.Tag)
-                .ToList();
-
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.ToggleFavorite(package)))).ContinueWith(t =>
-            {
-                PopulateGrid();
-            });
-        }
-
         private void btnShortcuts_Click(object sender, EventArgs e)
         {
             frmShortcuts shortcutsForm = new frmShortcuts();
@@ -627,8 +624,42 @@ namespace Bundlingway
 
             //Open the backup folder
             System.Diagnostics.Process.Start("explorer.exe", target);
+        }
 
+        private void btnFavPackage_Click(object sender, EventArgs e)
+        {
+            var selectedPackages = dgvPackages.SelectedRows
+                .Cast<DataGridViewRow>()
+                .Select(row => (ResourcePackage)row.Tag)
+                .ToList();
 
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.ToggleFavorite(package)))).ContinueWith(t =>
+            {
+                PopulateGrid();
+            });
+        }
+
+        private void btnLockPackage_Click(object sender, EventArgs e)
+        {
+            var selectedPackages = dgvPackages.SelectedRows
+                .Cast<DataGridViewRow>()
+                .Select(row => (ResourcePackage)row.Tag)
+                .ToList();
+
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.ToggleLocked(package)))).ContinueWith(t =>
+            {
+                PopulateGrid();
+            });
+        }
+
+        private void btnLockPackage_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce(((Control)sender).Tag.ToString());
+        }
+
+        private void btnFavPackage_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce(((Control)sender).Tag.ToString());
         }
     }
 }

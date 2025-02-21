@@ -34,7 +34,6 @@ namespace Bundlingway
                     ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.PackageInstalled, Message = result });
                     Process.GetCurrentProcess().Kill();
                 }
-
             }
 
             Application.Run(new frmLanding());

@@ -701,6 +701,7 @@ namespace Bundlingway.Utilities.Handler
 
         internal static void Remove(ResourcePackage package)
         {
+            if (package.Locked) return;
 
             if (package.Type == Constants.PackageCategories.SinglePreset)
             {
@@ -760,6 +761,7 @@ namespace Bundlingway.Utilities.Handler
 
         internal static void Uninstall(ResourcePackage package)
         {
+            if (package.Locked) return;
 
             if (package.Type == Constants.PackageCategories.SinglePreset)
             {
@@ -908,5 +910,10 @@ namespace Bundlingway.Utilities.Handler
             package.ToJsonFile(localCatalogFilePath);
         }
 
+        internal static void ToggleLocked(ResourcePackage package)
+        {
+            package.Locked = !package.Locked;
+            package.Save();
+        }
     }
 }

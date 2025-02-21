@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.IO.Pipes;
 using System.Reflection;
 using System.Text;
-using Windows.UI.Notifications;
 
 namespace Bundlingway.Utilities
 {
@@ -27,7 +26,6 @@ namespace Bundlingway.Utilities
         {
             return MethodBase.GetCurrentMethod().DeclaringType.Name + "." + MethodBase.GetCurrentMethod().Name;
         }
-
 
         public static bool IsProcessRunning(string processName)
         {
@@ -69,7 +67,6 @@ namespace Bundlingway.Utilities
                     var payload = notification.ToSingleLineJson();
                     writer.Write(payload);
                 }
-                Log.Information("Notification sent successfully.");
             }
             catch (TimeoutException)
             {
@@ -98,14 +95,17 @@ namespace Bundlingway.Utilities
                     Log.Information("Client connected.");
 
                     reader = new StreamReader(pipeServer, Encoding.UTF8); // Initialize StreamReader here
-
                     string message;
+
                     while ((message = await reader.ReadLineAsync()) != null)
                     {
                         var ipcNotification = message.FromJson<IPCNotification>();
 
-                        Log.Information($"Notification received: {ipcNotification.Topic} / {ipcNotification.Message}");
-                        try { NotificationReceived?.Invoke(null, ipcNotification); } catch (Exception e) { Log.Error(e, "Error while handling notification."); }
+                        if (ipcNotification != null)
+                        {
+                            Log.Information($"Notification received: {ipcNotification.Topic} / {ipcNotification.Message}");
+                            try { NotificationReceived?.Invoke(null, ipcNotification); } catch (Exception e) { Log.Error(e, "Error while handling notification."); }
+                        }
                     }
 
                     Log.Information("Client disconnected. Waiting for new connection.");
@@ -154,8 +154,6 @@ namespace Bundlingway.Utilities
             }
             Log.Information("ListenForNotifications loop exited.");
         }
-
-
 
         public static async Task PinToStartScreenAsync()
         {

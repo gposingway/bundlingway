@@ -60,6 +60,7 @@
             btnUninstall = new Button();
             btnReinstall = new Button();
             btnInstallPackage = new Button();
+            btnLockPackage = new Button();
             btnFavPackage = new Button();
             lblGrpPackages = new Label();
             pnlSettings = new Panel();
@@ -122,7 +123,6 @@
             // 
             // flpSideMenu
             // 
-            flpSideMenu.AllowDrop = true;
             flpSideMenu.AutoScroll = true;
             flpSideMenu.BackColor = SystemColors.ControlLight;
             flpSideMenu.Controls.Add(btnShortcuts);
@@ -141,8 +141,6 @@
             flpSideMenu.Name = "flpSideMenu";
             flpSideMenu.Size = new Size(151, 686);
             flpSideMenu.TabIndex = 0;
-            flpSideMenu.DragDrop += Generic_DragDrop;
-            flpSideMenu.DragEnter += Generic_DragEnter;
             // 
             // btnShortcuts
             // 
@@ -378,7 +376,6 @@
             // 
             // dgvPackages
             // 
-            dgvPackages.AllowDrop = true;
             dgvPackages.AllowUserToAddRows = false;
             dgvPackages.AllowUserToDeleteRows = false;
             dgvPackages.AllowUserToResizeColumns = false;
@@ -397,21 +394,18 @@
             dgvPackages.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvPackages.Size = new Size(605, 348);
             dgvPackages.TabIndex = 10;
-            dgvPackages.DragDrop += Generic_DragDrop;
-            dgvPackages.DragEnter += Generic_DragEnter;
-            dgvPackages.DragOver += Generic_DragOver;
             // 
             // FavCol
             // 
             FavCol.AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleLeft;
             FavCol.DefaultCellStyle = dataGridViewCellStyle1;
-            FavCol.HeaderText = "★";
+            FavCol.HeaderText = "🔒";
             FavCol.MinimumWidth = 3;
             FavCol.Name = "FavCol";
             FavCol.ReadOnly = true;
             FavCol.Resizable = DataGridViewTriState.False;
-            FavCol.Width = 42;
+            FavCol.Width = 44;
             // 
             // TypeCol
             // 
@@ -442,6 +436,7 @@
             flpPackageOptions.Controls.Add(btnUninstall);
             flpPackageOptions.Controls.Add(btnReinstall);
             flpPackageOptions.Controls.Add(btnInstallPackage);
+            flpPackageOptions.Controls.Add(btnLockPackage);
             flpPackageOptions.Controls.Add(btnFavPackage);
             flpPackageOptions.Dock = DockStyle.Bottom;
             flpPackageOptions.FlowDirection = FlowDirection.RightToLeft;
@@ -490,16 +485,31 @@
             btnInstallPackage.UseVisualStyleBackColor = true;
             btnInstallPackage.Click += btnInstallPackage_Click;
             // 
+            // btnLockPackage
+            // 
+            btnLockPackage.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
+            btnLockPackage.Location = new Point(190, 3);
+            btnLockPackage.Name = "btnLockPackage";
+            btnLockPackage.Size = new Size(24, 23);
+            btnLockPackage.TabIndex = 16;
+            btnLockPackage.Tag = "Lock Package: this toggle will keep the selected packages safe and sound! This will disable the uninstall and remove options.";
+            btnLockPackage.Text = "🔒";
+            btnLockPackage.UseVisualStyleBackColor = true;
+            btnLockPackage.Click += btnLockPackage_Click;
+            btnLockPackage.MouseEnter += btnLockPackage_MouseEnter;
+            // 
             // btnFavPackage
             // 
             btnFavPackage.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            btnFavPackage.Location = new Point(190, 3);
+            btnFavPackage.Location = new Point(160, 3);
             btnFavPackage.Name = "btnFavPackage";
             btnFavPackage.Size = new Size(24, 23);
             btnFavPackage.TabIndex = 15;
+            btnFavPackage.Tag = "Favorite: Add the selected packages to your favorites list for quick access. A Loporrit-approved way to keep track of your top picks!";
             btnFavPackage.Text = "★";
             btnFavPackage.UseVisualStyleBackColor = true;
             btnFavPackage.Click += btnFavPackage_Click;
+            btnFavPackage.MouseEnter += btnFavPackage_MouseEnter;
             // 
             // lblGrpPackages
             // 
@@ -671,6 +681,7 @@
             // 
             // frmLanding
             // 
+            AllowDrop = true;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(770, 686);
@@ -680,6 +691,9 @@
             Name = "frmLanding";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Bundlingway Package Manager";
+            DragDrop += Generic_DragDrop;
+            DragEnter += Generic_DragEnter;
+            DragOver += Generic_DragOver;
             splitContainer1.Panel1.ResumeLayout(false);
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
@@ -740,13 +754,14 @@
         private Label label5;
         private FontAwesome.Sharp.IconButton btnUpdate;
         private Button btnFavPackage;
-        private DataGridViewTextBoxColumn FavCol;
-        private DataGridViewTextBoxColumn TypeCol;
-        private DataGridViewTextBoxColumn NameCol;
-        private DataGridViewTextBoxColumn StatusCol;
         private FontAwesome.Sharp.IconButton btnShortcuts;
         private FontAwesome.Sharp.IconButton btnBackup;
         private Label label1;
         private Label label6;
+        private DataGridViewTextBoxColumn FavCol;
+        private DataGridViewTextBoxColumn TypeCol;
+        private DataGridViewTextBoxColumn NameCol;
+        private DataGridViewTextBoxColumn StatusCol;
+        private Button btnLockPackage;
     }
 }
