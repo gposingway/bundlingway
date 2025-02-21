@@ -104,7 +104,9 @@
             // 
             splitContainer1.Dock = DockStyle.Fill;
             splitContainer1.FixedPanel = FixedPanel.Panel1;
+            splitContainer1.IsSplitterFixed = true;
             splitContainer1.Location = new Point(0, 0);
+            splitContainer1.Margin = new Padding(0);
             splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -117,7 +119,7 @@
             splitContainer1.Panel2.Controls.Add(pnlAbout);
             splitContainer1.Panel2.Controls.Add(pnlPackages);
             splitContainer1.Panel2.Controls.Add(pnlSettings);
-            splitContainer1.Size = new Size(770, 686);
+            splitContainer1.Size = new Size(712, 626);
             splitContainer1.SplitterDistance = 151;
             splitContainer1.TabIndex = 1;
             // 
@@ -138,8 +140,10 @@
             flpSideMenu.Controls.Add(btnUpdate);
             flpSideMenu.Dock = DockStyle.Fill;
             flpSideMenu.Location = new Point(0, 0);
+            flpSideMenu.Margin = new Padding(0);
+            flpSideMenu.MinimumSize = new Size(151, 516);
             flpSideMenu.Name = "flpSideMenu";
-            flpSideMenu.Size = new Size(151, 686);
+            flpSideMenu.Size = new Size(151, 626);
             flpSideMenu.TabIndex = 0;
             // 
             // btnShortcuts
@@ -162,11 +166,10 @@
             // label5
             // 
             label5.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            label5.AutoSize = true;
-            label5.Font = new Font("Segoe UI", 12F);
+            label5.Font = new Font("Segoe UI", 6F);
             label5.Location = new Point(3, 40);
             label5.Name = "label5";
-            label5.Size = new Size(0, 21);
+            label5.Size = new Size(100, 10);
             label5.TabIndex = 21;
             // 
             // btnPackagesFolder
@@ -176,7 +179,7 @@
             btnPackagesFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnPackagesFolder.IconSize = 32;
             btnPackagesFolder.ImageAlign = ContentAlignment.MiddleLeft;
-            btnPackagesFolder.Location = new Point(3, 64);
+            btnPackagesFolder.Location = new Point(3, 53);
             btnPackagesFolder.Margin = new Padding(3, 3, 3, 0);
             btnPackagesFolder.Name = "btnPackagesFolder";
             btnPackagesFolder.Size = new Size(145, 37);
@@ -194,7 +197,7 @@
             btnGameFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnGameFolder.IconSize = 32;
             btnGameFolder.ImageAlign = ContentAlignment.MiddleLeft;
-            btnGameFolder.Location = new Point(3, 104);
+            btnGameFolder.Location = new Point(3, 93);
             btnGameFolder.Margin = new Padding(3, 3, 3, 0);
             btnGameFolder.Name = "btnGameFolder";
             btnGameFolder.Size = new Size(145, 37);
@@ -212,7 +215,7 @@
             btnBackup.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnBackup.IconSize = 32;
             btnBackup.ImageAlign = ContentAlignment.MiddleLeft;
-            btnBackup.Location = new Point(3, 144);
+            btnBackup.Location = new Point(3, 133);
             btnBackup.Margin = new Padding(3, 3, 3, 0);
             btnBackup.Name = "btnBackup";
             btnBackup.Size = new Size(145, 37);
@@ -229,7 +232,7 @@
             btnDebug.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnDebug.IconSize = 32;
             btnDebug.ImageAlign = ContentAlignment.MiddleLeft;
-            btnDebug.Location = new Point(3, 184);
+            btnDebug.Location = new Point(3, 173);
             btnDebug.Margin = new Padding(3, 3, 3, 0);
             btnDebug.Name = "btnDebug";
             btnDebug.Size = new Size(145, 37);
@@ -243,11 +246,10 @@
             // label1
             // 
             label1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            label1.AutoSize = true;
-            label1.Font = new Font("Segoe UI", 12F);
-            label1.Location = new Point(3, 221);
+            label1.Font = new Font("Segoe UI", 6F);
+            label1.Location = new Point(3, 210);
             label1.Name = "label1";
-            label1.Size = new Size(0, 21);
+            label1.Size = new Size(100, 10);
             label1.TabIndex = 26;
             // 
             // btnEmporium
@@ -257,7 +259,7 @@
             btnEmporium.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnEmporium.IconSize = 32;
             btnEmporium.ImageAlign = ContentAlignment.MiddleLeft;
-            btnEmporium.Location = new Point(3, 245);
+            btnEmporium.Location = new Point(3, 223);
             btnEmporium.Margin = new Padding(3, 3, 3, 0);
             btnEmporium.Name = "btnEmporium";
             btnEmporium.Size = new Size(145, 37);
@@ -275,7 +277,7 @@
             btnAbout.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnAbout.IconSize = 32;
             btnAbout.ImageAlign = ContentAlignment.MiddleLeft;
-            btnAbout.Location = new Point(3, 285);
+            btnAbout.Location = new Point(3, 263);
             btnAbout.Margin = new Padding(3, 3, 3, 0);
             btnAbout.Name = "btnAbout";
             btnAbout.Size = new Size(145, 37);
@@ -289,11 +291,10 @@
             // label6
             // 
             label6.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
-            label6.AutoSize = true;
-            label6.Font = new Font("Segoe UI", 12F);
-            label6.Location = new Point(3, 322);
+            label6.Font = new Font("Segoe UI", 6F);
+            label6.Location = new Point(3, 300);
             label6.Name = "label6";
-            label6.Size = new Size(0, 21);
+            label6.Size = new Size(100, 10);
             label6.TabIndex = 27;
             // 
             // btnUpdate
@@ -303,7 +304,7 @@
             btnUpdate.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnUpdate.IconSize = 32;
             btnUpdate.ImageAlign = ContentAlignment.MiddleLeft;
-            btnUpdate.Location = new Point(3, 346);
+            btnUpdate.Location = new Point(3, 313);
             btnUpdate.Margin = new Padding(3, 3, 3, 0);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(145, 37);
@@ -321,10 +322,10 @@
             pnlAbout.Controls.Add(pictureBox1);
             pnlAbout.Controls.Add(lblBundlingwaySays);
             pnlAbout.Dock = DockStyle.Bottom;
-            pnlAbout.Location = new Point(0, 536);
+            pnlAbout.Location = new Point(0, 476);
             pnlAbout.Name = "pnlAbout";
             pnlAbout.Padding = new Padding(5);
-            pnlAbout.Size = new Size(615, 150);
+            pnlAbout.Size = new Size(557, 150);
             pnlAbout.TabIndex = 3;
             // 
             // lblAnnouncement
@@ -334,7 +335,7 @@
             lblAnnouncement.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblAnnouncement.Location = new Point(26, 55);
             lblAnnouncement.Name = "lblAnnouncement";
-            lblAnnouncement.Size = new Size(447, 70);
+            lblAnnouncement.Size = new Size(389, 70);
             lblAnnouncement.TabIndex = 2;
             lblAnnouncement.Text = "Gathering my tools, one sec...";
             lblAnnouncement.TextAlign = ContentAlignment.MiddleCenter;
@@ -343,7 +344,7 @@
             // 
             pictureBox1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             pictureBox1.Image = Properties.Resources.ffxiv_dx11_OkamiClarity_2024_02_18_16_07_46_icon;
-            pictureBox1.Location = new Point(498, 33);
+            pictureBox1.Location = new Point(440, 33);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(117, 117);
             pictureBox1.TabIndex = 1;
@@ -358,7 +359,7 @@
             lblBundlingwaySays.Location = new Point(5, 5);
             lblBundlingwaySays.Name = "lblBundlingwaySays";
             lblBundlingwaySays.Padding = new Padding(3);
-            lblBundlingwaySays.Size = new Size(605, 25);
+            lblBundlingwaySays.Size = new Size(547, 25);
             lblBundlingwaySays.TabIndex = 0;
             lblBundlingwaySays.Text = "Bundlingway Says...";
             // 
@@ -371,7 +372,7 @@
             pnlPackages.Location = new Point(0, 132);
             pnlPackages.Name = "pnlPackages";
             pnlPackages.Padding = new Padding(5, 5, 5, 150);
-            pnlPackages.Size = new Size(615, 554);
+            pnlPackages.Size = new Size(557, 494);
             pnlPackages.TabIndex = 1;
             // 
             // dgvPackages
@@ -392,7 +393,7 @@
             dgvPackages.ReadOnly = true;
             dgvPackages.RowHeadersVisible = false;
             dgvPackages.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvPackages.Size = new Size(605, 348);
+            dgvPackages.Size = new Size(547, 288);
             dgvPackages.TabIndex = 10;
             // 
             // FavCol
@@ -440,14 +441,14 @@
             flpPackageOptions.Controls.Add(btnFavPackage);
             flpPackageOptions.Dock = DockStyle.Bottom;
             flpPackageOptions.FlowDirection = FlowDirection.RightToLeft;
-            flpPackageOptions.Location = new Point(5, 378);
+            flpPackageOptions.Location = new Point(5, 318);
             flpPackageOptions.Name = "flpPackageOptions";
-            flpPackageOptions.Size = new Size(605, 26);
+            flpPackageOptions.Size = new Size(547, 26);
             flpPackageOptions.TabIndex = 4;
             // 
             // btnRemove
             // 
-            btnRemove.Location = new Point(511, 3);
+            btnRemove.Location = new Point(453, 3);
             btnRemove.Name = "btnRemove";
             btnRemove.Size = new Size(91, 23);
             btnRemove.TabIndex = 14;
@@ -457,7 +458,7 @@
             // 
             // btnUninstall
             // 
-            btnUninstall.Location = new Point(414, 3);
+            btnUninstall.Location = new Point(356, 3);
             btnUninstall.Name = "btnUninstall";
             btnUninstall.Size = new Size(91, 23);
             btnUninstall.TabIndex = 13;
@@ -467,7 +468,7 @@
             // 
             // btnReinstall
             // 
-            btnReinstall.Location = new Point(317, 3);
+            btnReinstall.Location = new Point(259, 3);
             btnReinstall.Name = "btnReinstall";
             btnReinstall.Size = new Size(91, 23);
             btnReinstall.TabIndex = 12;
@@ -477,7 +478,7 @@
             // 
             // btnInstallPackage
             // 
-            btnInstallPackage.Location = new Point(220, 3);
+            btnInstallPackage.Location = new Point(162, 3);
             btnInstallPackage.Name = "btnInstallPackage";
             btnInstallPackage.Size = new Size(91, 23);
             btnInstallPackage.TabIndex = 11;
@@ -488,7 +489,7 @@
             // btnLockPackage
             // 
             btnLockPackage.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            btnLockPackage.Location = new Point(190, 3);
+            btnLockPackage.Location = new Point(132, 3);
             btnLockPackage.Name = "btnLockPackage";
             btnLockPackage.Size = new Size(24, 23);
             btnLockPackage.TabIndex = 16;
@@ -501,7 +502,7 @@
             // btnFavPackage
             // 
             btnFavPackage.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            btnFavPackage.Location = new Point(160, 3);
+            btnFavPackage.Location = new Point(102, 3);
             btnFavPackage.Name = "btnFavPackage";
             btnFavPackage.Size = new Size(24, 23);
             btnFavPackage.TabIndex = 15;
@@ -520,7 +521,7 @@
             lblGrpPackages.Location = new Point(5, 5);
             lblGrpPackages.Name = "lblGrpPackages";
             lblGrpPackages.Padding = new Padding(3);
-            lblGrpPackages.Size = new Size(605, 25);
+            lblGrpPackages.Size = new Size(547, 25);
             lblGrpPackages.TabIndex = 0;
             lblGrpPackages.Text = "Packages";
             // 
@@ -532,7 +533,7 @@
             pnlSettings.Location = new Point(0, 0);
             pnlSettings.Name = "pnlSettings";
             pnlSettings.Padding = new Padding(5);
-            pnlSettings.Size = new Size(615, 132);
+            pnlSettings.Size = new Size(557, 132);
             pnlSettings.TabIndex = 0;
             // 
             // tableLayoutPanel1
@@ -562,13 +563,13 @@
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
-            tableLayoutPanel1.Size = new Size(605, 101);
+            tableLayoutPanel1.Size = new Size(547, 101);
             tableLayoutPanel1.TabIndex = 1;
             // 
             // btnInstallGPosingway
             // 
             btnInstallGPosingway.Dock = DockStyle.Fill;
-            btnInstallGPosingway.Location = new Point(543, 66);
+            btnInstallGPosingway.Location = new Point(485, 66);
             btnInstallGPosingway.Name = "btnInstallGPosingway";
             btnInstallGPosingway.Size = new Size(54, 23);
             btnInstallGPosingway.TabIndex = 9;
@@ -585,7 +586,7 @@
             txtGPosingwayStatus.Margin = new Padding(3, 7, 3, 3);
             txtGPosingwayStatus.Name = "txtGPosingwayStatus";
             txtGPosingwayStatus.ReadOnly = true;
-            txtGPosingwayStatus.Size = new Size(389, 16);
+            txtGPosingwayStatus.Size = new Size(331, 16);
             txtGPosingwayStatus.TabIndex = 41;
             // 
             // label4
@@ -602,7 +603,7 @@
             // btnInstallReShade
             // 
             btnInstallReShade.Dock = DockStyle.Fill;
-            btnInstallReShade.Location = new Point(543, 37);
+            btnInstallReShade.Location = new Point(485, 37);
             btnInstallReShade.Name = "btnInstallReShade";
             btnInstallReShade.Size = new Size(54, 23);
             btnInstallReShade.TabIndex = 8;
@@ -620,7 +621,7 @@
             txtReShadeStatus.Margin = new Padding(3, 7, 3, 3);
             txtReShadeStatus.Name = "txtReShadeStatus";
             txtReShadeStatus.ReadOnly = true;
-            txtReShadeStatus.Size = new Size(389, 16);
+            txtReShadeStatus.Size = new Size(331, 16);
             txtReShadeStatus.TabIndex = 40;
             // 
             // label3
@@ -653,12 +654,12 @@
             txtXivPath.Location = new Point(148, 12);
             txtXivPath.Margin = new Padding(3, 7, 3, 3);
             txtXivPath.Name = "txtXivPath";
-            txtXivPath.Size = new Size(389, 16);
+            txtXivPath.Size = new Size(331, 16);
             txtXivPath.TabIndex = 1;
             // 
             // btnDetectSettings
             // 
-            btnDetectSettings.Location = new Point(543, 8);
+            btnDetectSettings.Location = new Point(485, 8);
             btnDetectSettings.Name = "btnDetectSettings";
             btnDetectSettings.Size = new Size(54, 23);
             btnDetectSettings.TabIndex = 7;
@@ -675,7 +676,7 @@
             lblGrpSettings.Location = new Point(5, 5);
             lblGrpSettings.Name = "lblGrpSettings";
             lblGrpSettings.Padding = new Padding(3);
-            lblGrpSettings.Size = new Size(605, 25);
+            lblGrpSettings.Size = new Size(547, 25);
             lblGrpSettings.TabIndex = 0;
             lblGrpSettings.Text = "Settings";
             // 
@@ -684,7 +685,7 @@
             AllowDrop = true;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(770, 686);
+            ClientSize = new Size(712, 626);
             Controls.Add(splitContainer1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MinimumSize = new Size(599, 555);
@@ -699,7 +700,6 @@
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
             flpSideMenu.ResumeLayout(false);
-            flpSideMenu.PerformLayout();
             pnlAbout.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)pictureBox1).EndInit();
             pnlPackages.ResumeLayout(false);
