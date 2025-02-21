@@ -46,6 +46,7 @@
             label6 = new Label();
             btnUpdate = new FontAwesome.Sharp.IconButton();
             pnlAbout = new Panel();
+            prgCommon = new ProgressBar();
             lblAnnouncement = new Label();
             pictureBox1 = new PictureBox();
             lblBundlingwaySays = new Label();
@@ -318,6 +319,7 @@
             // 
             // pnlAbout
             // 
+            pnlAbout.Controls.Add(prgCommon);
             pnlAbout.Controls.Add(lblAnnouncement);
             pnlAbout.Controls.Add(pictureBox1);
             pnlAbout.Controls.Add(lblBundlingwaySays);
@@ -328,12 +330,21 @@
             pnlAbout.Size = new Size(557, 150);
             pnlAbout.TabIndex = 3;
             // 
+            // prgCommon
+            // 
+            prgCommon.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            prgCommon.Location = new Point(6, 139);
+            prgCommon.Name = "prgCommon";
+            prgCommon.Size = new Size(428, 6);
+            prgCommon.TabIndex = 3;
+            prgCommon.Visible = false;
+            // 
             // lblAnnouncement
             // 
             lblAnnouncement.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             lblAnnouncement.FlatStyle = FlatStyle.Flat;
             lblAnnouncement.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblAnnouncement.Location = new Point(26, 55);
+            lblAnnouncement.Location = new Point(26, 49);
             lblAnnouncement.Name = "lblAnnouncement";
             lblAnnouncement.Size = new Size(389, 70);
             lblAnnouncement.TabIndex = 2;
@@ -763,5 +774,6 @@
         private DataGridViewTextBoxColumn NameCol;
         private DataGridViewTextBoxColumn StatusCol;
         private Button btnLockPackage;
+        private ProgressBar prgCommon;
     }
 }

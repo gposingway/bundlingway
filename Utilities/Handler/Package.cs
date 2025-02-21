@@ -206,6 +206,12 @@ namespace Bundlingway.Utilities.Handler
                 if (!Directory.Exists(targetPackagePath)) Directory.CreateDirectory(targetPackagePath);
                 Log.Information($"Package.Onboard: Target package path created at: {targetPackagePath}");
 
+                if (Instances.ResourcePackages.Any(p => p.Name == newCatalogEntry.Name && p.Locked))
+                {
+                    Log.Information($"Package.Onboard: Package {newCatalogEntry.Name} is locked. Aborting onboarding.");
+                    return null;
+                }
+
                 Directory.CreateDirectory(Path.Combine(targetPackagePath, Constants.Folders.SourcePackage));
                 var target = Path.Combine(targetPackagePath, Constants.Folders.SourcePackage, Path.GetFileName(filePath));
 
@@ -613,7 +619,7 @@ namespace Bundlingway.Utilities.Handler
             var installedPackages = Instances.ResourcePackages.Where(p => p.Installed).ToList();
 
 
-            _= UI.Announce($"Updating {installedPackages.Count} installed packages, please wait...");
+            _ = UI.Announce($"Updating {installedPackages.Count} installed packages, please wait...");
 
             int maxDegreeOfParallelism = 10;
 
@@ -823,6 +829,8 @@ namespace Bundlingway.Utilities.Handler
             int current = 0;
             int maxDegreeOfParallelism = 5;
 
+            _ = UI.StartProgress(count);
+
             var tasks = Partitioner.Create(selectedFiles)
                 .GetPartitions(maxDegreeOfParallelism)
                 .Select(async partition =>
@@ -833,6 +841,8 @@ namespace Bundlingway.Utilities.Handler
                         {
                             var file = partition.Current;
                             Interlocked.Increment(ref current);
+
+                            _ = UI.SetProgress(current);
                             _ = UI.Announce(Constants.MessageCategory.AddPackage, count.ToString(), current.ToString(), Path.GetFileName(file));
 
                             try
@@ -849,6 +859,8 @@ namespace Bundlingway.Utilities.Handler
                 });
 
             await Task.WhenAll(tasks);
+
+            _ = UI.StopProgress();
         }
 
         public static async Task<string> DownloadAndInstall(string url)

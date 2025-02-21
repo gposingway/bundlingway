@@ -50,7 +50,21 @@ namespace Bundlingway.Utilities
         public static async Task UpdateElements()
         {
             await _landing.UpdateElements();
+        }
 
+        public static async Task StartProgress(long count)
+        {
+            await _landing.StartProgress(count);
+        }
+
+        public static async Task SetProgress(long value)
+        {
+            await _landing.SetProgress(value);
+        }
+
+        public static async Task StopProgress()
+        {
+            await _landing.StopProgress();
         }
     }
 }

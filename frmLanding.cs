@@ -2,7 +2,9 @@
 using Bundlingway.Utilities;
 using Bundlingway.Utilities.Extensions;
 using Bundlingway.Utilities.Handler;
+using Newtonsoft.Json.Linq;
 using Serilog;
+using SharpCompress.Common;
 using System.ComponentModel;
 using System.Windows.Forms;
 
@@ -554,18 +556,29 @@ namespace Bundlingway
         private void btnReinstall_Click(object sender, EventArgs e)
         {
             SetPackageOpsAvailable(false);
-
             var selectedPackages = dgvPackages.SelectedRows
                 .Cast<DataGridViewRow>()
                 .Select(row => (ResourcePackage)row.Tag)
                 .ToList();
 
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Reinstall(package)))).ContinueWith(t =>
+            var count = selectedPackages.Count;
+            var pos = 0;
+
+            _ = UI.StartProgress(count);
+
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => { 
+                Package.Reinstall(package);
+                _ = UI.SetProgress(++pos);
+            }))).ContinueWith(t =>
             {
+
                 Maintenance.RemoveTempDir();
                 _ = UI.Announce(Constants.MessageCategory.ReinstallPackage);
                 PopulateGrid();
                 SetPackageOpsAvailable(true);
+
+                _ = UI.StopProgress();
+
             });
         }
 
@@ -660,6 +673,36 @@ namespace Bundlingway
         private void btnFavPackage_MouseEnter(object sender, EventArgs e)
         {
             _ = UI.Announce(((Control)sender).Tag.ToString());
+        }
+
+        internal async Task StartProgress(long count)
+        {
+            prgCommon?.DoAction(() =>
+            {
+                prgCommon.Value = 0;
+                prgCommon.Tag = count;
+                prgCommon.Visible = true;   
+            });
+        }
+
+        internal async Task SetProgress(long value)
+        {
+            var percentage = (int)Math.Round((double)value / (long)prgCommon.Tag * 100);
+
+            prgCommon?.DoAction(() =>
+            {
+                prgCommon.Value = percentage;
+            });
+        }
+
+        internal async Task StopProgress()
+        {
+            prgCommon?.DoAction(() =>
+            {
+                prgCommon.Value = 0;
+                prgCommon.Tag = 0;
+                prgCommon.Visible = false;
+            });
         }
     }
 }

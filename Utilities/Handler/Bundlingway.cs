@@ -52,6 +52,8 @@ namespace Bundlingway.Utilities.Handler
         {
             var b = Instances.LocalConfigProvider.Configuration.Bundlingway;
 
+            _=UI.Announce("Downloading a new Bundlingway version...");
+
             b.Location = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
             Instances.LocalConfigProvider.Save();
 
@@ -59,21 +61,65 @@ namespace Bundlingway.Utilities.Handler
 
             if (!Directory.Exists(storageFolder)) Directory.CreateDirectory(storageFolder);
 
-            control?.DoAction(() => control.Text = "Downloading...");
-
-            using HttpClient client = new();
-            HttpResponseMessage response = await client.GetAsync(b.RemoteLink);
-            response.EnsureSuccessStatusCode();
-            byte[] fileBytes = await response.Content.ReadAsByteArrayAsync();
-
             string fileName = Path.GetFileName(new Uri(b.RemoteLink).LocalPath);
             string filePath = Path.Combine(storageFolder, fileName);
-            await File.WriteAllBytesAsync(filePath, fileBytes);
-
-            Log.Information($"Bundlingway.Update: Downloaded file to {filePath}.");
 
             var tempFolder = Path.Combine(Instances.TempFolder, Constants.Folders.BundlingwayPackage);
             if (!Directory.Exists(tempFolder)) Directory.CreateDirectory(tempFolder);
+
+
+            using (HttpClient client = new())
+            using (HttpResponseMessage response = await client.GetAsync(b.RemoteLink, HttpCompletionOption.ResponseHeadersRead)) // Get headers first
+            {
+                response.EnsureSuccessStatusCode();
+
+                long? totalBytes = response.Content.Headers.ContentLength;
+                long downloadedBytes = 0;
+                byte[] buffer = new byte[8192]; // 8KB buffer
+                bool progressReported = false; // Flag to avoid reporting 100% twice
+
+                control?.DoAction(() => control.Text = "Downloading 0%"); // Initial text
+
+                using (Stream contentStream = await response.Content.ReadAsStreamAsync())
+                using (FileStream fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true)) // Use FileStream for async operations
+                {
+                    long totalFileSize = totalBytes.HasValue ? totalBytes.Value : -1;
+
+                    _ = UI.StartProgress(totalFileSize);
+
+                    while (true)
+                    {
+                        int bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length);
+                        if (bytesRead == 0)
+                        {
+                            // End of stream
+                            break;
+                        }
+
+                        await fileStream.WriteAsync(buffer, 0, bytesRead);
+                        downloadedBytes += bytesRead;
+
+
+                        if (totalFileSize > 0) // Only report progress if total size is known
+                        {
+                            _ = UI.SetProgress(downloadedBytes);
+                            double percentage = (double)downloadedBytes / totalFileSize * 100;
+                            control?.DoAction(() => control.Text = $"Downloading {percentage:F0}%"); // Update progress in UI
+                            progressReported = percentage >= 100; // Set flag when reaching 100% (or close to it due to potential rounding)
+                        }
+                    }
+
+                    if (totalFileSize <= 0 || !progressReported) // Report 100% if size was unknown or if not reported in loop
+                    {
+                        _ = UI.SetProgress(totalFileSize);
+                        control?.DoAction(() => control.Text = $"Downloading 100%"); // Final 100% update
+                    }
+
+                    Log.Information($"Bundlingway.Update: Downloaded file to {filePath}.");
+                }
+            }
+
+            _ = UI.Announce("Unzipping the new version...");
 
             control?.DoAction(() => control.Text = "Unzipping...");
 
