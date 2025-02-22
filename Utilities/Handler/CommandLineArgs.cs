@@ -1,6 +1,9 @@
-﻿
-using Serilog;
+﻿using Serilog;
+using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -21,8 +24,7 @@ namespace Bundlingway.Utilities.Handler
                 // Run the installation form in a separate thread
                 await UI.NotifyAsync("Installing package", firstArg);
 
-                var packageName = Package.DownloadAndInstall(firstArg).Result;
-
+                var packageName = Package.DownloadAndInstall(firstArg).Result; // Consider making this async
                 await UI.NotifyAsync("Installation", packageName);
                 Log.Information(packageName);
 
@@ -39,29 +41,79 @@ namespace Bundlingway.Utilities.Handler
                     var currentExePath = Process.GetCurrentProcess().MainModule.FileName;
                     Log.Information($"Copying current executable from {currentExePath} to {targetFile}");
 
-                    // Wait for any existing process with the same name to exit
                     var processName = Path.GetFileNameWithoutExtension(currentExePath);
-                    var existingProcesses = Process.GetProcessesByName(processName).Where(p => p.Id != Process.GetCurrentProcess().Id).ToList();
+                    var existingProcesses = Process.GetProcessesByName(processName)
+                                                     .Where(p => p.Id != Process.GetCurrentProcess().Id)
+                                                     .ToList();
+
                     if (existingProcesses.Any())
                     {
                         Log.Information($"Waiting for existing process {processName} to exit.");
-                        var waitTask = Task.Run(() =>
+                        foreach (var process in existingProcesses)
                         {
-                            foreach (var process in existingProcesses)
+                            int waitAttempts = 0;
+                            while (!process.HasExited && waitAttempts < 30) // Check for exit with shorter intervals
                             {
-                                process.WaitForExit(10000); // Wait up to 10 seconds
+                                Log.Debug($"Waiting for process {process.Id}, attempt {waitAttempts + 1}");
+                                process.WaitForExit(1000); // Wait 1 second
+                                waitAttempts++;
                             }
-                        });
-                        await waitTask;
+                            if (!process.HasExited)
+                            {
+                                Log.Warning($"Process {process.Id} did not exit gracefully after waiting. Proceeding with update.");
+                                // Optionally: process.Kill(); - Use with caution!
+                            }
+                            else
+                            {
+                                Log.Information($"Process {process.Id} exited.");
+                            }
+                        }
                     }
 
-                    File.Copy(currentExePath, targetFile, true);
+                    bool copySuccess = false;
+                    int copyRetries = 3;
+                    while (!copySuccess && copyRetries > 0)
+                    {
+                        try
+                        {
+                            File.Copy(currentExePath, targetFile, true);
+                            copySuccess = true;
+                            Log.Information($"File copied successfully to {targetFile}");
+                        }
+                        catch (IOException ex) when (ex.HResult == -2147024864) // Error code for sharing violation (File in use)
+                        {
+                            copyRetries--;
+                            Log.Warning($"File copy failed due to sharing violation. Retrying in 1 second... Retries remaining: {copyRetries}");
+                            await Task.Delay(1000);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, $"Error during file copy to {targetFile}");
+                            return null; // Or handle error as needed
+                        }
+                    }
 
-                    var process = new Process { StartInfo = new ProcessStartInfo { FileName = targetFile, UseShellExecute = true } };
-                    process.Start();
-                    Log.Information("New client process started. Exiting current process.");
-
-                    Environment.Exit(0);
+                    if (copySuccess)
+                    {
+                        try
+                        {
+                            var processStartInfo = new ProcessStartInfo { FileName = targetFile, UseShellExecute = true };
+                            var process = Process.Start(processStartInfo);
+                            Log.Information("New client process started. Exiting current process.");
+                            Environment.Exit(0);
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "Error starting new process.");
+                            // Handle process start failure - maybe log and don't exit?
+                            return null;
+                        }
+                    }
+                    else
+                    {
+                        Log.Error($"File copy failed after multiple retries to {targetFile}. Update aborted.");
+                        return null; // Or handle copy failure
+                    }
                 }
                 else
                 {
