@@ -159,6 +159,7 @@
             btnShortcuts.Name = "btnShortcuts";
             btnShortcuts.Size = new Size(145, 37);
             btnShortcuts.TabIndex = 23;
+            btnShortcuts.Tag = "Customize your in-game ReShade shortcuts! Make it easy to toggle effects and adjust settings on the fly.";
             btnShortcuts.Text = "In-game Shortcuts";
             btnShortcuts.TextAlign = ContentAlignment.MiddleRight;
             btnShortcuts.UseVisualStyleBackColor = true;
@@ -185,6 +186,7 @@
             btnPackagesFolder.Name = "btnPackagesFolder";
             btnPackagesFolder.Size = new Size(145, 37);
             btnPackagesFolder.TabIndex = 3;
+            btnPackagesFolder.Tag = "Where all your precious presets and shaders live! Don’t worry, they’re well-fed.";
             btnPackagesFolder.Text = "Repository";
             btnPackagesFolder.TextAlign = ContentAlignment.MiddleRight;
             btnPackagesFolder.UseVisualStyleBackColor = true;
@@ -203,6 +205,7 @@
             btnGameFolder.Name = "btnGameFolder";
             btnGameFolder.Size = new Size(145, 37);
             btnGameFolder.TabIndex = 2;
+            btnGameFolder.Tag = "Game files, game files everywhere! Tread carefully, adventurer!";
             btnGameFolder.Text = "FFXIV Game Folder";
             btnGameFolder.TextAlign = ContentAlignment.MiddleRight;
             btnGameFolder.UseVisualStyleBackColor = true;
@@ -211,7 +214,7 @@
             // 
             // btnBackup
             // 
-            btnBackup.IconChar = FontAwesome.Sharp.IconChar.FolderOpen;
+            btnBackup.IconChar = FontAwesome.Sharp.IconChar.DiceD6;
             btnBackup.IconColor = SystemColors.Highlight;
             btnBackup.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnBackup.IconSize = 32;
@@ -221,6 +224,7 @@
             btnBackup.Name = "btnBackup";
             btnBackup.Size = new Size(145, 37);
             btnBackup.TabIndex = 25;
+            btnBackup.Tag = "Create a backup of your managed packages. Better safe than sorry, friend!";
             btnBackup.Text = "Backup";
             btnBackup.TextAlign = ContentAlignment.MiddleRight;
             btnBackup.UseVisualStyleBackColor = true;
@@ -238,6 +242,7 @@
             btnDebug.Name = "btnDebug";
             btnDebug.Size = new Size(145, 37);
             btnDebug.TabIndex = 4;
+            btnDebug.Tag = "Oh dear, what have we here? A log full of secrets! (and probably some errors…)";
             btnDebug.Text = "Log";
             btnDebug.TextAlign = ContentAlignment.MiddleRight;
             btnDebug.UseVisualStyleBackColor = true;
@@ -265,6 +270,7 @@
             btnEmporium.Name = "btnEmporium";
             btnEmporium.Size = new Size(145, 37);
             btnEmporium.TabIndex = 5;
+            btnEmporium.Tag = "A Loporrit-approved selection of presets and shaders! Fluffy, fancy, and fantastic!";
             btnEmporium.Text = "The Emporium";
             btnEmporium.TextAlign = ContentAlignment.MiddleRight;
             btnEmporium.UseVisualStyleBackColor = true;
@@ -283,6 +289,7 @@
             btnAbout.Name = "btnAbout";
             btnAbout.Size = new Size(145, 37);
             btnAbout.TabIndex = 6;
+            btnAbout.Tag = "About? About what? Oh! The project! Yes, yes, right this way!";
             btnAbout.Text = "About";
             btnAbout.TextAlign = ContentAlignment.MiddleRight;
             btnAbout.UseVisualStyleBackColor = true;
@@ -310,12 +317,12 @@
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(145, 37);
             btnUpdate.TabIndex = 22;
+            btnUpdate.Tag = "A new Bundlingway version is out - Click here to download and install!";
             btnUpdate.Text = "Update Available!";
             btnUpdate.TextAlign = ContentAlignment.MiddleRight;
             btnUpdate.UseVisualStyleBackColor = true;
             btnUpdate.Visible = false;
             btnUpdate.Click += btnUpdate_Click;
-            btnUpdate.MouseEnter += btnUpdate_MouseEnter;
             // 
             // pnlAbout
             // 
@@ -463,6 +470,7 @@
             btnRemove.Name = "btnRemove";
             btnRemove.Size = new Size(91, 23);
             btnRemove.TabIndex = 14;
+            btnRemove.Tag = "Tidy up your list! Remove the selected packages from the game and Bundlingway.";
             btnRemove.Text = "Remove";
             btnRemove.UseVisualStyleBackColor = true;
             btnRemove.Click += btnRemove_Click;
@@ -473,6 +481,7 @@
             btnUninstall.Name = "btnUninstall";
             btnUninstall.Size = new Size(91, 23);
             btnUninstall.TabIndex = 13;
+            btnUninstall.Tag = "Remove the selected packages from your game installation, but keep'em handy if you decide to reinstall!";
             btnUninstall.Text = "Uninstall";
             btnUninstall.UseVisualStyleBackColor = true;
             btnUninstall.Click += btnUninstall_Click;
@@ -483,6 +492,7 @@
             btnReinstall.Name = "btnReinstall";
             btnReinstall.Size = new Size(91, 23);
             btnReinstall.TabIndex = 12;
+            btnReinstall.Tag = "Reinstall the selected packages. Useful if something seems broken or if you want a fresh start.";
             btnReinstall.Text = "Reinstall";
             btnReinstall.UseVisualStyleBackColor = true;
             btnReinstall.Click += btnReinstall_Click;
@@ -493,6 +503,7 @@
             btnInstallPackage.Name = "btnInstallPackage";
             btnInstallPackage.Size = new Size(91, 23);
             btnInstallPackage.TabIndex = 11;
+            btnInstallPackage.Tag = "Ready for more beautiful graphics? Click here to add new packages to the game!";
             btnInstallPackage.Text = "Add Package";
             btnInstallPackage.UseVisualStyleBackColor = true;
             btnInstallPackage.Click += btnInstallPackage_Click;
@@ -508,7 +519,6 @@
             btnLockPackage.Text = "🔒";
             btnLockPackage.UseVisualStyleBackColor = true;
             btnLockPackage.Click += btnLockPackage_Click;
-            btnLockPackage.MouseEnter += btnLockPackage_MouseEnter;
             // 
             // btnFavPackage
             // 
@@ -521,7 +531,6 @@
             btnFavPackage.Text = "★";
             btnFavPackage.UseVisualStyleBackColor = true;
             btnFavPackage.Click += btnFavPackage_Click;
-            btnFavPackage.MouseEnter += btnFavPackage_MouseEnter;
             // 
             // lblGrpPackages
             // 
@@ -618,6 +627,7 @@
             btnInstallReShade.Name = "btnInstallReShade";
             btnInstallReShade.Size = new Size(54, 23);
             btnInstallReShade.TabIndex = 8;
+            btnInstallReShade.Tag = "You need to shut down the game client before you can update!";
             btnInstallReShade.Text = "Install";
             btnInstallReShade.UseVisualStyleBackColor = true;
             btnInstallReShade.Visible = false;
@@ -674,6 +684,7 @@
             btnDetectSettings.Name = "btnDetectSettings";
             btnDetectSettings.Size = new Size(54, 23);
             btnDetectSettings.TabIndex = 7;
+            btnDetectSettings.Tag = "Let Bundlingway sniff out your game installation, ReShade and GPosingway settings automatically!";
             btnDetectSettings.Text = "Detect";
             btnDetectSettings.UseVisualStyleBackColor = true;
             btnDetectSettings.Click += btnDetectSettings_Click;

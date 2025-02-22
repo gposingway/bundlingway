@@ -18,13 +18,9 @@ namespace Bundlingway
             UI._landing = this;
             InitializeComponent();
 
-            this.AllowDrop = true; // Make sure this line is present
-            this.DragEnter += Generic_DragEnter; // Add these lines
-            this.DragOver += Generic_DragOver;  // Add these lines
-            this.DragDrop += Generic_DragDrop;  // Add these lines
-
-
             this.Text = $"Bundlingway · v{Instances.AppVersion}";
+
+            BindAllTaggedControls();
 
             _ = UI.Announce(Constants.MessageCategory.ApplicationStart);
 
@@ -36,6 +32,29 @@ namespace Bundlingway
             _ = ProcessHelper.ListenForNotifications();
 
             _ = UI.Announce(Constants.MessageCategory.Ready);
+        }
+
+        private void BindAllTaggedControls(Control parent = null)
+        {
+
+            parent ??= this;
+
+            foreach (Control control in parent.Controls)
+            {
+                if (control.Tag != null)
+                {
+                    control.MouseEnter += Generic_MouseEnter;
+                }
+                if (control.HasChildren)
+                {
+                    BindAllTaggedControls(control);
+                }
+            }
+        }
+
+        private void Generic_MouseEnter(object sender, EventArgs e)
+        {
+            _ = UI.Announce(((Control)sender).Tag.ToString());
         }
 
         private void ProcessHelper_NotificationReceived(object? sender, IPCNotification e)
@@ -548,11 +567,6 @@ namespace Bundlingway
             _ = Utilities.Handler.Bundlingway.Update(btnUpdate);
         }
 
-        private void btnUpdate_MouseEnter(object sender, EventArgs e)
-        {
-            _ = UI.Announce($"A new Bundlingway version ({Instances.LocalConfigProvider.Configuration.Bundlingway.RemoteVersion}) is out!");
-        }
-
         private void btnReinstall_Click(object sender, EventArgs e)
         {
             SetPackageOpsAvailable(false);
@@ -566,7 +580,8 @@ namespace Bundlingway
 
             _ = UI.StartProgress(count);
 
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => { 
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() =>
+            {
                 Package.Reinstall(package);
                 _ = UI.SetProgress(++pos);
             }))).ContinueWith(t =>
@@ -665,23 +680,13 @@ namespace Bundlingway
             });
         }
 
-        private void btnLockPackage_MouseEnter(object sender, EventArgs e)
-        {
-            _ = UI.Announce(((Control)sender).Tag.ToString());
-        }
-
-        private void btnFavPackage_MouseEnter(object sender, EventArgs e)
-        {
-            _ = UI.Announce(((Control)sender).Tag.ToString());
-        }
-
         internal async Task StartProgress(long count)
         {
             prgCommon?.DoAction(() =>
             {
                 prgCommon.Value = 0;
                 prgCommon.Tag = count;
-                prgCommon.Visible = true;   
+                prgCommon.Visible = true;
             });
         }
 
