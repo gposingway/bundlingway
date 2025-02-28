@@ -120,7 +120,7 @@
             splitContainer1.Panel2.Controls.Add(pnlAbout);
             splitContainer1.Panel2.Controls.Add(pnlPackages);
             splitContainer1.Panel2.Controls.Add(pnlSettings);
-            splitContainer1.Size = new Size(712, 626);
+            splitContainer1.Size = new Size(661, 636);
             splitContainer1.SplitterDistance = 151;
             splitContainer1.TabIndex = 1;
             // 
@@ -144,7 +144,7 @@
             flpSideMenu.Margin = new Padding(0);
             flpSideMenu.MinimumSize = new Size(151, 516);
             flpSideMenu.Name = "flpSideMenu";
-            flpSideMenu.Size = new Size(151, 626);
+            flpSideMenu.Size = new Size(151, 636);
             flpSideMenu.TabIndex = 0;
             // 
             // btnShortcuts
@@ -331,10 +331,10 @@
             pnlAbout.Controls.Add(pictureBox1);
             pnlAbout.Controls.Add(lblBundlingwaySays);
             pnlAbout.Dock = DockStyle.Bottom;
-            pnlAbout.Location = new Point(0, 476);
+            pnlAbout.Location = new Point(0, 486);
             pnlAbout.Name = "pnlAbout";
             pnlAbout.Padding = new Padding(5);
-            pnlAbout.Size = new Size(557, 150);
+            pnlAbout.Size = new Size(506, 150);
             pnlAbout.TabIndex = 3;
             // 
             // prgCommon
@@ -342,7 +342,7 @@
             prgCommon.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
             prgCommon.Location = new Point(6, 139);
             prgCommon.Name = "prgCommon";
-            prgCommon.Size = new Size(428, 6);
+            prgCommon.Size = new Size(377, 6);
             prgCommon.TabIndex = 3;
             prgCommon.Visible = false;
             // 
@@ -353,7 +353,7 @@
             lblAnnouncement.Font = new Font("Segoe UI", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
             lblAnnouncement.Location = new Point(26, 49);
             lblAnnouncement.Name = "lblAnnouncement";
-            lblAnnouncement.Size = new Size(389, 70);
+            lblAnnouncement.Size = new Size(338, 70);
             lblAnnouncement.TabIndex = 2;
             lblAnnouncement.Text = "Gathering my tools, one sec...";
             lblAnnouncement.TextAlign = ContentAlignment.MiddleCenter;
@@ -362,7 +362,7 @@
             // 
             pictureBox1.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             pictureBox1.Image = Properties.Resources.ffxiv_dx11_OkamiClarity_2024_02_18_16_07_46_icon;
-            pictureBox1.Location = new Point(440, 33);
+            pictureBox1.Location = new Point(389, 33);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(117, 117);
             pictureBox1.TabIndex = 1;
@@ -377,7 +377,7 @@
             lblBundlingwaySays.Location = new Point(5, 5);
             lblBundlingwaySays.Name = "lblBundlingwaySays";
             lblBundlingwaySays.Padding = new Padding(3);
-            lblBundlingwaySays.Size = new Size(547, 25);
+            lblBundlingwaySays.Size = new Size(496, 25);
             lblBundlingwaySays.TabIndex = 0;
             lblBundlingwaySays.Text = "Bundlingway Says...";
             // 
@@ -390,7 +390,7 @@
             pnlPackages.Location = new Point(0, 132);
             pnlPackages.Name = "pnlPackages";
             pnlPackages.Padding = new Padding(5, 5, 5, 150);
-            pnlPackages.Size = new Size(557, 494);
+            pnlPackages.Size = new Size(506, 504);
             pnlPackages.TabIndex = 1;
             // 
             // dgvPackages
@@ -411,7 +411,7 @@
             dgvPackages.ReadOnly = true;
             dgvPackages.RowHeadersVisible = false;
             dgvPackages.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvPackages.Size = new Size(547, 288);
+            dgvPackages.Size = new Size(496, 298);
             dgvPackages.TabIndex = 10;
             // 
             // FavCol
@@ -459,14 +459,14 @@
             flpPackageOptions.Controls.Add(btnFavPackage);
             flpPackageOptions.Dock = DockStyle.Bottom;
             flpPackageOptions.FlowDirection = FlowDirection.RightToLeft;
-            flpPackageOptions.Location = new Point(5, 318);
+            flpPackageOptions.Location = new Point(5, 328);
             flpPackageOptions.Name = "flpPackageOptions";
-            flpPackageOptions.Size = new Size(547, 26);
+            flpPackageOptions.Size = new Size(496, 26);
             flpPackageOptions.TabIndex = 4;
             // 
             // btnRemove
             // 
-            btnRemove.Location = new Point(453, 3);
+            btnRemove.Location = new Point(402, 3);
             btnRemove.Name = "btnRemove";
             btnRemove.Size = new Size(91, 23);
             btnRemove.TabIndex = 14;
@@ -477,7 +477,7 @@
             // 
             // btnUninstall
             // 
-            btnUninstall.Location = new Point(356, 3);
+            btnUninstall.Location = new Point(305, 3);
             btnUninstall.Name = "btnUninstall";
             btnUninstall.Size = new Size(91, 23);
             btnUninstall.TabIndex = 13;
@@ -488,7 +488,7 @@
             // 
             // btnReinstall
             // 
-            btnReinstall.Location = new Point(259, 3);
+            btnReinstall.Location = new Point(208, 3);
             btnReinstall.Name = "btnReinstall";
             btnReinstall.Size = new Size(91, 23);
             btnReinstall.TabIndex = 12;
@@ -499,7 +499,7 @@
             // 
             // btnInstallPackage
             // 
-            btnInstallPackage.Location = new Point(162, 3);
+            btnInstallPackage.Location = new Point(111, 3);
             btnInstallPackage.Name = "btnInstallPackage";
             btnInstallPackage.Size = new Size(91, 23);
             btnInstallPackage.TabIndex = 11;
@@ -511,7 +511,7 @@
             // btnLockPackage
             // 
             btnLockPackage.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            btnLockPackage.Location = new Point(132, 3);
+            btnLockPackage.Location = new Point(81, 3);
             btnLockPackage.Name = "btnLockPackage";
             btnLockPackage.Size = new Size(24, 23);
             btnLockPackage.TabIndex = 16;
@@ -523,7 +523,7 @@
             // btnFavPackage
             // 
             btnFavPackage.Font = new Font("Segoe UI", 9F, FontStyle.Regular, GraphicsUnit.Point, 0);
-            btnFavPackage.Location = new Point(102, 3);
+            btnFavPackage.Location = new Point(51, 3);
             btnFavPackage.Name = "btnFavPackage";
             btnFavPackage.Size = new Size(24, 23);
             btnFavPackage.TabIndex = 15;
@@ -541,7 +541,7 @@
             lblGrpPackages.Location = new Point(5, 5);
             lblGrpPackages.Name = "lblGrpPackages";
             lblGrpPackages.Padding = new Padding(3);
-            lblGrpPackages.Size = new Size(547, 25);
+            lblGrpPackages.Size = new Size(496, 25);
             lblGrpPackages.TabIndex = 0;
             lblGrpPackages.Text = "Packages";
             // 
@@ -553,7 +553,7 @@
             pnlSettings.Location = new Point(0, 0);
             pnlSettings.Name = "pnlSettings";
             pnlSettings.Padding = new Padding(5);
-            pnlSettings.Size = new Size(557, 132);
+            pnlSettings.Size = new Size(506, 132);
             pnlSettings.TabIndex = 0;
             // 
             // tableLayoutPanel1
@@ -583,13 +583,13 @@
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
-            tableLayoutPanel1.Size = new Size(547, 101);
+            tableLayoutPanel1.Size = new Size(496, 101);
             tableLayoutPanel1.TabIndex = 1;
             // 
             // btnInstallGPosingway
             // 
             btnInstallGPosingway.Dock = DockStyle.Fill;
-            btnInstallGPosingway.Location = new Point(485, 66);
+            btnInstallGPosingway.Location = new Point(434, 66);
             btnInstallGPosingway.Name = "btnInstallGPosingway";
             btnInstallGPosingway.Size = new Size(54, 23);
             btnInstallGPosingway.TabIndex = 9;
@@ -606,7 +606,7 @@
             txtGPosingwayStatus.Margin = new Padding(3, 7, 3, 3);
             txtGPosingwayStatus.Name = "txtGPosingwayStatus";
             txtGPosingwayStatus.ReadOnly = true;
-            txtGPosingwayStatus.Size = new Size(331, 16);
+            txtGPosingwayStatus.Size = new Size(280, 16);
             txtGPosingwayStatus.TabIndex = 41;
             // 
             // label4
@@ -623,7 +623,7 @@
             // btnInstallReShade
             // 
             btnInstallReShade.Dock = DockStyle.Fill;
-            btnInstallReShade.Location = new Point(485, 37);
+            btnInstallReShade.Location = new Point(434, 37);
             btnInstallReShade.Name = "btnInstallReShade";
             btnInstallReShade.Size = new Size(54, 23);
             btnInstallReShade.TabIndex = 8;
@@ -642,7 +642,7 @@
             txtReShadeStatus.Margin = new Padding(3, 7, 3, 3);
             txtReShadeStatus.Name = "txtReShadeStatus";
             txtReShadeStatus.ReadOnly = true;
-            txtReShadeStatus.Size = new Size(331, 16);
+            txtReShadeStatus.Size = new Size(280, 16);
             txtReShadeStatus.TabIndex = 40;
             // 
             // label3
@@ -675,12 +675,12 @@
             txtXivPath.Location = new Point(148, 12);
             txtXivPath.Margin = new Padding(3, 7, 3, 3);
             txtXivPath.Name = "txtXivPath";
-            txtXivPath.Size = new Size(331, 16);
+            txtXivPath.Size = new Size(280, 16);
             txtXivPath.TabIndex = 1;
             // 
             // btnDetectSettings
             // 
-            btnDetectSettings.Location = new Point(485, 8);
+            btnDetectSettings.Location = new Point(434, 8);
             btnDetectSettings.Name = "btnDetectSettings";
             btnDetectSettings.Size = new Size(54, 23);
             btnDetectSettings.TabIndex = 7;
@@ -698,7 +698,7 @@
             lblGrpSettings.Location = new Point(5, 5);
             lblGrpSettings.Name = "lblGrpSettings";
             lblGrpSettings.Padding = new Padding(3);
-            lblGrpSettings.Size = new Size(547, 25);
+            lblGrpSettings.Size = new Size(496, 25);
             lblGrpSettings.TabIndex = 0;
             lblGrpSettings.Text = "Settings";
             // 
@@ -707,7 +707,7 @@
             AllowDrop = true;
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(712, 626);
+            ClientSize = new Size(661, 636);
             Controls.Add(splitContainer1);
             Icon = (Icon)resources.GetObject("$this.Icon");
             MinimumSize = new Size(599, 555);
