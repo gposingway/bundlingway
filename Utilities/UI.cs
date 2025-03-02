@@ -1,5 +1,4 @@
 ﻿using static Bundlingway.Constants;
-using Microsoft.Toolkit.Uwp.Notifications;
 
 namespace Bundlingway.Utilities
 {
@@ -38,13 +37,13 @@ namespace Bundlingway.Utilities
 
         public static async Task NotifyAsync(string topic, string message)
         {
-            new ToastContentBuilder()
-             .AddArgument("action", "viewConversation")
-             .AddArgument("conversationId", 9813)
-             .AddText(topic)
-             .AddText(message)
-             .Show();
-            ;
+            //new ToastContentBuilder()
+            // .AddArgument("action", "viewConversation")
+            // .AddArgument("conversationId", 9813)
+            // .AddText(topic)
+            // .AddText(message)
+            // .Show();
+            //;
         }
 
         public static async Task UpdateElements()
