@@ -777,14 +777,9 @@ namespace Bundlingway.Utilities.Handler
 
             Log.Information($"Package.Uninstall: Uninstalling package: {package.Name}");
 
-            if (Directory.Exists(package.LocalPresetFolder))
-                Directory.Delete(package.LocalPresetFolder, true);
-
-            if (Directory.Exists(package.LocalTextureFolder))
-                Directory.Delete(package.LocalTextureFolder, true);
-
-            if (Directory.Exists(package.LocalShaderFolder))
-                Directory.Delete(package.LocalShaderFolder, true);
+            if (Directory.Exists(package.LocalPresetFolder)) Directory.Delete(package.LocalPresetFolder, true);
+            if (Directory.Exists(package.LocalTextureFolder)) Directory.Delete(package.LocalTextureFolder, true);
+            if (Directory.Exists(package.LocalShaderFolder)) Directory.Delete(package.LocalShaderFolder, true);
 
             package.Status = "Uninstalled";
             package.Installed = false;
@@ -810,11 +805,17 @@ namespace Bundlingway.Utilities.Handler
         {
             Log.Information($"Package.InstallSinglePresetFile: Installing single preset file: {package.Name}");
             string source = package.Source;
-            string target = Path.Combine(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder, Constants.Folders.GamePresets, Constants.Folders.SinglePresets, $"{package.Name}.ini");
+
+            string targetFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder, Constants.Folders.GamePresets, Constants.Folders.SinglePresets);
+
+            if (!Directory.Exists(targetFolder))
+                Directory.CreateDirectory(targetFolder);
+
+            string targetFile = Path.Combine(targetFolder, $"{package.Name}.ini");
 
             if (File.Exists(source))
             {
-                File.Copy(source, target, true);
+                File.Copy(source, targetFile, true);
                 Log.Information($"Package.InstallSinglePresetFile: Single preset file {package.Name} installed successfully.");
             }
             else
@@ -865,12 +866,10 @@ namespace Bundlingway.Utilities.Handler
 
         public static async Task<string> DownloadAndInstall(string url)
         {
-            // Log the start of the method
             using (HttpClient client = new())
             {
                 try
                 {
-                    // Log the URL being downloaded
                     Log.Information($"DownloadAndInstall: Downloading from URL: {url}");
 
                     var response = await client.GetAsync(url);
@@ -889,10 +888,8 @@ namespace Bundlingway.Utilities.Handler
                         await response.Content.CopyToAsync(fs);
                     }
 
-                    // Log the file path where the content is saved
                     Log.Information($"DownloadAndInstall: File saved to: {filePath}");
 
-                    // Call your install method here with the filePath
                     ResourcePackage package = Onboard(filePath).Result;
 
                     Maintenance.RemoveTempDir();
@@ -906,7 +903,6 @@ namespace Bundlingway.Utilities.Handler
                 }
             }
 
-            // Log the end of the method
             return null;
         }
 
