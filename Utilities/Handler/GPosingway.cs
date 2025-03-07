@@ -129,22 +129,61 @@ namespace Bundlingway.Utilities
 
             try
             {
-                using var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
+                _ = UI.Announce($"Downloading {Constants.Files.GPosingwayConfig}...");
 
-                response.EnsureSuccessStatusCode();
+                using (HttpClient client = new())
+                using (var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
+                {
+                    response.EnsureSuccessStatusCode();
 
-                Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)); // Create the directory if it doesn't exist
+                    long? totalBytes = response.Content.Headers.ContentLength;
+                    long downloadedBytes = 0;
+                    byte[] buffer = new byte[8192]; // 8KB buffer
+                    bool progressReported = false;
 
-                await using var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
-                await using var stream = await response.Content.ReadAsStreamAsync();
-                await stream.CopyToAsync(fs);
+                    Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)); // Create the directory if it doesn't exist
 
-                Log.Information($"{methodName}: Successfully downloaded the file as gposingway-definitions-new.json.");
+                    await using var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+                    await using var stream = await response.Content.ReadAsStreamAsync();
+
+                    long totalFileSize = totalBytes.HasValue ? totalBytes.Value : -1;
+                    _ = UI.StartProgress(totalFileSize);
+
+
+                    while (true)
+                    {
+                        int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                        if (bytesRead == 0)
+                        {
+                            // End of stream
+                            break;
+                        }
+
+                        await fs.WriteAsync(buffer, 0, bytesRead);
+                        downloadedBytes += bytesRead;
+
+                        if (totalFileSize > 0) // Only report progress if total size is known
+                        {
+                            _ = UI.SetProgress(downloadedBytes);
+                            double percentage = (double)downloadedBytes / totalFileSize * 100;
+                            progressReported = percentage >= 100;
+                        }
+                    }
+
+                    if (totalFileSize <= 0 || !progressReported) // Report 100% if size was unknown or if not reported in loop
+                    {
+                        _ = UI.SetProgress(totalFileSize);
+                    }
+
+                    Log.Information($"{methodName}: Successfully downloaded the file as gposingway-definitions-new.json.");
+                }
             }
             catch (Exception ex)
             {
                 Log.Warning($"{methodName}: Error downloading the file: {ex.Message}");
+                return; // Early return in case of download failure
             }
+
 
             // Read the JSON file...
             string jsonContent = await File.ReadAllTextAsync(destinationPath);
@@ -179,12 +218,44 @@ namespace Bundlingway.Utilities
 
                 _ = UI.Announce("Downloading the GPosingway package...");
 
+                using (HttpClient client = new())
                 using (var response = await client.GetAsync(definitions.gposingwayUrl, HttpCompletionOption.ResponseHeadersRead))
                 {
                     response.EnsureSuccessStatusCode();
+                    long? totalBytes = response.Content.Headers.ContentLength;
+                    long downloadedBytes = 0;
+                    byte[] buffer = new byte[8192]; // 8KB buffer
+                    bool progressReported = false;
+
                     await using var fs = new FileStream(storageFile, FileMode.Create, FileAccess.Write, FileShare.None);
                     await using var stream = await response.Content.ReadAsStreamAsync();
-                    await stream.CopyToAsync(fs);
+
+                    long totalFileSize = totalBytes.HasValue ? totalBytes.Value : -1;
+                    _ = UI.StartProgress(totalFileSize);
+
+                    while (true)
+                    {
+                        int bytesRead = await stream.ReadAsync(buffer, 0, buffer.Length);
+                        if (bytesRead == 0)
+                        {
+                            // End of stream
+                            break;
+                        }
+
+                        await fs.WriteAsync(buffer, 0, bytesRead);
+                        downloadedBytes += bytesRead;
+
+                        if (totalFileSize > 0) // Only report progress if total size is known
+                        {
+                            _ = UI.SetProgress(downloadedBytes);
+                            double percentage = (double)downloadedBytes / totalFileSize * 100;
+                            progressReported = percentage >= 100;
+                        }
+                    }
+                    if (totalFileSize <= 0 || !progressReported) // Report 100% if size was unknown or if not reported in loop
+                    {
+                        _ = UI.SetProgress(totalFileSize);
+                    }
                     Log.Information($"{methodName}: Successfully downloaded the file.");
                 }
 
@@ -194,10 +265,15 @@ namespace Bundlingway.Utilities
                 Directory.CreateDirectory(extractPath);
 
                 _ = UI.Announce("Unpacking GPosingway...");
+                _ = UI.StartProgress(100);
+                _ = UI.SetProgress(0);  
 
                 using (var fs = new FileStream(storageFile, FileMode.Open, FileAccess.Read))
                 using (var zf = new ZipFile(fs))
                 {
+                    long totalEntries = zf.Count;
+                    long processedEntries = 0;
+
                     foreach (ZipEntry entry in zf)
                     {
                         if (!entry.IsFile) continue;
@@ -214,6 +290,9 @@ namespace Bundlingway.Utilities
                         {
                             zipStream.CopyTo(streamWriter);
                         }
+                        processedEntries++;
+                        double percentage = (double)processedEntries / totalEntries * 100;
+                        _ = UI.SetProgress((long)percentage); //Approximate progress based on file count. Consider improving with actual byte count if Ionic.Zip supports it.
                     }
                     Log.Information($"{methodName}: Successfully extracted the file.");
                 }
@@ -277,6 +356,10 @@ namespace Bundlingway.Utilities
             catch (Exception ex)
             {
                 Log.Warning($"{methodName}: Error during update: {ex.Message}");
+            }
+            finally
+            {
+                _ = UI.StopProgress();
             }
         }
     }
