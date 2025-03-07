@@ -846,15 +846,9 @@ namespace Bundlingway.Utilities.Handler
                             _ = UI.SetProgress(current);
                             _ = UI.Announce(Constants.MessageCategory.AddPackage, count.ToString(), current.ToString(), Path.GetFileName(file));
 
-                            try
-                            {
-                                await Onboard(file);
-                            }
+                            try { await Onboard(file); }
                             catch (Exception e)
-                            {
-                                Log.Error(e, $"Error onboarding {file}: {e.Message}");
-                            }
-
+                            { Log.Error(e, $"Error onboarding {file}: {e.Message}"); }
                         }
                     }
                 });
