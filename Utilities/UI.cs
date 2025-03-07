@@ -23,16 +23,16 @@ namespace Bundlingway.Utilities
         {
             if (_currentMessage != message)
             {
+                _idleTimer.Change(Timeout.Infinite, Timeout.Infinite);
                 _currentMessage = message;
                 await _landing.Announce(message);
+                _idleTimer.Change(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
             }
         }
 
         public static async Task Announce(MessageCategory category, params string[] args)
         {
-            _idleTimer.Change(Timeout.Infinite, Timeout.Infinite);
-            await _landing.Announce(Constants.Bundlingway.GetMessage(category, args));
-            _idleTimer.Change(TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+            await Announce(Constants.Bundlingway.GetMessage(category, args));
         }
 
         public static async Task NotifyAsync(string topic, string message)
