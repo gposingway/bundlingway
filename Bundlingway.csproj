@@ -13,10 +13,11 @@
     <Title>Bundlingway Package Manager</Title>
     <Product>Bundlingway</Product>
     <!-- Set initial version numbers -->
+    <Deterministic>false</Deterministic>
     <MajorVersion>0</MajorVersion>
-    <MinorVersion>$([System.DateTime]::Now.ToString("yyyy"))</MinorVersion>
-    <BuildVersion>$([System.DateTime]::Now.ToString("MMdd"))</BuildVersion>
-    <RevisionVersion>$([System.DateTime]::Now.ToString("HHmm"))</RevisionVersion>
+    <MinorVersion>0</MinorVersion>
+    <BuildVersion>1</BuildVersion>
+    <RevisionVersion>*</RevisionVersion>
 
     <!-- Form the complete version strings -->
     <ApplicationVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</ApplicationVersion>
