@@ -1,118 +1,95 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-
-    <PropertyGroup>
-        <PublishSingleFile>true</PublishSingleFile>
-        <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-        <OutputType>WinExe</OutputType>
-        <TargetFramework>net8.0-windows</TargetFramework>
-        <EnableWindowsTargeting>true</EnableWindowsTargeting>
-        <Nullable>enable</Nullable>
-        <UseWindowsForms>true</UseWindowsForms>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <ApplicationManifest>app.manifest</ApplicationManifest>
-        <Title>Bundlingway Package Manager</Title>
-        <Product>Bundlingway</Product>
-        <Deterministic>false</Deterministic>
-        <MajorVersion>0</MajorVersion>
-        <MinorVersion>0</MinorVersion>
-        <BuildVersion>2</BuildVersion>
-        <RevisionVersion>*</RevisionVersion>
-        <ApplicationVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</ApplicationVersion>
-        <AssemblyVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</AssemblyVersion>
-        <FileVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</FileVersion>
-        <ApplicationIcon>Resources\IMG_0922.ico</ApplicationIcon>
-     
+  <PropertyGroup>
+    <PublishSingleFile>true</PublishSingleFile>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Nullable>enable</Nullable>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Title>Bundlingway Package Manager</Title>
+    <Product>Bundlingway</Product>
+    <Deterministic>false</Deterministic>
+    <MajorVersion>0</MajorVersion>
+    <MinorVersion>0</MinorVersion>
+    <BuildVersion>2</BuildVersion>
+    <RevisionVersion>*</RevisionVersion>
+    <ApplicationVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</ApplicationVersion>
+    <AssemblyVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</AssemblyVersion>
+    <FileVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</FileVersion>
+    <ApplicationIcon>Resources\IMG_0922.ico</ApplicationIcon>
   </PropertyGroup>
 
-    <Target Name="CreateVersionFile" AfterTargets="Publish">
-        <PropertyGroup>
-            <ExecutableName>$(Product).exe</ExecutableName>
-            <ExecutablePath>$(PublishDir)$(ExecutableName)</ExecutablePath>
-      <FileVersionString></FileVersionString>
-            <VersionFileName>$(Product).$(FileVersionString).zip</VersionFileName>
-            <DistributionDir>$(PublishDir)..\distributions\</DistributionDir>
-            <ZipFilePath>$(DistributionDir)$(VersionFileName)</ZipFilePath>
-         
+
+  <Target Name="CreateVersionFile" AfterTargets="Publish">
+      <PropertyGroup>
+          <ExecutableName>$(Product).exe</ExecutableName>
+          <ExecutablePath>$(PublishDir)$(ExecutableName)</ExecutablePath>
+          <FileVersionString>$([System.DateTime]::Now.ToString('yyyyMMdd-HHmmss'))</FileVersionString>
+          <VersionFileName>$(Product).$(FileVersionString).zip</VersionFileName>
+          <DistributionDir>$(PublishDir)..\distributions\</DistributionDir>
+          <ZipFilePath>$(DistributionDir)$(VersionFileName)</ZipFilePath>
+       
     </PropertyGroup>
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;Write-Host -NoNewLine (Get-Date); $Env:FileVersionString = Get-Date&quot;"
-          ConsoleToMSBuild="true" StandardOutputImportance="high">
-    </Exec>
-    <ItemGroup>
-      <FileVersionItem Include="$([System.Environment]::GetEnvironmentVariable('FileVersionString'))">
-        <Value>%(Filename)%(Extension)</Value>
-      </FileVersionItem>
-    </ItemGroup>
-    <Message Importance="high" Text="File Version from Item: %(FileVersionItem.Value)" />
-    <PropertyGroup>
-      <FileVersionString>%(FileVersionItem.Value)</FileVersionString>
+      <Message Importance="high" Text="File Version String: $(FileVersionString)" />
+      <PropertyGroup>
+          <VersionFileName>$(Product).$(FileVersionString).zip</VersionFileName>
+          <ZipFilePath>$(DistributionDir)$(VersionFileName)</ZipFilePath>
+       
     </PropertyGroup>
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;Start-Sleep -Seconds 2&quot;" />
-        <Exec Command="mkdir &quot;$(DistributionDir)&quot;" Condition="!Exists('$(DistributionDir)')" />
-        <Delete Files="$(PublishDir)/*.dll.config" />
-        <Delete Files="$(PublishDir)/*.pdb" />
-        <Message Importance="high" Text="ZIP file will be created at: $(ZipFilePath)" />
-        <ZipDirectory DestinationFile="$(ZipFilePath)" SourceDirectory="$(PublishDir)" />
-        <Message Importance="high" Text="ZIP file created: $(ZipFilePath)" />
-     
+      <Exec Command="mkdir &quot;$(DistributionDir)&quot;" Condition="!Exists('$(DistributionDir)')" />
+      <Delete Files="$(PublishDir)/*.dll.config" />
+      <Delete Files="$(PublishDir)/*.pdb" />
+      <Message Importance="high" Text="ZIP file will be created at: $(ZipFilePath)" />
+      <Delete Files="$(ZipFilePath)" />
+      <ZipDirectory DestinationFile="$(ZipFilePath)" SourceDirectory="$(PublishDir)" />
+      <Message Importance="high" Text="ZIP file created: $(ZipFilePath)" />
   </Target>
 
-    <ItemGroup>
-        <None Remove="Resources\ReShade.ini" />
-     
-  </ItemGroup>
 
-    <ItemGroup>
-        <Content Include="Resources\IMG_0922.ico" />
-        <Resource Include="Resources\ReShade.ini">
-            <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-         
+  <ItemGroup>
+    <None Remove="Resources\ReShade.ini" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\IMG_0922.ico" />
+    <Resource Include="Resources\ReShade.ini">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Resource>
-     
   </ItemGroup>
-
-    <ItemGroup>
-        <PackageReference Include="FontAwesome.Sharp" Version="6.6.0" />
-        <PackageReference Include="INIFileParserDotNetCore" Version="2.5.2" />
-        <PackageReference Include="Serilog" Version="4.2.0" />
-        <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
-        <PackageReference Include="SharpCompress" Version="0.39.0" />
-        <PackageReference Include="SharpZipLib" Version="1.4.2" />
-        <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-        <PackageReference Include="System.Management" Version="9.0.1" />
-     
+  <ItemGroup>
+    <PackageReference Include="FontAwesome.Sharp" Version="6.6.0" />
+    <PackageReference Include="INIFileParserDotNetCore" Version="2.5.2" />
+    <PackageReference Include="Serilog" Version="4.2.0" />
+    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageReference Include="SharpCompress" Version="0.39.0" />
+    <PackageReference Include="SharpZipLib" Version="1.4.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Management" Version="9.0.1" />
   </ItemGroup>
-
-    <ItemGroup>
-        <Compile Update="Properties\Resources.Designer.cs">
-            <DesignTime>True</DesignTime>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Resources.resx</DependentUpon>
-         
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
-        <Compile Update="Properties\Settings.Designer.cs">
-            <DesignTimeSharedInput>True</DesignTimeSharedInput>
-            <AutoGen>True</AutoGen>
-            <DependentUpon>Settings.settings</DependentUpon>
-         
+    <Compile Update="Properties\Settings.Designer.cs">
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-     
   </ItemGroup>
-
-    <ItemGroup>
-        <EmbeddedResource Update="Properties\Resources.resx">
-            <Generator>ResXFileCodeGenerator</Generator>
-            <LastGenOutput>Resources.Designer.cs</LastGenOutput>
-         
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-     
   </ItemGroup>
-
-    <ItemGroup>
-        <None Update="Properties\Settings.settings">
-            <Generator>SettingsSingleFileGenerator</Generator>
-            <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-         
+  <ItemGroup>
+    <None Update="Properties\Settings.settings">
+      <Generator>SettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-     
   </ItemGroup>
 </Project>
