@@ -69,26 +69,6 @@ namespace Bundlingway
             _ = Bootstrap.DetectSettings().ContinueWith(async a => { await UpdateElements(); });
         }
 
-        private void TryInstalPackages(DragEventArgs e)
-        {
-            if (e.Data == null) return;
-
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                List<string> files = new List<string>(e.Data.GetData(DataFormats.FileDrop) as string[]);
-
-                foreach (string file in files)
-                {
-                    string fileExtension = Path.GetExtension(file).ToLower();
-
-                    if (Constants.InstallableExtensions.Contains(fileExtension))
-                    {
-                        _ = Package.Onboard(file);
-                    }
-                }
-            }
-        }
-
         private void btnInstallPackage_Click(object sender, EventArgs e)
         {
             _ = UI.Announce(Constants.MessageCategory.BeforeAddPackageSelection);
@@ -223,35 +203,6 @@ namespace Bundlingway
                     }
                 }
             });
-        }
-        private void Generic_DragDrop(object? sender, DragEventArgs e)
-        {
-            Name = "flowLayoutPanel1_DragDrop";
-            TryInstalPackages(e);
-        }
-
-        private void Generic_DragEnter(object? sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                e.Effect = DragDropEffects.Copy; // You can set this to another effect if needed
-            }
-            else
-            {
-                e.Effect = DragDropEffects.None;
-            }
-        }
-
-        private void Generic_DragOver(object? sender, DragEventArgs e)
-        {
-            if (e.Data.GetDataPresent(DataFormats.FileDrop))
-            {
-                e.Effect = DragDropEffects.Copy; // You can set this to another effect if needed
-            }
-            else
-            {
-                e.Effect = DragDropEffects.None;
-            }
         }
 
         private void btnRemove_Click(object sender, EventArgs e)
@@ -707,7 +658,7 @@ namespace Bundlingway
             });
         }
 
-        private async void btnFixIt_Click(object sender, EventArgs e)
+        private void btnFixIt_Click(object sender, EventArgs e)
         {
             var result = MessageBox.Show(
                 "This process can take a little while as Bundlingway analyses everything and fixes your setup, friend.\n(Don't worry, I'll backup everything in case you want to revert changes.)\n\nDo you want to continue?",
@@ -720,7 +671,6 @@ namespace Bundlingway
             {
                 UI.DisableEverything();
                 Utilities.Handler.Bundlingway.FixIt().Wait();
-                MessageBox.Show("There you go - fixing is complete, give it a try!", "Fix Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 UI.EnableEverything();
             }
             else

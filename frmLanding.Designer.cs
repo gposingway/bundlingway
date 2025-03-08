@@ -179,8 +179,8 @@
             btnFixIt.Name = "btnFixIt";
             btnFixIt.Size = new Size(145, 37);
             btnFixIt.TabIndex = 28;
-            btnFixIt.Tag = "About? About what? Oh! The project! Yes, yes, right this way!";
-            btnFixIt.Text = "Fix It!";
+            btnFixIt.Tag = "Broken presets? Duplicated effects? Missing files? I'll try to fix any problems. A full Loporrit service!";
+            btnFixIt.Text = "Fix Everything!";
             btnFixIt.TextAlign = ContentAlignment.MiddleRight;
             btnFixIt.UseVisualStyleBackColor = true;
             btnFixIt.Click += btnFixIt_Click;
@@ -734,9 +734,6 @@
             Name = "frmLanding";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Bundlingway Package Manager";
-            DragDrop += Generic_DragDrop;
-            DragEnter += Generic_DragEnter;
-            DragOver += Generic_DragOver;
             splitContainer1.Panel1.ResumeLayout(false);
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
