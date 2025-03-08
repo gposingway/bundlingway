@@ -9,7 +9,7 @@ namespace Bundlingway.Utilities.Extensions
     public static class PostProcessorExtensions
     {
 
-        public static void ReplaceValues(string folderPath, Dictionary<string, string> replacements)
+        public static void ReplaceValues(string folderPath, Dictionary<string, string> replacements, bool scanSubfolders = true)
         {
             if (replacements == null || replacements.Count == 0) return;
 
@@ -19,8 +19,7 @@ namespace Bundlingway.Utilities.Extensions
                 return;
             }
 
-
-            foreach (var filePath in Directory.GetFiles(folderPath, "*", SearchOption.AllDirectories))
+            foreach (var filePath in Directory.GetFiles(folderPath, "*", scanSubfolders ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly))
             {
                 try
                 {

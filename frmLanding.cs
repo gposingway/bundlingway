@@ -2,11 +2,8 @@
 using Bundlingway.Utilities;
 using Bundlingway.Utilities.Extensions;
 using Bundlingway.Utilities.Handler;
-using Newtonsoft.Json.Linq;
 using Serilog;
-using SharpCompress.Common;
 using System.ComponentModel;
-using System.Windows.Forms;
 
 namespace Bundlingway
 {
@@ -18,7 +15,7 @@ namespace Bundlingway
             UI._landing = this;
             InitializeComponent();
 
-            this.Text = $"Bundlingway · v{Instances.AppVersion}";
+            Text = $"Bundlingway · v{Instances.AppVersion}";
 
             BindAllTaggedControls();
 
@@ -169,7 +166,6 @@ namespace Bundlingway
                 }
             });
 
-
             foreach (var package in Instances.ResourcePackages)
             {
                 var rowObj = new DataGridViewRow();
@@ -180,9 +176,9 @@ namespace Bundlingway
 
                 rowObj.CreateCells(dgvPackages,
                     tagLine,
-                    package.Type,
-                    package.Name,
-                    package.Status
+                    package.Type.GetDescription(),
+                    package.Label ?? package.Name,
+                    package.Status.GetDescription()
                 );
                 rowObj.Tag = package;
 

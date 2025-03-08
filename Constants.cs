@@ -4,20 +4,33 @@ namespace Bundlingway
 {
     public static class Constants
     {
-        public static List<string> TextureExtensions { get; set; } = [".jpg", ".jpeg", ".png", ".dds"];
-        public static List<string> NonTextureImageMarkers { get; set; } = ["[prev]", "[cover]", "[preview]", ".dds","preview"];
-        public static List<string> ShaderExtensions { get; set; } = [".fx", ".fxh"];
-        public static List<string> InstallableExtensions { get; set; } = [".zip", ".rar", ".7z", ".ini"];
-        public static ResourcePackage SingleFileCatalog { get; set; } = new ResourcePackage()
+        public static List<string> TextureExtensions = [".jpg", ".jpeg", ".png", ".dds"];
+        public static List<string> NonTextureImageMarkers = ["[prev]", "[cover]", "[preview]", ".dds", "preview"];
+        public static List<string> ShaderExtensions = [".fx", ".fxh"];
+        public static List<string> InstallableExtensions = [".zip", ".rar", ".7z", ".ini"];
+
+        public static ResourcePackage SingleFileCatalog = new()
         {
             LocalPresetFolder = Path.Combine(Instances.SinglePresetsFolder, Folders.PackagePresets),
             Name = "Single Presets",
             Source = "Local",
-            Type = "Single",
-            Status = "Installed",
+            Type = ResourcePackage.EType.SinglePreset,
+            Status = ResourcePackage.EStatus.Installed,
             Default = true,
-            Installed = true,
             Hidden = true,
+        };
+
+        public static ResourcePackage GPosingwayDefaultPackage = new ResourcePackage()
+        {
+            LocalPresetFolder = Path.Combine(Instances.SinglePresetsFolder, Folders.PackagePresets),
+            Name = "GPosingway",
+            Source = "Local",
+            Type = ResourcePackage.EType.CorePackage,
+            Status = ResourcePackage.EStatus.NotDownloaded,
+            Bundle = true,
+            Default = true,
+            Hidden = false,
+            Locked = true,
         };
 
         public static Dictionary<string, string> DefaultShortcuts = new()
@@ -50,14 +63,6 @@ namespace Bundlingway
         public static class Events
         {
             public static string PackageInstalled = "package-installed";
-        }
-
-        public static class PackageCategories
-        {
-            internal static readonly string PresetCollection = "Preset Collection";
-            internal static readonly string ShaderCollection = "Shader Collection";
-            internal static readonly string MixedCollection = "Mixed Collection";
-            internal static readonly string SinglePreset = "Single Preset";
         }
 
         public static class Folders
@@ -116,12 +121,10 @@ namespace Bundlingway
 
         public class BundlingwayDialogueOptions
         {
-            private readonly Random _random = new Random();
+            private readonly Random _random = new();
             private readonly Dictionary<MessageCategory, List<string>> _messages;
 
-            public BundlingwayDialogueOptions()
-            {
-                _messages = new Dictionary<MessageCategory, List<string>>
+            public BundlingwayDialogueOptions() => _messages = new Dictionary<MessageCategory, List<string>>
             {
                 {
                     MessageCategory.ApplicationStart, new List<string>
@@ -316,11 +319,10 @@ namespace Bundlingway
                     }
                 }
             };
-            }
 
             public string GetMessage(MessageCategory category, params string[] args)
             {
-                if (_messages.TryGetValue(category, out List<string> messages))
+                if (_messages.TryGetValue(category, out var messages))
                 {
                     string messageTemplate = messages[_random.Next(messages.Count)];
 
@@ -335,7 +337,7 @@ namespace Bundlingway
             {
                 return await Task.Run(() =>
                 {
-                    if (_messages.TryGetValue(category, out List<string> messages))
+                    if (_messages.TryGetValue(category, out var messages))
                     {
                         string messageTemplate = messages[_random.Next(messages.Count)];
 

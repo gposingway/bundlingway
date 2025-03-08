@@ -1,5 +1,6 @@
 using Bundlingway.Model;
 using Bundlingway.Utilities.Extensions;
+using Bundlingway.Utilities.Handler;
 using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json.Linq;
 using Serilog;
@@ -75,46 +76,23 @@ namespace Bundlingway.Utilities
         internal static async Task GetLocalInfo()
         {
             string methodName = ProcessHelper.GetCurrentMethodName();
-            try
+
+            ResourcePackage gposingwayPackage = Handler.Package.GetByName(Constants.GPosingwayDefaultPackage.Name);
+
+            if (gposingwayPackage == null)
             {
-                if (Instances.LocalConfigProvider.Configuration.Game.ClientLocation != null)
-                {
-                    var localGposingwayConfigProbe = Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.GPosingwayConfig);
-                    var appDataGposingwayConfigExists = File.Exists(localGposingwayConfigProbe);
-
-                    if (!appDataGposingwayConfigExists)
-                    {
-                        var gameGposingwayConfigProbe = Path.Combine(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder, ".gposingway", Constants.Files.GPosingwayConfig);
-                        var gameGposingwayConfigExists = File.Exists(gameGposingwayConfigProbe);
-
-                        if (gameGposingwayConfigExists)
-                        {
-                            File.Copy(gameGposingwayConfigProbe, localGposingwayConfigProbe);
-                            localGposingwayConfigProbe = Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.GPosingwayConfig);
-                            appDataGposingwayConfigExists = File.Exists(localGposingwayConfigProbe);
-                        }
-                    }
-
-                    if (!appDataGposingwayConfigExists)
-                    {
-                        Instances.LocalConfigProvider.Configuration.GPosingway.Status = EPackageStatus.NotInstalled;
-                        Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion = null;
-                        Log.Information($"{methodName}: GPosingway not installed locally");
-                    }
-                    else
-                    {
-                        Instances.LocalConfigProvider.Configuration.GPosingway.Status = EPackageStatus.Installed;
-                        Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion = localGposingwayConfigProbe.GetTokenValueFromFile("version");
-
-                        Log.Information($"{methodName}: Local version found: {Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion}");
-                    }
-                }
-                _ = UI.UpdateElements();
+                Instances.LocalConfigProvider.Configuration.GPosingway.Status = EPackageStatus.NotInstalled;
+                Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion = null;
+                Log.Information($"{methodName}: GPosingway not installed locally");
             }
-            catch (Exception ex)
+            else
             {
-                Log.Warning($"{methodName}: Error in CheckGPosingway: {ex.Message}");
+                Instances.LocalConfigProvider.Configuration.GPosingway.Status = EPackageStatus.Installed;
+                Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion = gposingwayPackage.Version;
+
+                Log.Information($"{methodName}: Local version found: {Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion}");
             }
+            _ = UI.UpdateElements();
 
             Instances.LocalConfigProvider.Save();
             Log.Information($"{methodName}: Local info fetching completed");
@@ -125,7 +103,10 @@ namespace Bundlingway.Utilities
             string methodName = ProcessHelper.GetCurrentMethodName();
 
             var downloadUrl = Constants.Urls.GPosingwayConfigFileUrl;
-            var destinationPath = Path.Combine(Instances.TempFolder, Constants.Files.GPosingwayConfig);
+
+            var gposingwayPackage = await Package.Prepare(Constants.GPosingwayDefaultPackage, true);
+
+            var destinationPath = Path.Combine(gposingwayPackage.LocalFolder,  Constants.Files.GPosingwayConfig);
 
             try
             {
@@ -175,7 +156,7 @@ namespace Bundlingway.Utilities
                         _ = UI.SetProgress(totalFileSize);
                     }
 
-                    Log.Information($"{methodName}: Successfully downloaded the file as gposingway-definitions-new.json.");
+                    Log.Information($"{methodName}: Successfully downloaded the gposingway-definitions.json file.");
                 }
             }
             catch (Exception ex)
@@ -183,7 +164,6 @@ namespace Bundlingway.Utilities
                 Log.Warning($"{methodName}: Error downloading the file: {ex.Message}");
                 return; // Early return in case of download failure
             }
-
 
             // Read the JSON file...
             string jsonContent = await File.ReadAllTextAsync(destinationPath);
@@ -196,7 +176,11 @@ namespace Bundlingway.Utilities
                 return;
             }
 
-            var storageFolder = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Core, Constants.Folders.GposingwayPackage);
+            gposingwayPackage.Version = definitions.version;
+            gposingwayPackage.Label = $"GPosingway {definitions.version}";
+            gposingwayPackage.Save();
+
+            var storageFolder = Path.Combine(gposingwayPackage.LocalFolder, Constants.Folders.SourcePackage);
             var storageFile = Path.Combine(storageFolder, Constants.Files.GPosingwayPackage);
 
             if (!Directory.Exists(storageFolder))
@@ -215,7 +199,6 @@ namespace Bundlingway.Utilities
 
             try
             {
-
                 _ = UI.Announce("Downloading the GPosingway package...");
 
                 using (HttpClient client = new())
@@ -266,7 +249,7 @@ namespace Bundlingway.Utilities
 
                 _ = UI.Announce("Unpacking GPosingway...");
                 _ = UI.StartProgress(100);
-                _ = UI.SetProgress(0);  
+                _ = UI.SetProgress(0);
 
                 using (var fs = new FileStream(storageFile, FileMode.Open, FileAccess.Read))
                 using (var zf = new ZipFile(fs))
@@ -292,7 +275,7 @@ namespace Bundlingway.Utilities
                         }
                         processedEntries++;
                         double percentage = (double)processedEntries / totalEntries * 100;
-                        _ = UI.SetProgress((long)percentage); //Approximate progress based on file count. Consider improving with actual byte count if Ionic.Zip supports it.
+                        _ = UI.SetProgress((long)percentage); 
                     }
                     Log.Information($"{methodName}: Successfully extracted the file.");
                 }
@@ -301,21 +284,20 @@ namespace Bundlingway.Utilities
 
                 // Copy the content from extractPath + "reshade-shaders" to the game's "reshade-shaders" folder
                 var sourcePath = Path.Combine(extractPath, Constants.Folders.GameShaders);
-                var gameShaderPath = Path.Combine(gameFolder, Constants.Folders.GameShaders);
 
                 if (Directory.Exists(sourcePath))
                 {
                     foreach (var dirPath in Directory.GetDirectories(sourcePath, "*", SearchOption.AllDirectories))
                     {
-                        Directory.CreateDirectory(dirPath.Replace(sourcePath, gameShaderPath));
+                        Directory.CreateDirectory(dirPath.Replace(sourcePath, gposingwayPackage.LocalShaderFolder));
                     }
 
                     foreach (var newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
                     {
-                        File.Copy(newPath, newPath.Replace(sourcePath, gameShaderPath), true);
+                        File.Copy(newPath, newPath.Replace(sourcePath, gposingwayPackage.LocalShaderFolder), true);
                     }
 
-                    Log.Information($"{methodName}: Successfully copied reshade-shaders to the game folder.");
+                    Log.Information($"{methodName}: Successfully copied reshade-shaders to the GPosingway package folder.");
                 }
                 else
                 {
@@ -324,34 +306,44 @@ namespace Bundlingway.Utilities
 
                 // Copy the content from extractPath + "reshade-presets" to the game's "reshade-presets" folder
                 var sourcePresetsPath = Path.Combine(extractPath, Constants.Folders.GamePresets);
-                var gamePresetsPath = Path.Combine(gameFolder, Constants.Folders.GamePresets);
 
                 if (Directory.Exists(sourcePresetsPath))
                 {
                     foreach (var dirPath in Directory.GetDirectories(sourcePresetsPath, "*", SearchOption.AllDirectories))
                     {
-                        Directory.CreateDirectory(dirPath.Replace(sourcePresetsPath, gamePresetsPath));
+                        Directory.CreateDirectory(dirPath.Replace(sourcePresetsPath, gposingwayPackage.LocalPresetFolder));
                     }
 
                     foreach (var newPath in Directory.GetFiles(sourcePresetsPath, "*.*", SearchOption.AllDirectories))
                     {
-                        File.Copy(newPath, newPath.Replace(sourcePresetsPath, gamePresetsPath), true);
+                        File.Copy(newPath, newPath.Replace(sourcePresetsPath, gposingwayPackage.LocalPresetFolder), true);
                     }
 
-                    Log.Information($"{methodName}: Successfully copied reshade-presets to the game folder.");
+                    Log.Information($"{methodName}: Successfully copied reshade-presets to the GPosingway package folder.");
                 }
                 else
                 {
                     Log.Information($"{methodName}: Source reshade-presets folder does not exist.");
                 }
 
-                // Overwrite the gposingway-definitions.json in the appdata folder with the copy on temp
-                var appDataPath = Path.Combine(Instances.BundlingwayDataFolder, "gposingway-definitions.json");
-                File.Copy(destinationPath, appDataPath, true);
-                Log.Information($"{methodName}: Successfully copied gposingway-definitions.json to the appdata folder.");
-
                 //cleanup
                 Maintenance.RemoveTempDir();
+
+                try
+                {
+                    await Task.Run(() => PostProcessor.RunPipeline(gposingwayPackage));
+
+                    gposingwayPackage.Status = ResourcePackage.EStatus.Installed;
+                    gposingwayPackage.Save();
+
+                    Package.Install(gposingwayPackage.LocalFolder);
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"{methodName}: {e.Message}.");
+                }
+
+
             }
             catch (Exception ex)
             {

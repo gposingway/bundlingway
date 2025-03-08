@@ -1,5 +1,7 @@
 ﻿
 using Bundlingway.Utilities.Extensions;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json;
 using Serilog;
 
 namespace Bundlingway.Utilities
@@ -40,6 +42,15 @@ namespace Bundlingway.Utilities
 
         internal static async Task PrepareEnvironmentAsync()
         {
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Ignore,
+                DefaultValueHandling = DefaultValueHandling.Ignore,
+                Converters = { new DescriptionConverter() }
+            };
+
+            JsonConvert.DefaultSettings = () => settings;
+
             if (!Directory.Exists(Instances.BundlingwayDataFolder))
                 Directory.CreateDirectory(Instances.BundlingwayDataFolder);
 
