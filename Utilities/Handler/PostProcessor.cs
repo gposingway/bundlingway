@@ -36,12 +36,12 @@ namespace Bundlingway.Utilities.Handler
 
                 var texturePath = Path.Combine(baseline, Constants.Folders.PackageShaders);
 
+                List<string> textureFiles = Directory.Exists(texturePath) ? Directory.GetFiles(texturePath, "*.*", SearchOption.AllDirectories).ToList() : new();
+
                 var iniParser = new FileIniDataParser(iniDataParser);
 
                 var iniFiles = Directory.GetFiles(presetPath, "*.ini", SearchOption.AllDirectories)
                     .Where(i => !i.EndsWith(@"\Off.ini")).ToList();
-
-                List<string> textureFiles = Directory.Exists(texturePath) ? Directory.GetFiles(texturePath, "*.*", SearchOption.AllDirectories).ToList() : new();
 
                 var techGraph = new Dictionary<string, int>();
 

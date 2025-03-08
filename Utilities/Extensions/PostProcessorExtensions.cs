@@ -79,7 +79,14 @@ namespace Bundlingway.Utilities.Extensions
 
                 if (templateProcess != null)
                 {
-                    if (templateProcess.PresetExclusionList?.Any(i => preset.Filename.EndsWith(i, StringComparison.InvariantCultureIgnoreCase)) == true) continue;
+                    if (templateProcess.PresetExclusionList?.Any(i =>
+                        i.Contains("*")
+                            ? Regex.IsMatch(preset.Filename, "^" + Regex.Escape(i).Replace("\\*", ".*") + "$", RegexOptions.IgnoreCase)
+                            : preset.Filename.EndsWith(i, StringComparison.InvariantCultureIgnoreCase)
+                        ) == true) continue;
+
+                    if (templateProcess.PresetExclusionList?.Any(i => preset.Filename.EndsWith(i, StringComparison.InvariantCultureIgnoreCase)) == true) 
+                        continue;
 
                     if (templateProcess?.Techniques?.StartWith?.Count != 0)
                     {

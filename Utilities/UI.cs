@@ -1,4 +1,5 @@
-﻿using static Bundlingway.Constants;
+﻿using System.Threading.Tasks;
+using static Bundlingway.Constants;
 
 namespace Bundlingway.Utilities
 {
@@ -64,6 +65,16 @@ namespace Bundlingway.Utilities
         public static async Task StopProgress()
         {
             await _landing.StopProgress();
+        }
+
+        internal static void DisableEverything()
+        {
+            _landing.DisableEverything();
+        }
+
+        internal static void EnableEverything()
+        {
+            _landing.EnableEverything();
         }
     }
 }

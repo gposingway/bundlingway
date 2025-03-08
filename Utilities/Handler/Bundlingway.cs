@@ -6,6 +6,83 @@ namespace Bundlingway.Utilities.Handler
 {
     public static class Bundlingway
     {
+        internal static async Task FixIt()
+        {
+            await UI.Announce("Doing Hydaelyn's work, fixing the game's shaders...");
+
+            await Backup();
+
+            // wipe all contents from the reshade-shaders/shaders folders
+            var gameFolder = Instances.LocalConfigProvider.Configuration.Game.InstallationFolder;
+            var reshadeShadersFolder = Path.Combine(gameFolder, Constants.Folders.GameShaders, Constants.Folders.PackageShaders);
+            if (Directory.Exists(reshadeShadersFolder)) Directory.Delete(reshadeShadersFolder, true);
+
+            await ReShade.Update();
+            await GPosingway.Update();
+
+            //Reinstall all installed Shader packages
+            await Package.Scan();
+            foreach (var package in Instances.ResourcePackages)
+            {
+                if (package.Type == Model.ResourcePackage.EType.ShaderCollection && package.Status == Model.ResourcePackage.EStatus.Installed)
+                    await package.Install();
+            }
+
+            _ = UI.Announce("Done!");
+
+        }
+
+        internal static async Task<string> Backup()
+        {
+            var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
+            try
+            {
+
+                _ = UI.Announce($"Backing up the reshade-shaders and reshade-presets folders to {timestamp}...");
+
+                // Backup the whole content of the game folder's reshade-shaders and reshade-presets folders to the backup folder
+                var backupFolder = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Backup);
+                if (!Directory.Exists(backupFolder)) Directory.CreateDirectory(backupFolder);
+
+                // Create a timestamped backup folder
+                var backupFolderTimestamped = Path.Combine(backupFolder, timestamp);
+                Directory.CreateDirectory(backupFolderTimestamped);
+
+                var gameFolder = Instances.LocalConfigProvider.Configuration.Game.InstallationFolder;
+
+                // Backup reshade-shaders folder
+                var reshadeShadersFolder = Path.Combine(gameFolder, Constants.Folders.GameShaders);
+                if (Directory.Exists(reshadeShadersFolder))
+                {
+                    var destinationFolder = Path.Combine(backupFolderTimestamped, Constants.Folders.GameShaders);
+                    FS.DirectoryCopy(reshadeShadersFolder, destinationFolder, true);
+                }
+
+                // Backup reshade-presets folder
+                var reshadePresetsFolder = Path.Combine(gameFolder, Constants.Folders.GamePresets);
+                if (Directory.Exists(reshadePresetsFolder))
+                {
+                    var destinationFolder = Path.Combine(backupFolderTimestamped, Constants.Folders.GamePresets);
+                    FS.DirectoryCopy(reshadePresetsFolder, destinationFolder, true);
+                }
+
+                // Also copy the reshade.ini file
+                var reshadeIniFile = Path.Combine(gameFolder, Constants.Files.LocalReshadeConfig);
+                if (File.Exists(reshadeIniFile))
+                {
+                    var destinationFile = Path.Combine(backupFolderTimestamped, Constants.Files.LocalReshadeConfig);
+                    File.Copy(reshadeIniFile, destinationFile, true);
+                }
+
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Bundlingway.Backup: Error in Backup: {e.Message}");
+            }
+
+
+            return timestamp;
+        }
 
 
         internal static async Task GetLocalInfo()
@@ -52,7 +129,7 @@ namespace Bundlingway.Utilities.Handler
         {
             var b = Instances.LocalConfigProvider.Configuration.Bundlingway;
 
-            _=UI.Announce("Downloading a new Bundlingway version...");
+            _ = UI.Announce("Downloading a new Bundlingway version...");
 
             b.Location = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
             Instances.LocalConfigProvider.Save();

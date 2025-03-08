@@ -552,7 +552,7 @@ namespace Bundlingway.Utilities.Handler
 
             if (!catalogEntry.Bundle)
             {
-                gamePresetsFolder = Path.Combine(gameShaderFolder, collectionName);
+                gamePresetsFolder = Path.Combine(gamePresetsFolder, collectionName);
                 gameTexturesFolder = Path.Combine(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder, Constants.Folders.GameShaders, Constants.Folders.PackageTextures, collectionName);
                 gameShaderFolder = Path.Combine(gameShaderFolder, Constants.Folders.PackageShaders, collectionName);
             }
@@ -563,11 +563,24 @@ namespace Bundlingway.Utilities.Handler
                 catalogEntry.LocalTextureFolder = gameTexturesFolder;
                 catalogEntry.LocalShaderFolder = gameShaderFolder;
 
-
                 // Presets:
-
                 if (Directory.Exists(sourcePresetsFolder))
                 {
+
+                    if (catalogEntry.Bundle)
+                    {
+                        foreach (var folder in Directory.GetDirectories(sourcePresetsFolder))
+                        {
+                            var relativePath = Path.GetRelativePath(sourcePresetsFolder, folder);
+                            var targetFolder = Path.Combine(gamePresetsFolder, relativePath);
+
+                            if (Directory.Exists(targetFolder))
+                                Directory.Delete(targetFolder, true);
+
+                            Directory.CreateDirectory(targetFolder);
+                        }
+                    }
+
                     Directory.CreateDirectory(gamePresetsFolder);
                     Log.Information($"Package.Install: Created game presets folder at: {gamePresetsFolder}");
 

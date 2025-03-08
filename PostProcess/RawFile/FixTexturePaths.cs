@@ -9,6 +9,7 @@ namespace Bundlingway.PostProcess.RawFile
     {
         public bool ApplyToPresets { get; set; } = true;
         public bool ApplyToShaders { get; set; } = false;
+        public int Order { get; set; } = 6;
 
         public bool PostProcess(Preset preset)
         {

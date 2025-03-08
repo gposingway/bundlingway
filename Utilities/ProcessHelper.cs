@@ -185,5 +185,7 @@ namespace Bundlingway.Utilities
                 Log.Information("Application pinned to start screen.");
             }
         }
+
+        internal static bool IsGameRunning() => IsProcessRunning(Constants.Files.GameProcess);
     }
 }

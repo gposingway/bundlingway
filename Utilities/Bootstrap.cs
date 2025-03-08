@@ -83,8 +83,6 @@ namespace Bundlingway.Utilities
 
                 Log.Information("Bootstrap.CheckGameClient: Checking game client.");
 
-                Instances.IsGameRunning = ProcessHelper.IsProcessRunning(Constants.Files.GameProcess);
-
                 if (Instances.IsGameRunning)
                 {
                     var procPath = ProcessHelper.GetProcessPath(Constants.Files.GameProcess);

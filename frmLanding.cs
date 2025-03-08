@@ -314,6 +314,7 @@ namespace Bundlingway
                 Bootstrap.DetectSettings().ContinueWith(b =>
                 {
                     Maintenance.RemoveTempDir();
+                    PopulateGrid();
                 });
             });
         }
@@ -704,6 +705,43 @@ namespace Bundlingway
                 prgCommon.Tag = 0;
                 prgCommon.Visible = false;
             });
+        }
+
+        private async void btnFixIt_Click(object sender, EventArgs e)
+        {
+            var result = MessageBox.Show(
+                "This process can take a little while as Bundlingway analyses everything and fixes your setup, friend.\n(Don't worry, I'll backup everything in case you want to revert changes.)\n\nDo you want to continue?",
+                "Lots of work ahead!",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Warning
+            );
+
+            if (result == DialogResult.Yes)
+            {
+                UI.DisableEverything();
+                Utilities.Handler.Bundlingway.FixIt().Wait();
+                MessageBox.Show("There you go - fixing is complete, give it a try!", "Fix Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                UI.EnableEverything();
+            }
+            else
+            {
+                // User chose not to proceed
+            }
+        }
+
+        internal void DisableEverything()
+        {
+            flpSideMenu.DoAction(() => { flpSideMenu.Enabled = false; });
+            flpPackageOptions.DoAction(() => { flpPackageOptions.Enabled = false; });
+            pnlSettings.DoAction(() => { pnlSettings.Enabled = false; });
+        }
+
+
+        internal void EnableEverything()
+        {
+            flpSideMenu.DoAction(() => { flpSideMenu.Enabled = true; });
+            flpPackageOptions.DoAction(() => { flpPackageOptions.Enabled = true; });
+            pnlSettings.DoAction(() => { pnlSettings.Enabled = true; });
         }
     }
 }

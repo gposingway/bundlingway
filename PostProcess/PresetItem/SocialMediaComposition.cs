@@ -4,7 +4,7 @@ namespace Bundlingway.PostProcess.PresetItem
 {
     public class SocialMediaComposition : ITemplatePostProcess
     {
-        public int Order { get; set; } = 0;
+        public int Order { get; set; } = 16;
         public ParameterList Techniques { get; set; } = new ParameterList() { EndWith = ["AspectRatioComposition@AspectRatioComposition.fx"] };
         public Dictionary<string, string> RootElements { get; set; } = new Dictionary<string, string> {
             { "KeyAspectRatioComposition@AspectRatioComposition.fx", "%KeyAspectRatioComposition@AspectRatioComposition.fx%" }
@@ -18,13 +18,7 @@ namespace Bundlingway.PostProcess.PresetItem
                 { "iUIGridType", "1" }
             }
         }];
-        public List<string> PresetExclusionList { get; set; } = [
-            "- Note -  Disable Glamarye_Fast_Effects for even more FPS.ini",
-            "- Note -  Enable Fast AO under Glamarye_Fast_Effects for better quality.ini",
-            "- Note -  Disable 'DAMP RT' if shading looks weird.ini",
-            "- Note - Enable 'DAMP RT' for Raytraced Global Illumination.ini",
-            "- Note -  Check README for list of required shaders.ini"
-            ];
+        public List<string> PresetExclusionList { get; set; } = ["- Note -*",];
 
         public bool PostProcess(Preset preset)
         {

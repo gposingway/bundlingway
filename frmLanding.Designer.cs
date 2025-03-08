@@ -35,6 +35,7 @@
             splitContainer1 = new SplitContainer();
             flpSideMenu = new FlowLayoutPanel();
             btnShortcuts = new FontAwesome.Sharp.IconButton();
+            btnFixIt = new FontAwesome.Sharp.IconButton();
             label5 = new Label();
             btnPackagesFolder = new FontAwesome.Sharp.IconButton();
             btnGameFolder = new FontAwesome.Sharp.IconButton();
@@ -129,6 +130,7 @@
             flpSideMenu.AutoScroll = true;
             flpSideMenu.BackColor = SystemColors.ControlLight;
             flpSideMenu.Controls.Add(btnShortcuts);
+            flpSideMenu.Controls.Add(btnFixIt);
             flpSideMenu.Controls.Add(label5);
             flpSideMenu.Controls.Add(btnPackagesFolder);
             flpSideMenu.Controls.Add(btnGameFolder);
@@ -165,11 +167,29 @@
             btnShortcuts.UseVisualStyleBackColor = true;
             btnShortcuts.Click += btnShortcuts_Click;
             // 
+            // btnFixIt
+            // 
+            btnFixIt.IconChar = FontAwesome.Sharp.IconChar.Hammer;
+            btnFixIt.IconColor = SystemColors.Highlight;
+            btnFixIt.IconFont = FontAwesome.Sharp.IconFont.Auto;
+            btnFixIt.IconSize = 32;
+            btnFixIt.ImageAlign = ContentAlignment.MiddleLeft;
+            btnFixIt.Location = new Point(3, 43);
+            btnFixIt.Margin = new Padding(3, 3, 3, 0);
+            btnFixIt.Name = "btnFixIt";
+            btnFixIt.Size = new Size(145, 37);
+            btnFixIt.TabIndex = 28;
+            btnFixIt.Tag = "About? About what? Oh! The project! Yes, yes, right this way!";
+            btnFixIt.Text = "Fix It!";
+            btnFixIt.TextAlign = ContentAlignment.MiddleRight;
+            btnFixIt.UseVisualStyleBackColor = true;
+            btnFixIt.Click += btnFixIt_Click;
+            // 
             // label5
             // 
             label5.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label5.Font = new Font("Segoe UI", 6F);
-            label5.Location = new Point(3, 40);
+            label5.Location = new Point(3, 80);
             label5.Name = "label5";
             label5.Size = new Size(100, 10);
             label5.TabIndex = 21;
@@ -181,7 +201,7 @@
             btnPackagesFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnPackagesFolder.IconSize = 32;
             btnPackagesFolder.ImageAlign = ContentAlignment.MiddleLeft;
-            btnPackagesFolder.Location = new Point(3, 53);
+            btnPackagesFolder.Location = new Point(3, 93);
             btnPackagesFolder.Margin = new Padding(3, 3, 3, 0);
             btnPackagesFolder.Name = "btnPackagesFolder";
             btnPackagesFolder.Size = new Size(145, 37);
@@ -200,7 +220,7 @@
             btnGameFolder.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnGameFolder.IconSize = 32;
             btnGameFolder.ImageAlign = ContentAlignment.MiddleLeft;
-            btnGameFolder.Location = new Point(3, 93);
+            btnGameFolder.Location = new Point(3, 133);
             btnGameFolder.Margin = new Padding(3, 3, 3, 0);
             btnGameFolder.Name = "btnGameFolder";
             btnGameFolder.Size = new Size(145, 37);
@@ -219,7 +239,7 @@
             btnBackup.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnBackup.IconSize = 32;
             btnBackup.ImageAlign = ContentAlignment.MiddleLeft;
-            btnBackup.Location = new Point(3, 133);
+            btnBackup.Location = new Point(3, 173);
             btnBackup.Margin = new Padding(3, 3, 3, 0);
             btnBackup.Name = "btnBackup";
             btnBackup.Size = new Size(145, 37);
@@ -237,7 +257,7 @@
             btnDebug.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnDebug.IconSize = 32;
             btnDebug.ImageAlign = ContentAlignment.MiddleLeft;
-            btnDebug.Location = new Point(3, 173);
+            btnDebug.Location = new Point(3, 213);
             btnDebug.Margin = new Padding(3, 3, 3, 0);
             btnDebug.Name = "btnDebug";
             btnDebug.Size = new Size(145, 37);
@@ -253,7 +273,7 @@
             // 
             label1.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label1.Font = new Font("Segoe UI", 6F);
-            label1.Location = new Point(3, 210);
+            label1.Location = new Point(3, 250);
             label1.Name = "label1";
             label1.Size = new Size(100, 10);
             label1.TabIndex = 26;
@@ -265,7 +285,7 @@
             btnEmporium.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnEmporium.IconSize = 32;
             btnEmporium.ImageAlign = ContentAlignment.MiddleLeft;
-            btnEmporium.Location = new Point(3, 223);
+            btnEmporium.Location = new Point(3, 263);
             btnEmporium.Margin = new Padding(3, 3, 3, 0);
             btnEmporium.Name = "btnEmporium";
             btnEmporium.Size = new Size(145, 37);
@@ -284,7 +304,7 @@
             btnAbout.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnAbout.IconSize = 32;
             btnAbout.ImageAlign = ContentAlignment.MiddleLeft;
-            btnAbout.Location = new Point(3, 263);
+            btnAbout.Location = new Point(3, 303);
             btnAbout.Margin = new Padding(3, 3, 3, 0);
             btnAbout.Name = "btnAbout";
             btnAbout.Size = new Size(145, 37);
@@ -300,7 +320,7 @@
             // 
             label6.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
             label6.Font = new Font("Segoe UI", 6F);
-            label6.Location = new Point(3, 300);
+            label6.Location = new Point(3, 340);
             label6.Name = "label6";
             label6.Size = new Size(100, 10);
             label6.TabIndex = 27;
@@ -312,7 +332,7 @@
             btnUpdate.IconFont = FontAwesome.Sharp.IconFont.Auto;
             btnUpdate.IconSize = 32;
             btnUpdate.ImageAlign = ContentAlignment.MiddleLeft;
-            btnUpdate.Location = new Point(3, 313);
+            btnUpdate.Location = new Point(3, 353);
             btnUpdate.Margin = new Padding(3, 3, 3, 0);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(145, 37);
@@ -786,5 +806,6 @@
         private DataGridViewTextBoxColumn StatusCol;
         private Button btnLockPackage;
         private ProgressBar prgCommon;
+        private FontAwesome.Sharp.IconButton btnFixIt;
     }
 }

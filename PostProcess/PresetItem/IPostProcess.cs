@@ -4,6 +4,7 @@ namespace Bundlingway.PostProcess.PresetItem
 {
     public interface IPostProcess
     {
+        int Order { get; set; }
         bool PostProcess(Preset preset);
     }
 

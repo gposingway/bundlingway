@@ -4,6 +4,8 @@ namespace Bundlingway.PostProcess.PresetItem
 {
     public class VerticalPreviewer : ITemplatePostProcess
     {
+        public int Order { get; set; } = 18;
+
         private List<string> textureTechniques = ["Layer", "Layer2", "Layer3", "Layer4", "Layer5", "StageDepth", "StageDepth2", "StageDepth3", "StageDepth4", "StageDepth5", "MultiStageDepth"];
         private List<string> textureTechniques2 = [
             "Layer@Layer.fx",
@@ -39,7 +41,6 @@ namespace Bundlingway.PostProcess.PresetItem
             "- Note -  Check README for list of required shaders.ini",
             ];
 
-        public int Order { get; set; } = 10;
         public ParameterList Techniques { get; set; } = new ParameterList()
         {
             EndWith = ["Vertical_Previewer@VerticalPreviewer.fx"]

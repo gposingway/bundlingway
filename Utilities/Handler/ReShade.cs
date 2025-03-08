@@ -108,7 +108,11 @@ namespace Bundlingway.Utilities.Handler
 
         internal static async Task Update()
         {
+            _ = UI.Announce("Updating ReShade...");
+
             Log.Information("ReShadeParser.Update: Starting update process.");
+
+            if (Instances.IsGameRunning) return;
 
             var remoteLink = Instances.LocalConfigProvider.Configuration.ReShade.RemoteLink;
             var tempFolder = Path.Combine(Instances.TempFolder, "ReShade");
@@ -178,10 +182,14 @@ namespace Bundlingway.Utilities.Handler
                     File.WriteAllText(destinationIni, Encoding.UTF8.GetString(placeholderFile));
                     Log.Information("ReShadeParser.Update: Successfully created the INI file.");
                 }
+
+                _ = UI.Announce("ReShade successfully updated!");
+
             }
             catch (Exception ex)
             {
                 Log.Warning($"ReShadeParser.Update: Error during update: {ex.Message}");
+                _ = UI.Announce("Error during ReShade update; check logs for details.");
             }
         }
     }

@@ -57,9 +57,6 @@ namespace Bundlingway.Utilities
             if (!Directory.Exists(Instances.SinglePresetsFolder))
                 Directory.CreateDirectory(Instances.SinglePresetsFolder);
 
-
-            Instances.IsGameRunning = ProcessHelper.IsProcessRunning(Constants.Files.GameProcess);
-
             string localCatalogFilePath = Path.Combine(Instances.SinglePresetsFolder, Constants.Files.CatalogEntry);
 
             if (!File.Exists(localCatalogFilePath)) Constants.SingleFileCatalog.ToJsonFile(localCatalogFilePath);
