@@ -11,43 +11,47 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Title>Bundlingway Package Manager</Title>
     <Product>Bundlingway</Product>
-    <Deterministic>false</Deterministic>
-    <MajorVersion>0</MajorVersion>
-    <MinorVersion>0</MinorVersion>
-    <BuildVersion>2</BuildVersion>
-    <RevisionVersion>*</RevisionVersion>
-    <ApplicationVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</ApplicationVersion>
-    <AssemblyVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</AssemblyVersion>
-    <FileVersion>$(MajorVersion).$(MinorVersion).$(BuildVersion).$(RevisionVersion)</FileVersion>
     <ApplicationIcon>Resources\IMG_0922.ico</ApplicationIcon>
+    <AssemblyVersion>0.0.2.1</AssemblyVersion>
+    <FileVersion>0.0.2.1</FileVersion>
   </PropertyGroup>
 
-
   <Target Name="CreateVersionFile" AfterTargets="Publish">
-      <PropertyGroup>
-          <ExecutableName>$(Product).exe</ExecutableName>
-          <ExecutablePath>$(PublishDir)$(ExecutableName)</ExecutablePath>
-          <FileVersionString>$([System.DateTime]::Now.ToString('yyyyMMdd-HHmmss'))</FileVersionString>
-          <VersionFileName>$(Product).$(FileVersionString).zip</VersionFileName>
-          <DistributionDir>$(PublishDir)..\distributions\</DistributionDir>
-          <ZipFilePath>$(DistributionDir)$(VersionFileName)</ZipFilePath>
-       
+    <PropertyGroup>
+      <ExecutableName>$(Product).exe</ExecutableName>
+      <PublishDir>$(MSBuildProjectDirectory)\bin\Release\net8.0-windows\publish\</PublishDir>
+      <ExecutablePath>$(PublishDir)$(ExecutableName)</ExecutablePath>
+      <VersionFileName>$(Product).$(AssemblyFileVersion).zip</VersionFileName>
+      <DistributionDir>$(PublishDir)..\distributions\</DistributionDir>
+      <ZipFilePath>$(DistributionDir)$(VersionFileName)</ZipFilePath>
+      <VersionTempFile>$(PublishDir)version.tmp</VersionTempFile>
     </PropertyGroup>
-      <Message Importance="high" Text="File Version String: $(FileVersionString)" />
-      <PropertyGroup>
-          <VersionFileName>$(Product).$(FileVersionString).zip</VersionFileName>
-          <ZipFilePath>$(DistributionDir)$(VersionFileName)</ZipFilePath>
-       
-    </PropertyGroup>
-      <Exec Command="mkdir &quot;$(DistributionDir)&quot;" Condition="!Exists('$(DistributionDir)')" />
-      <Delete Files="$(PublishDir)/*.dll.config" />
-      <Delete Files="$(PublishDir)/*.pdb" />
-      <Message Importance="high" Text="ZIP file will be created at: $(ZipFilePath)" />
-      <Delete Files="$(ZipFilePath)" />
-      <ZipDirectory DestinationFile="$(ZipFilePath)" SourceDirectory="$(PublishDir)" />
-      <Message Importance="high" Text="ZIP file created: $(ZipFilePath)" />
-  </Target>
 
+    <Message Importance="high" Text="CreateVersionFile Target is Running!" />
+    <Message Importance="high" Text="Executable Path: $(ExecutablePath)" />
+    <Message Importance="high" Text="PublishDir: $(PublishDir)" />
+    <Message Importance="high" Text="TargetDir: $(TargetDir)" />
+    <Message Importance="high" Text="OutputPath: $(OutputPath)" />
+    <Message Importance="high" Text="OutDir: $(OutDir)" />
+    <Message Importance="high" Text="Version Temp File: $(VersionTempFile)" />
+
+
+    <PropertyGroup>
+      <VersionFileName>$(Product).$(AssemblyVersion).zip</VersionFileName>
+      <ZipFilePath>$(DistributionDir)$(VersionFileName)</ZipFilePath>
+    </PropertyGroup>
+
+    <Message Importance="high" Text="Assembly File Version: $(AssemblyFileVersion)" />
+    <Message Importance="high" Text="Version File Name: $(VersionFileName)" />
+
+    <Exec Command="mkdir &quot;$(DistributionDir)&quot;" Condition="!Exists('$(DistributionDir)')" />
+    <Delete Files="$(PublishDir)/*.dll.config" />
+    <Delete Files="$(PublishDir)/*.pdb" />
+    <Message Importance="high" Text="ZIP file will be created at: $(ZipFilePath)" />
+    <Delete Files="$(ZipFilePath)" />
+    <ZipDirectory DestinationFile="$(ZipFilePath)" SourceDirectory="$(PublishDir)" />
+    <Message Importance="high" Text="ZIP file created: $(ZipFilePath)" />
+  </Target>
 
   <ItemGroup>
     <None Remove="Resources\ReShade.ini" />
