@@ -6,7 +6,7 @@ namespace Bundlingway.Utilities.Handler
 {
     public static class Bundlingway
     {
-        internal static async Task FixIt()
+        internal static async Task FixIt(bool refreshCache = false)
         {
             await UI.Announce("Doing Hydaelyn's work, fixing the game's shaders...");
 
@@ -18,7 +18,7 @@ namespace Bundlingway.Utilities.Handler
             if (Directory.Exists(reshadeShadersFolder)) Directory.Delete(reshadeShadersFolder, true);
 
             await ReShade.Update();
-            await GPosingway.Update();
+            await GPosingway.Update(refreshCache);
 
             //Reinstall all installed Shader packages
             await Package.Scan();

@@ -304,7 +304,10 @@ namespace Bundlingway
         {
             if (lblAnnouncement == null) return;
 
-            lblAnnouncement?.DoAction(() => { lblAnnouncement.Text = message; });
+            lblAnnouncement?.DoAction(() => {
+                lblAnnouncement.Text = message; 
+                this.Refresh();
+            });
         }
 
         private void btnDebug_Click(object sender, EventArgs e)
@@ -680,21 +683,26 @@ namespace Bundlingway
         private void btnFixIt_Click(object sender, EventArgs e)
         {
             var result = MessageBox.Show(
-                "This process can take a little while as Bundlingway analyses everything and fixes your setup, friend.\n(Don't worry, I'll backup everything in case you want to revert changes.)\n\nDo you want to continue?",
+                "This process can take a little while as Bundlingway analyses everything and fixes your setup, friend.\n(Don't worry, I'll backup everything in case you want to revert changes.)\n\nDo you want to re-download ReShade and GPosingway?\n(If not, cached copies will be used.)",
                 "Lots of work ahead!",
-                MessageBoxButtons.YesNo,
+                MessageBoxButtons.YesNoCancel,
                 MessageBoxIcon.Warning
             );
 
-            if (result == DialogResult.Yes)
+            switch (result)
             {
-                UI.DisableEverything();
-                Utilities.Handler.Bundlingway.FixIt().Wait();
-                UI.EnableEverything();
-            }
-            else
-            {
-                // User chose not to proceed
+                case DialogResult.Yes:
+                    UI.DisableEverything();
+                    Utilities.Handler.Bundlingway.FixIt(true).Wait();
+                    UI.EnableEverything();
+                    break;
+                case DialogResult.No:
+                    UI.DisableEverything();
+                    Utilities.Handler.Bundlingway.FixIt(false).Wait();
+                    UI.EnableEverything();
+                    break;
+                default:
+                    break;
             }
         }
 
