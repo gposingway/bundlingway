@@ -21,9 +21,15 @@
         public CorePackageStatus ReShade { get; set; } = new CorePackageStatus();
         public CorePackageStatus GPosingway { get; set; } = new CorePackageStatus();
         public CorePackageStatus Bundlingway { get; set; } = new CorePackageStatus();
+        public UIData UI { get; set; } = new UIData();
 
         public GameData Game { get; set; } = new GameData();
 
         public Dictionary<string, string> Shortcuts { get; set; } = new Dictionary<string, string>();
+
+        public class UIData
+        {
+            public bool TopMost { get; set; }
+        }
     }
 }

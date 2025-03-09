@@ -3,7 +3,6 @@ using Bundlingway.Utilities.Extensions;
 using IniParser;
 using IniParser.Parser;
 using Serilog;
-using System.Numerics;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -31,8 +30,6 @@ namespace Bundlingway.Utilities.Handler
                 var presetPath = Path.Combine(baseline, Constants.Folders.PackagePresets);
 
                 if (!Directory.Exists(presetPath)) return;
-
-
 
                 var texturePath = Path.Combine(baseline, Constants.Folders.PackageShaders);
 

@@ -277,15 +277,16 @@ namespace Bundlingway.Utilities.Handler
                 if (!Directory.Exists(presetsFolder)) Directory.CreateDirectory(presetsFolder);
                 Log.Information("Package.Onboard: Presets folder created.");
 
-                foreach (var file in Directory.GetFiles(tempFolderPath, "*.ini", SearchOption.AllDirectories))
-                {
-                    var relativePath = Path.GetRelativePath(tempFolderPath, file);
-                    var targetPath = Path.Combine(presetsFolder, relativePath);
+                foreach (var acceptableFile in Constants.AcceptableFilesInPresetFolder)
+                    foreach (var file in Directory.GetFiles(tempFolderPath, acceptableFile, SearchOption.AllDirectories))
+                    {
+                        var relativePath = Path.GetRelativePath(tempFolderPath, file);
+                        var targetPath = Path.Combine(presetsFolder, relativePath);
 
-                    Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
-                    File.Copy(file, targetPath, true);
-                    packageHasPresets = true;
-                }
+                        Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                        File.Copy(file, targetPath, true);
+                        packageHasPresets = true;
+                    }
 
                 Log.Information("Package.Onboard: INI files copied to presets folder: " + presetsFolder);
                 newCatalogEntry.LocalPresetFolder = presetsFolder;
@@ -500,7 +501,7 @@ namespace Bundlingway.Utilities.Handler
         private static bool ValidateIniFiles(string tempFolderPath)
         {
             // Search for .INI files in the directory and its subdirectories
-            string[] iniFiles = Directory.GetFiles(tempFolderPath, "*.INI", SearchOption.AllDirectories);
+            string[] iniFiles = Directory.GetFiles(tempFolderPath, "*.ini", SearchOption.AllDirectories);
 
             // Validate if there is at least one .INI file
             return iniFiles.Length > 0;
@@ -584,14 +585,15 @@ namespace Bundlingway.Utilities.Handler
                     Directory.CreateDirectory(gamePresetsFolder);
                     Log.Information($"Package.Install: Created game presets folder at: {gamePresetsFolder}");
 
-                    foreach (var file in Directory.GetFiles(sourcePresetsFolder, "*.ini", SearchOption.AllDirectories))
-                    {
-                        var relativePath = Path.GetRelativePath(sourcePresetsFolder, file);
-                        var targetPath = Path.Combine(gamePresetsFolder, relativePath);
-                        Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
-                        File.Copy(file, targetPath, true);
-                        Log.Information($"Package.Install: Copied preset file {file} to {targetPath}");
-                    }
+                    foreach (var acceptableFile in Constants.AcceptableFilesInPresetFolder)
+                        foreach (var file in Directory.GetFiles(sourcePresetsFolder, acceptableFile, SearchOption.AllDirectories))
+                        {
+                            var relativePath = Path.GetRelativePath(sourcePresetsFolder, file);
+                            var targetPath = Path.Combine(gamePresetsFolder, relativePath);
+                            Directory.CreateDirectory(Path.GetDirectoryName(targetPath));
+                            File.Copy(file, targetPath, true);
+                            Log.Information($"Package.Install: Copied preset file {file} to {targetPath}");
+                        }
 
                     var replacements = Instances.LocalConfigProvider.Configuration.Shortcuts.ToDictionary(k => "%" + k.Key + "%", v => v.Value);
 

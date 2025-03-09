@@ -8,6 +8,7 @@ namespace Bundlingway
         public static List<string> NonTextureImageMarkers = ["[prev]", "[cover]", "[preview]", ".dds", "preview"];
         public static List<string> ShaderExtensions = [".fx", ".fxh"];
         public static List<string> InstallableExtensions = [".zip", ".rar", ".7z", ".ini"];
+        public static List<string> AcceptableFilesInPresetFolder = ["LICENSE", "README.*", "*.ini"];
 
         public static ResourcePackage SingleFileCatalog = new()
         {

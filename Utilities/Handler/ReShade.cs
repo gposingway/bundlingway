@@ -108,11 +108,13 @@ namespace Bundlingway.Utilities.Handler
 
         internal static async Task Update()
         {
+            var c = Instances.LocalConfigProvider.Configuration.ReShade;
+
             _ = UI.Announce("Updating ReShade...");
 
             Log.Information("ReShadeParser.Update: Starting update process.");
 
-            if (Instances.IsGameRunning) return;
+            if (Instances.IsGameRunning & c.Status != EPackageStatus.NotInstalled ) return;
 
             var remoteLink = Instances.LocalConfigProvider.Configuration.ReShade.RemoteLink;
             var tempFolder = Path.Combine(Instances.TempFolder, "ReShade");
@@ -129,12 +131,12 @@ namespace Bundlingway.Utilities.Handler
                 Directory.CreateDirectory(tempFolder);
                 var fileName = Path.Combine(tempFolder, "temp.zip");
 
-                using (var response = await client.GetAsync(remoteLink, HttpCompletionOption.ResponseHeadersRead))
+                using (var response = client.GetAsync(remoteLink, HttpCompletionOption.ResponseHeadersRead).Result)
                 {
                     response.EnsureSuccessStatusCode();
-                    await using var fs = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None);
-                    await using var stream = await response.Content.ReadAsStreamAsync();
-                    await stream.CopyToAsync(fs);
+                    using var fs = new FileStream(fileName, FileMode.Create, FileAccess.Write, FileShare.None);
+                    using var stream = response.Content.ReadAsStreamAsync().Result;
+                    stream.CopyTo(fs);
                     Log.Information("ReShadeParser.Update: Successfully downloaded the file.");
                 }
 

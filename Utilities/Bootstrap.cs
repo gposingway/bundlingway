@@ -11,6 +11,7 @@ namespace Bundlingway.Utilities
             try
             {
                 await ProcessHelper.PinToStartScreenAsync();
+                ProcessHelper.EnsureDesktopShortcut();
                 await CustomProtocolHandler.RegisterCustomProtocolAsync("gwpreset", "A collection of presets for GPosingway", true);
 
                 Instances.LocalConfigProvider = new ConfigProvider<BundlingwayConfig>();

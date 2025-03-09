@@ -28,6 +28,8 @@ namespace Bundlingway
             ProcessHelper.NotificationReceived += ProcessHelper_NotificationReceived;
             _ = ProcessHelper.ListenForNotifications();
 
+            _ = UI.UpdateElements();
+
             _ = UI.Announce(Constants.MessageCategory.Ready);
         }
 
@@ -62,7 +64,6 @@ namespace Bundlingway
                 _ = UI.Announce(e.Message);
             }
         }
-
 
         private void btnDetectSettings_Click(object sender, EventArgs e)
         {
@@ -377,8 +378,23 @@ namespace Bundlingway
             var txtGamePathText = "";
             var mustDetect = false;
 
+            //Now elements in general.
 
-            if (c.Game.InstallationFolder != null)
+            var gameIsInstalled = !string.IsNullOrEmpty(c.Game.InstallationFolder);
+
+            btnFixIt.DoAction(() =>
+            {
+                btnFixIt.Enabled = gameIsInstalled;
+                btnGameFolder.Enabled = gameIsInstalled;
+                pnlPackages.Enabled = gameIsInstalled;
+                btnPackagesFolder.Enabled = gameIsInstalled;
+                btnBackup.Enabled = gameIsInstalled;
+
+                btnTopMost.ForeColor = c.UI.TopMost ? Color.White : Color.Gray;
+                TopMost = c.UI.TopMost;
+            });
+
+            if (gameIsInstalled)
             {
                 txtGamePathText = c.Game.InstallationFolder;
             }
@@ -506,6 +522,7 @@ namespace Bundlingway
                 btnInstallGPosingway.Visible = gPosingwayBtnVisible;
                 btnInstallGPosingway.Text = gPosingwayBtnText;
             });
+
         }
 
         private void btnUpdate_Click(object sender, EventArgs e)
@@ -579,7 +596,9 @@ namespace Bundlingway
 
                 if (Path.GetFileName(folder).Equals(Constants.Folders.SinglePresets))
                 {
-                    foreach (var file in Directory.GetFiles(folder, "*.ini"))
+
+                    foreach (var acceptableFile in Constants.AcceptableFilesInPresetFolder)
+                    foreach (var file in Directory.GetFiles(folder, acceptableFile))
                     {
                         var destFile = Path.Combine(target, Path.GetFileName(file));
                         File.Copy(file, destFile, true);
@@ -681,17 +700,36 @@ namespace Bundlingway
 
         internal void DisableEverything()
         {
-            flpSideMenu.DoAction(() => { flpSideMenu.Enabled = false; });
-            flpPackageOptions.DoAction(() => { flpPackageOptions.Enabled = false; });
-            pnlSettings.DoAction(() => { pnlSettings.Enabled = false; });
+            flpSideMenu.DoAction(() =>
+            {
+                flpSideMenu.Enabled = false;
+                flpPackageOptions.Enabled = false;
+                pnlSettings.Enabled = false;
+                pnlPackages.Enabled = false;
+            });
         }
-
 
         internal void EnableEverything()
         {
-            flpSideMenu.DoAction(() => { flpSideMenu.Enabled = true; });
-            flpPackageOptions.DoAction(() => { flpPackageOptions.Enabled = true; });
-            pnlSettings.DoAction(() => { pnlSettings.Enabled = true; });
+            flpSideMenu.DoAction(() =>
+            {
+                flpSideMenu.Enabled = true;
+                flpPackageOptions.Enabled = true;
+                pnlSettings.Enabled = true;
+                pnlPackages.Enabled = true;
+            });
+        }
+
+        private void btnTopMost_Click(object sender, EventArgs e)
+        {
+
+
+            var c = Instances.LocalConfigProvider.Configuration;
+            if (c.UI == null) c.UI = new BundlingwayConfig.UIData();
+            c.UI.TopMost = !c.UI.TopMost;
+            Instances.LocalConfigProvider.Save();
+            UpdateElements().Wait();
+
         }
     }
 }

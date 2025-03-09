@@ -37,7 +37,6 @@ namespace Bundlingway.Utilities.Handler
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
             try
             {
-
                 _ = UI.Announce($"Backing up the reshade-shaders and reshade-presets folders to {timestamp}...");
 
                 // Backup the whole content of the game folder's reshade-shaders and reshade-presets folders to the backup folder
@@ -74,12 +73,14 @@ namespace Bundlingway.Utilities.Handler
                     File.Copy(reshadeIniFile, destinationFile, true);
                 }
 
+                // Keep only the last 5 backup directories
+                var backupDirectories = Directory.GetDirectories(backupFolder).OrderByDescending(d => d).Skip(5);
+                foreach (var dir in backupDirectories) { Directory.Delete(dir, true); }
             }
             catch (Exception e)
             {
                 Log.Error($"Bundlingway.Backup: Error in Backup: {e.Message}");
             }
-
 
             return timestamp;
         }

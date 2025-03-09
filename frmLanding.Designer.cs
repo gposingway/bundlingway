@@ -66,6 +66,7 @@
             btnFavPackage = new Button();
             lblGrpPackages = new Label();
             pnlSettings = new Panel();
+            btnTopMost = new Button();
             tableLayoutPanel1 = new TableLayoutPanel();
             btnInstallGPosingway = new Button();
             txtGPosingwayStatus = new TextBox();
@@ -567,6 +568,7 @@
             // 
             // pnlSettings
             // 
+            pnlSettings.Controls.Add(btnTopMost);
             pnlSettings.Controls.Add(tableLayoutPanel1);
             pnlSettings.Controls.Add(lblGrpSettings);
             pnlSettings.Dock = DockStyle.Top;
@@ -575,6 +577,24 @@
             pnlSettings.Padding = new Padding(5);
             pnlSettings.Size = new Size(506, 132);
             pnlSettings.TabIndex = 0;
+            // 
+            // btnTopMost
+            // 
+            btnTopMost.Anchor = AnchorStyles.Top | AnchorStyles.Right;
+            btnTopMost.BackColor = SystemColors.Highlight;
+            btnTopMost.FlatAppearance.BorderSize = 0;
+            btnTopMost.FlatStyle = FlatStyle.Flat;
+            btnTopMost.Font = new Font("Segoe UI", 9.1F, FontStyle.Bold);
+            btnTopMost.ForeColor = SystemColors.Control;
+            btnTopMost.Location = new Point(477, 6);
+            btnTopMost.Margin = new Padding(0);
+            btnTopMost.Name = "btnTopMost";
+            btnTopMost.Size = new Size(23, 23);
+            btnTopMost.TabIndex = 17;
+            btnTopMost.Tag = "Pin this window over all others. Pretty handy sometimes!";
+            btnTopMost.Text = "📌";
+            btnTopMost.UseVisualStyleBackColor = false;
+            btnTopMost.Click += btnTopMost_Click;
             // 
             // tableLayoutPanel1
             // 
@@ -804,5 +824,6 @@
         private Button btnLockPackage;
         private ProgressBar prgCommon;
         private FontAwesome.Sharp.IconButton btnFixIt;
+        private Button btnTopMost;
     }
 }

@@ -253,6 +253,13 @@ namespace Bundlingway.Utilities
                         Log.Information($"{methodName}: Successfully extracted the file.");
                     }
 
+                    // Drop and recreate the local package folder' Shaders and Presets folders
+                    if (Directory.Exists(gposingwayPackage.LocalShaderFolder)) Directory.Delete(gposingwayPackage.LocalShaderFolder, true);
+                    if (Directory.Exists(gposingwayPackage.LocalPresetFolder)) Directory.Delete(gposingwayPackage.LocalPresetFolder, true);
+                    Directory.CreateDirectory(gposingwayPackage.LocalShaderFolder);
+                    Directory.CreateDirectory(gposingwayPackage.LocalPresetFolder);
+
+
                     _ = UI.Announce("Installing GPosingway...");
 
                     // Copy the content from extractPath + "reshade-shaders" to the game's "reshade-shaders" folder
@@ -267,7 +274,9 @@ namespace Bundlingway.Utilities
 
                         foreach (var newPath in Directory.GetFiles(sourcePath, "*.*", SearchOption.AllDirectories))
                         {
-                            File.Copy(newPath, newPath.Replace(sourcePath, gposingwayPackage.LocalShaderFolder), true);
+                            var source = newPath;
+                            var destination = newPath.Replace(sourcePath, gposingwayPackage.LocalShaderFolder); 
+                            File.Copy(source, destination, true);
                         }
 
                         Log.Information($"{methodName}: Successfully copied reshade-shaders to the GPosingway package folder.");
