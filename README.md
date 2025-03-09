@@ -2,13 +2,13 @@
 Your very own FFXIV ReShade setup Loporrit assistant! 🌙🐰
 
 ![Build Status](https://github.com/gposingway/bundlingway/actions/workflows/release.yml/badge.svg)  
-[![GitHub release](https://img.shields.io/github/release/gposingway/bundlingway.svg)](https://github.com/gposingway/bundlingway/releases)  
 
 ---
 
 Oh, hello there, friend! Welcome to **Bundlingway**, the coziest little package manager designed to make your preset adventures as smooth as a mochi bun! Built on top of [GPosingway](https://github.com/gposingway/gposingway), Bundlingway is here to take the fuss out of installing and managing presets—so you can focus on looking fabulous in your screenshots! ✨
 
-![image](https://github.com/user-attachments/assets/d8a27131-1652-4ab2-84a5-7f906e9c8bb9)
+![gposingway-emporium-integration](https://github.com/user-attachments/assets/354f1105-06bc-4376-aab6-d5b0a37aac81)
+
 
 ## 🌟 Features 🌟
 
