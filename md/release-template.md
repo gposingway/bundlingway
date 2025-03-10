@@ -11,9 +11,6 @@
 - **Bundlingway's Emporium:** One-click download and installation of preset and shader collections.
 - **Simplified Setup:** Easy installation and updates for ReShade and GPosingway.
 
-### Changelog
-- [...]
-
 > [!CAUTION]  
 > **Windows Security Alert:**  
 > Bundlingway might trigger a false positive in Windows Virus & Threat Protection. **Avoid disabling your antivirus**. If you wish to proceed:  
