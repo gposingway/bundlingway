@@ -162,7 +162,7 @@ jobs:
             $retryCount++
             Write-Host "Polling VirusTotal for analysis status... Retry $($retryCount) of $($maxRetries)"
 
-            $reportUrl = "https://www.virustotal.com/gui/url/$($analysisId)"
+            $reportUrl = "$($analysisReportUrlBase)$analysisId"
             Write-Host "Report URL for polling: $($reportUrl)" # Debug: Report URL
             try {
               $reportResponse = Invoke-RestMethod -Uri $reportUrl -Headers @{"x-apikey" = $apiKey} -Method Get
