@@ -29,6 +29,10 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: build
+          path: ./bin/Release/net8.0 # Changed path to bin/Release/net8.0      
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build
           path: ./bin/Release/net8.0-windows/win-x64 # Corrected path to net8.0-windows/win-x64
 
   release:
