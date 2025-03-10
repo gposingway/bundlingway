@@ -3,134 +3,76 @@ name: Build and Deploy Release
 on:
   push:
     branches:
-      - deploy
-
-permissions:
-  contents: write
-  issues: write
-  pull-requests: write
-  actions: write
-  checks: write
-  deployments: write
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.find_version.outputs.version }}
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-dotnet@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Find and Extract Version
+        id: find_version
+        run: |
+          $version = "0.0.2.4" # Replace with your actual version finding logic if needed
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "VERSION=$version" >> $env:GITHUB_ENV
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.0.x'
-      - run: dotnet restore # Removed --runtime win-x64 from dotnet restore
-      - run: dotnet build --configuration Release --no-restore
-      - run: dotnet publish --configuration Release --no-build --output ./publish --no-self-contained # Added --no-self-contained flag
-      - name: List publish directory contents
-        shell: pwsh
-        run: Get-ChildItem -Path ./publish -Recurse # Listing publish directory
-      - uses: actions/upload-artifact@v4
+
+      - name: Restore dependencies
+        run: dotnet restore Bundlingway.sln
+
+      - name: Build
+        run: dotnet build Bundlingway.sln --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish Bundlingway.sln --configuration Release --no-restore --output publish
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
         with:
-          name: build
-          path: ./publish # Path for artifact upload is now ./publish
+          name: Bundlingway-app
+          path: publish
 
   release:
-    needs: build
     runs-on: windows-latest
+    needs: build
+    environment:
+      name: Release
+      url: https://github.com/gposingway/bundlingway/releases/tag/v${{ needs.build.outputs.version }}
     steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/download-artifact@v4
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: build
-          path: ./publish # Path for download-artifact is now ./publish
+          name: Bundlingway-app
+          path: publish
 
       - name: Find and Extract Version
         id: extract_version
+        run: |
+          echo "VERSION=${{ needs.build.outputs.version }}" >> $env:GITHUB_ENV
+          echo "EXE_FILE=D:\a\bundlingway\bundlingway\publish\Bundlingway.exe" >> $env:GITHUB_ENV # Adjust if necessary
+          echo "EXE_NAME=Bundlingway" >> $env:GITHUB_ENV # Adjust if necessary
+          echo "AUTHOR_NAME=Leon Aquitaine" >> $env:GITHUB_ENV # Adjust if necessary
+          echo "AUTHOR_EMAIL=leonaquitaine@gmail.com" >> $env:GITHUB_ENV # Adjust if necessary
+          echo "ZIP_FILE=Bundlingway.${{ needs.build.outputs.version }}.zip" >> $env:GITHUB_ENV
+
+      - name: Create Release ZIP Archive
         shell: pwsh
         run: |
-          $exe_file = Get-ChildItem -Path "./publish" -Filter *.exe | Select-Object -First 1 # Path is now ./publish
-          $file_info = Get-Item $exe_file.FullName
-          $version = $file_info.VersionInfo.FileVersion
-          $exe_name = $exe_file.BaseName
-          echo "VERSION=$version" >> $env:GITHUB_ENV
-          echo "EXE_FILE=$($exe_file.FullName)" >> $env:GITHUB_ENV
-          echo "EXE_NAME=$exe_name" >> $env:GITHUB_ENV
-          echo "VERSION=$version"
-          echo "EXE_FILE=$($exe_file.FullName)"
-          echo "EXE_NAME=$exe_name"
-
-      - name: Extract Commit Details
-        id: extract_commit
-        run: |
-          author_name=$(git log -1 --pretty=format:'%an')
-          author_email=$(git log -1 --pretty=format:'%ae')
-          echo "AUTHOR_NAME=$author_name" >> $GITHUB_ENV
-          echo "AUTHOR_EMAIL=$author_email" >> $GITHUB_ENV
-          echo "AUTHOR_NAME=$author_name"
-          echo "AUTHOR_EMAIL=$author_email"
-        shell: bash
-
-      - name: Configure Git User
-        run: |
-          git config --global user.email "${{ env.AUTHOR_EMAIL }}"
-          git config --global user.name "${{ env.AUTHOR_NAME }}"
-
-      - name: Delete Existing Tag and Release
-        id: delete_existing_release
-        continue-on-error: true # If delete fails, continue workflow
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
-        run: |
-          $tag_name = "v${{ env.VERSION }}"
-          Write-Host "Checking for existing tag: $($tag_name)"
-          $existing_tag = git tag --list "$tag_name"
-          if ($existing_tag) {
-            Write-Host "Tag '$tag_name' exists. Attempting to delete remote tag (forcefully)..."
-            git push origin --delete tag "$tag_name" --force # Force delete remote tag
-            if ($LASTEXITCODE -eq 0) {
-              Write-Host "Remote tag '$tag_name' deleted successfully (forcefully)."
-            } else {
-              Write-Warning "Failed to delete remote tag '$tag_name' (forcefully). This might cause issues if the tag persists."
-            }
-            Write-Host "Deleting local tag '$tag_name'..."
-            git tag -d "$tag_name"
-            Write-Host "Local tag '$tag_name' deleted."
-          } else {
-            Write-Host "Tag '$tag_name' does not exist."
-          }
-
-          Write-Host "Checking for existing release: Release $tag_name"
-          $existing_release = gh release list --repo="$GITHUB_REPOSITORY" --limit 100 | Where-Object { $_ -match "Release $tag_name" }
-          if ($existing_release) {
-            Write-Host "Release 'Release $tag_name' exists. Deleting release..."
-            gh release delete "$tag_name" --yes --repo="$GITHUB_REPOSITORY"
-            Write-Host "Release 'Release $tag_name' deleted."
-          } else {
-            Write-Host "Release 'Release $tag_name' does not exist."
-          }
-        shell: pwsh
-
-      - name: Create and Push Tag
-        id: create_tag
-        run: |
-          $tag_name = "v${{ env.VERSION }}"
-          Write-Host "Creating tag: $($tag_name)"
-          git tag -a "$tag_name" -m "Release $tag_name"
-          Write-Host "Pushing tag: $($tag_name)"
-          git push origin "$tag_name" --force # Force push the tag
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
-
-      - name: Create zip file
-        id: create_zip
-        shell: pwsh
-        run: |
-          $zip_file = "${{ env.EXE_NAME }}.${{ env.VERSION }}.zip"
-          Compress-Archive -Path "./publish/$env:EXE_NAME.exe" -DestinationPath $zip_file # Path is now ./publish
-          echo "ZIP_FILE=$zip_file" >> $env:GITHUB_ENV
+           Compress-Archive -Path "publish/*" -DestinationPath "${{ env.ZIP_FILE }}"
 
       - name: Scan with VirusTotal
-        id: virus_total_scan
-        shell: pwsh
         run: |
           $apiKey = "${{ secrets.VIRUSTOTAL_API_KEY }}"
           $assetUrl = "https://github.com/gposingway/bundlingway/releases/download/v${{ env.VERSION }}/Bundlingway.${{ env.VERSION }}.zip" # URL to scan
@@ -151,79 +93,67 @@ jobs:
           }
           $body = "url=$($assetUrl)"
           try {
-              $response = Invoke-RestMethod -Uri $apiUrl -Method Post -Headers $headers -Body $body -ContentType "application/x-www-form-urlencoded"
-              $analysisId = $response.data.id
-              Write-Host "URL submitted for analysis. Analysis ID: $($analysisId)"
+            $response = Invoke-RestMethod -Uri $apiUrl -Method Post -Headers $headers -Body $body -ContentType "application/x-www-form-urlencoded"
+            $analysisId = $response.data.id
+            Write-Host "URL submitted for analysis. Analysis ID: $($analysisId)"
           } catch {
-              Write-Error "Error submitting URL to VirusTotal: $_"
-              throw
+            Write-Error "Error submitting URL to VirusTotal: $_"
+            throw
           }
 
           # Poll for analysis completion
           $retryCount = 0
           $analysisStatus = "queued" # Initial status
           while ($retryCount -lt $maxRetries -and $analysisStatus -ne "completed") {
-              Start-Sleep -Seconds $retryDelaySeconds
-              $retryCount++
-              Write-Host "Polling VirusTotal for analysis status... Retry $($retryCount) of $($maxRetries)"
+            Start-Sleep -Seconds $retryDelaySeconds
+            $retryCount++
+            Write-Host "Polling VirusTotal for analysis status... Retry $($retryCount) of $($maxRetries)"
 
-              $reportUrl = "$($analysisReportUrlBase)$analysisId"
-              Write-Host "Report URL for polling: $($reportUrl)" # Debug: Report URL
-              try {
-                  $reportResponse = Invoke-RestMethod -Uri $reportUrl -Headers @{"x-apikey" = $apiKey} -Method Get
-                  Write-Debug -Message "Full Report Response: $($reportResponse | ConvertTo-Json -Depth 10)" # Debug: Full API Response
-                  $analysisStatus = $reportResponse.data.attributes.status
-                  Write-Host "Analysis status: $($analysisStatus)"
-                  if ($analysisStatus -eq "completed") {
-                      $reportPermalink = $reportResponse.data.links.permalink
-                      echo "VIRUSTOTAL_REPORT_URL=$reportPermalink" >> $env:GITHUB_ENV
-                      Write-Host "VirusTotal report URL: $($reportPermalink)"
-                      Write-Host "Final VirusTotal Report Permalink: $($reportPermalink)" # Debug: Permalink
-                      break # Exit loop if completed
-                  }
-              } catch {
-                  Write-Warning "Error retrieving VirusTotal report during polling: $_"
-                  # Continue polling on error, as transient network issues might occur
+            $reportUrl = "$($analysisReportUrlBase)$analysisId"
+            Write-Host "Report URL for polling: $($reportUrl)" # Debug: Report URL
+            try {
+              $reportResponse = Invoke-RestMethod -Uri $reportUrl -Headers @{"x-apikey" = $apiKey} -Method Get
+              Write-Host "Full Report Response: $($reportResponse | ConvertTo-Json -Depth 10)" # Debug: Full API Response - CHANGED TO Write-Host
+              $analysisStatus = $reportResponse.data.attributes.status
+              Write-Host "Analysis status: $($analysisStatus)"
+              if ($analysisStatus -eq "completed") {
+                $reportPermalink = $reportResponse.data.links.permalink
+                echo "VIRUSTOTAL_REPORT_URL=$reportPermalink" >> $env:GITHUB_ENV
+                Write-Host "VirusTotal report URL: $($reportPermalink)"
+                Write-Host "Final VirusTotal Report Permalink: $($reportPermalink)" # Debug: Permalink
+                break # Exit loop if completed
               }
+            } catch {
+              Write-Warning "Error retrieving VirusTotal report during polling: $_"
+              # Continue polling on error, as transient network issues might occur
+            }
           }
 
           if ($analysisStatus -ne "completed") {
-              Write-Warning "VirusTotal analysis polling timed out or did not complete successfully after $($maxRetries) retries."
-              echo "VIRUSTOTAL_REPORT_URL=Error retrieving report or timeout" >> $env:GITHUB_ENV # Set a placeholder in case of timeout
+            Write-Warning "VirusTotal analysis polling timed out or did not complete successfully after $($maxRetries) retries."
+            echo "VIRUSTOTAL_REPORT_URL=Error retrieving report or timeout" >> $env:GITHUB_ENV # Set a placeholder in case of timeout
           }
 
           Write-Host "Environment variable VIRUSTOTAL_REPORT_URL after Scan: ${{ env.VIRUSTOTAL_REPORT_URL }}" # Debug: Check env var
 
-      - name: Read Release Template
-        id: read_template
-        shell: pwsh
-        run: |
-          $template_content = Get-Content -Path "./md/release-template.md" -Raw
-          Write-Host "Template Content before replacement: $($template_content)" # Debug: Template Content
-          $release_body = $template_content -replace '%VIRUSTOTAL_LINK%', "${{ env.VIRUSTOTAL_REPORT_URL }}"
-          Write-Host "Release Body after replacement: $($release_body)" # Debug: Release Body
-          echo "RELEASE_BODY<<EOF" >> $env:GITHUB_ENV
-          echo "$release_body" >> $env:GITHUB_ENV
-          echo "EOF" >> $env:GITHUB_ENV
-
       - name: Create GitHub Release
-        id: create_release
         uses: actions/create-release@v1
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: "v${{ env.VERSION }}"
-          release_name: Release v${{ env.VERSION }}
-          body: ${{ env.RELEASE_BODY }}
+          tag_name: v${{ env.VERSION }}
+          release_name: Bundlingway v${{ env.VERSION }}
+          body_path: release-notes.md
           draft: false
           prerelease: false
+          files: |
+            Bundlingway.*.zip
+            publish/Bundlingway.exe
+            publish/Bundlingway.dll
+            publish/Bundlingway.deps.json
+            publish/Bundlingway.runtimeconfig.json
 
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.PAT }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: "${{ env.ZIP_FILE }}"
-          asset_name: "${{ env.ZIP_FILE }}"
-          asset_content_type: application/zip
+      - name: Output VirusTotal Report URL
+        shell: pwsh
+        run: |
+          Write-Host "VirusTotal Report URL: ${{ env.VIRUSTOTAL_REPORT_URL }}"
