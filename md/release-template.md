@@ -1,7 +1,3 @@
-Sure, here's a more concise version:
-
----
-
 > [!IMPORTANT]  
 > **Early Release:** Bundlingway is still in development. You may encounter bugs or unexpected behavior. Please share feedback and report issues via our [GitHub repository](https://github.com/gposingway/bundlingway/issues) or the [Sights of Eorzea Discord server](https://discord.com/servers/sights-of-eorzea-1124828911700811957).
 
