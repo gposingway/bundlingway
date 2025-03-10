@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using static Bundlingway.Constants;
+﻿using static Bundlingway.Constants;
 
 namespace Bundlingway.Utilities
 {
@@ -13,7 +12,7 @@ namespace Bundlingway.Utilities
             _idleTimer = new System.Threading.Timer(async a =>
             {
                 await Announce(MessageCategory.IdleCommentary);
-                _idleTimer.Change(TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
+                _idleTimer?.Change(TimeSpan.FromSeconds(15), TimeSpan.FromSeconds(15));
 
             });
         }
@@ -31,10 +30,7 @@ namespace Bundlingway.Utilities
             }
         }
 
-        public static async Task Announce(MessageCategory category, params string[] args)
-        {
-            await Announce(Constants.Bundlingway.GetMessage(category, args));
-        }
+        public static async Task Announce(MessageCategory category, params string[] args) => await Announce(Constants.Bundlingway.GetMessage(category, args));
 
         public static async Task NotifyAsync(string topic, string message)
         {
@@ -47,34 +43,11 @@ namespace Bundlingway.Utilities
             //;
         }
 
-        public static async Task UpdateElements()
-        {
-            await _landing.UpdateElements();
-        }
-
-        public static async Task StartProgress(long count)
-        {
-            await _landing.StartProgress(count);
-        }
-
-        public static async Task SetProgress(long value)
-        {
-            await _landing.SetProgress(value);
-        }
-
-        public static async Task StopProgress()
-        {
-            await _landing.StopProgress();
-        }
-
-        internal static void DisableEverything()
-        {
-            _landing.DisableEverything();
-        }
-
-        internal static void EnableEverything()
-        {
-            _landing.EnableEverything();
-        }
+        public static async Task UpdateElements() => await _landing.UpdateElements();
+        public static async Task StartProgress(long count) => await _landing.StartProgress(count);
+        public static async Task SetProgress(long value) => await _landing.SetProgress(value);
+        public static async Task StopProgress() => await _landing.StopProgress();
+        internal static void DisableEverything() => _landing.DisableEverything();
+        internal static void EnableEverything() => _landing.EnableEverything();
     }
 }
