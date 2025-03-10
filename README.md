@@ -1,7 +1,7 @@
 # Bundlingway
 Your very own FFXIV ReShade setup Loporrit assistant! 🌙🐰
 
-![Build Status](https://github.com/gposingway/bundlingway/actions/workflows/release.yml/badge.svg)  
+![Build Status](https://github.com/gposingway/bundlingway/actions/workflows/release.yml/badge.svg) [![GitHub release](https://img.shields.io/github/release/gposingway/bundlingway.svg)](https://github.com/gposingway/bundlingway/releases)  
 
 ---
 
