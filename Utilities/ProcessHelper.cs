@@ -188,6 +188,8 @@ namespace Bundlingway.Utilities
 
         internal static bool IsGameRunning() => IsProcessRunning(Constants.Files.GameProcess);
 
+
+
         public static void EnsureDesktopShortcut()
         {
             string appName = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule.FileName);
@@ -200,50 +202,112 @@ namespace Bundlingway.Utilities
             string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             string shortcutPath = Path.Combine(desktopPath, $"{shortcutName}.lnk");
 
-            if (!File.Exists(shortcutPath))
+            if (File.Exists(shortcutPath))
             {
-                Log.Information($"Creating desktop shortcut: {shortcutPath}");
-
                 try
                 {
-                    // Create a new shortcut using COM objects
-                    Type shellType = Type.GetTypeFromProgID("WScript.Shell");
-                    if (shellType == null)
-                    {
-                        Log.Error("Failed to get WScript.Shell type.");
-                        return;
-                    }
-
-                    dynamic shell = Activator.CreateInstance(shellType);
-                    if (shell == null)
-                    {
-                        Log.Error("Failed to create WScript.Shell instance.");
-                        return;
-                    }
-
-                    var shortcut = shell.CreateShortcut(shortcutPath);
-                    if (shortcut == null)
-                    {
-                        Log.Error("Failed to create shortcut.");
-                        return;
-                    }
-
-                    shortcut.TargetPath = targetPath;
-                    shortcut.WorkingDirectory = Path.GetDirectoryName(targetPath);
-                    shortcut.Description = "Shortcut for " + shortcutName;
-                    shortcut.IconLocation = targetPath;
-                    shortcut.Save();
-
-                    Log.Information("Desktop shortcut created successfully.");
+                    File.Delete(shortcutPath);
+                    Log.Information("Existing shortcut removed successfully.");
                 }
                 catch (Exception ex)
                 {
-                    Log.Error(ex, "Error creating desktop shortcut.");
+                    Log.Error(ex, "Error removing existing shortcut.");
+                    return;
                 }
             }
-            else
+
+            Log.Information($"Creating desktop shortcut: {shortcutPath}");
+
+            try
             {
-                Log.Information("Desktop shortcut already exists.");
+                // Create a new shortcut using COM objects
+                Type shellType = Type.GetTypeFromProgID("WScript.Shell");
+                if (shellType == null)
+                {
+                    Log.Error("Failed to get WScript.Shell type.");
+                    return;
+                }
+
+                dynamic shell = Activator.CreateInstance(shellType);
+                if (shell == null)
+                {
+                    Log.Error("Failed to create WScript.Shell instance.");
+                    return;
+                }
+
+                var shortcut = shell.CreateShortcut(shortcutPath);
+                if (shortcut == null)
+                {
+                    Log.Error("Failed to create shortcut.");
+                    return;
+                }
+
+                shortcut.TargetPath = targetPath;
+                shortcut.WorkingDirectory = Path.GetDirectoryName(targetPath);
+                shortcut.Description = "Shortcut for " + shortcutName;
+                shortcut.IconLocation = targetPath;
+                shortcut.Save();
+
+                Log.Information("Desktop shortcut created successfully.");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error creating desktop shortcut.");
+            }
+        }
+
+        public static string CheckDesktopShortcutStatus()
+        {
+            string appName = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule.FileName);
+            string appPath = Process.GetCurrentProcess().MainModule.FileName;
+            return CheckDesktopShortcutStatus(appName, appPath);
+        }
+
+        public static string CheckDesktopShortcutStatus(string shortcutName, string expectedTargetPath)
+        {
+            string desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
+            string shortcutPath = Path.Combine(desktopPath, $"{shortcutName}.lnk");
+
+            if (!File.Exists(shortcutPath))
+            {
+                return "Not Created";
+            }
+
+            try
+            {
+                Type shellType = Type.GetTypeFromProgID("WScript.Shell");
+                if (shellType == null)
+                {
+                    Log.Error("Failed to get WScript.Shell type.");
+                    return "Error";
+                }
+
+                dynamic shell = Activator.CreateInstance(shellType);
+                if (shell == null)
+                {
+                    Log.Error("Failed to create WScript.Shell instance.");
+                    return "Error";
+                }
+
+                var shortcut = shell.CreateShortcut(shortcutPath);
+                if (shortcut == null)
+                {
+                    Log.Error("Failed to create shortcut.");
+                    return "Error";
+                }
+
+                string currentTargetPath = shortcut.TargetPath;
+                if (currentTargetPath != expectedTargetPath)
+                {
+                    return "Outdated";
+                }
+
+                return "Up-to-date";
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Error checking desktop shortcut status.");
+                return "Error";
             }
         }
     }

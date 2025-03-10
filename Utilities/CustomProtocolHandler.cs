@@ -5,6 +5,9 @@ namespace Bundlingway.Utilities
 {
     public static class CustomProtocolHandler
     {
+
+
+
         public static async Task RegisterCustomProtocolAsync(string protocolName, string description = "", bool forceRegister = false)
         {
             var isExtensionRegistered = true;
@@ -77,6 +80,31 @@ namespace Bundlingway.Utilities
 
                 Log.Information($"Registered {extensionName} extension handler.");
             }
+        }
+        public static string IsCustomProtocolRegistered(string protocolName)
+        {
+            var appPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+            string status = "Not Set";
+
+            using (RegistryKey existingKey = Registry.ClassesRoot.OpenSubKey(protocolName))
+            {
+                if (existingKey != null)
+                {
+                    string existingAppPath = existingKey.OpenSubKey("shell")?.OpenSubKey("open")?.OpenSubKey("command")?.GetValue("")?.ToString();
+                    if (existingAppPath != null)
+                    {
+                        if (existingAppPath.Contains(appPath))
+                        {
+                            status = "Set";
+                        }
+                        else
+                        {
+                            status = "Outdated";
+                        }
+                    }
+                }
+            }
+            return status;
         }
     }
 }

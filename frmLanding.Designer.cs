@@ -68,11 +68,17 @@
             pnlSettings = new Panel();
             btnTopMost = new Button();
             tableLayoutPanel1 = new TableLayoutPanel();
+            txtBrowserIntegration = new Label();
+            txtDesktopShortcut = new Label();
+            txtGPosingwayStatus = new Label();
+            txtReShadeStatus = new Label();
+            btnSetDrowserIntegration = new Button();
+            textBox3 = new TextBox();
+            btnCreateDesktopShortcut = new Button();
+            textBox1 = new TextBox();
             btnInstallGPosingway = new Button();
-            txtGPosingwayStatus = new TextBox();
             label4 = new Label();
             btnInstallReShade = new Button();
-            txtReShadeStatus = new TextBox();
             label3 = new Label();
             label2 = new Label();
             txtXivPath = new TextBox();
@@ -161,7 +167,7 @@
             btnShortcuts.Margin = new Padding(3, 3, 3, 0);
             btnShortcuts.Name = "btnShortcuts";
             btnShortcuts.Size = new Size(145, 37);
-            btnShortcuts.TabIndex = 23;
+            btnShortcuts.TabIndex = 1;
             btnShortcuts.Tag = "Customize your in-game ReShade shortcuts! Make it easy to toggle effects and adjust settings on the fly.";
             btnShortcuts.Text = "In-game Shortcuts";
             btnShortcuts.TextAlign = ContentAlignment.MiddleRight;
@@ -179,7 +185,7 @@
             btnFixIt.Margin = new Padding(3, 3, 3, 0);
             btnFixIt.Name = "btnFixIt";
             btnFixIt.Size = new Size(145, 37);
-            btnFixIt.TabIndex = 28;
+            btnFixIt.TabIndex = 2;
             btnFixIt.Tag = "Broken presets? Duplicated effects? Missing files? I'll try to fix any problems. A full Loporrit service!";
             btnFixIt.Text = "Fix Everything!";
             btnFixIt.TextAlign = ContentAlignment.MiddleRight;
@@ -225,7 +231,7 @@
             btnGameFolder.Margin = new Padding(3, 3, 3, 0);
             btnGameFolder.Name = "btnGameFolder";
             btnGameFolder.Size = new Size(145, 37);
-            btnGameFolder.TabIndex = 2;
+            btnGameFolder.TabIndex = 4;
             btnGameFolder.Tag = "Game files, game files everywhere! Tread carefully, adventurer!";
             btnGameFolder.Text = "FFXIV Game Folder";
             btnGameFolder.TextAlign = ContentAlignment.MiddleRight;
@@ -244,7 +250,7 @@
             btnBackup.Margin = new Padding(3, 3, 3, 0);
             btnBackup.Name = "btnBackup";
             btnBackup.Size = new Size(145, 37);
-            btnBackup.TabIndex = 25;
+            btnBackup.TabIndex = 5;
             btnBackup.Tag = "Create a backup of your managed packages. Better safe than sorry, friend!";
             btnBackup.Text = "Backup";
             btnBackup.TextAlign = ContentAlignment.MiddleRight;
@@ -262,7 +268,7 @@
             btnDebug.Margin = new Padding(3, 3, 3, 0);
             btnDebug.Name = "btnDebug";
             btnDebug.Size = new Size(145, 37);
-            btnDebug.TabIndex = 4;
+            btnDebug.TabIndex = 6;
             btnDebug.Tag = "Oh dear, what have we here? A log full of secrets! (and probably some errors…)";
             btnDebug.Text = "Log";
             btnDebug.TextAlign = ContentAlignment.MiddleRight;
@@ -290,7 +296,7 @@
             btnEmporium.Margin = new Padding(3, 3, 3, 0);
             btnEmporium.Name = "btnEmporium";
             btnEmporium.Size = new Size(145, 37);
-            btnEmporium.TabIndex = 5;
+            btnEmporium.TabIndex = 7;
             btnEmporium.Tag = "A Loporrit-approved selection of presets and shaders! Fluffy, fancy, and fantastic!";
             btnEmporium.Text = "The Emporium";
             btnEmporium.TextAlign = ContentAlignment.MiddleRight;
@@ -309,7 +315,7 @@
             btnAbout.Margin = new Padding(3, 3, 3, 0);
             btnAbout.Name = "btnAbout";
             btnAbout.Size = new Size(145, 37);
-            btnAbout.TabIndex = 6;
+            btnAbout.TabIndex = 8;
             btnAbout.Tag = "About? About what? Oh! The project! Yes, yes, right this way!";
             btnAbout.Text = "About";
             btnAbout.TextAlign = ContentAlignment.MiddleRight;
@@ -337,7 +343,7 @@
             btnUpdate.Margin = new Padding(3, 3, 3, 0);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(145, 37);
-            btnUpdate.TabIndex = 22;
+            btnUpdate.TabIndex = 9;
             btnUpdate.Tag = "A new Bundlingway version is out - Click here to download and install!";
             btnUpdate.Text = "Update Available!";
             btnUpdate.TextAlign = ContentAlignment.MiddleRight;
@@ -408,10 +414,10 @@
             pnlPackages.Controls.Add(flpPackageOptions);
             pnlPackages.Controls.Add(lblGrpPackages);
             pnlPackages.Dock = DockStyle.Fill;
-            pnlPackages.Location = new Point(0, 132);
+            pnlPackages.Location = new Point(0, 188);
             pnlPackages.Name = "pnlPackages";
             pnlPackages.Padding = new Padding(5, 5, 5, 150);
-            pnlPackages.Size = new Size(506, 504);
+            pnlPackages.Size = new Size(506, 448);
             pnlPackages.TabIndex = 1;
             // 
             // dgvPackages
@@ -432,8 +438,8 @@
             dgvPackages.ReadOnly = true;
             dgvPackages.RowHeadersVisible = false;
             dgvPackages.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgvPackages.Size = new Size(496, 298);
-            dgvPackages.TabIndex = 10;
+            dgvPackages.Size = new Size(496, 242);
+            dgvPackages.TabIndex = 15;
             // 
             // FavCol
             // 
@@ -480,7 +486,7 @@
             flpPackageOptions.Controls.Add(btnFavPackage);
             flpPackageOptions.Dock = DockStyle.Bottom;
             flpPackageOptions.FlowDirection = FlowDirection.RightToLeft;
-            flpPackageOptions.Location = new Point(5, 328);
+            flpPackageOptions.Location = new Point(5, 272);
             flpPackageOptions.Name = "flpPackageOptions";
             flpPackageOptions.Size = new Size(496, 26);
             flpPackageOptions.TabIndex = 4;
@@ -490,7 +496,7 @@
             btnRemove.Location = new Point(402, 3);
             btnRemove.Name = "btnRemove";
             btnRemove.Size = new Size(91, 23);
-            btnRemove.TabIndex = 14;
+            btnRemove.TabIndex = 20;
             btnRemove.Tag = "Tidy up your list! Remove the selected packages from the game and Bundlingway.";
             btnRemove.Text = "Remove";
             btnRemove.UseVisualStyleBackColor = true;
@@ -501,7 +507,7 @@
             btnUninstall.Location = new Point(305, 3);
             btnUninstall.Name = "btnUninstall";
             btnUninstall.Size = new Size(91, 23);
-            btnUninstall.TabIndex = 13;
+            btnUninstall.TabIndex = 19;
             btnUninstall.Tag = "Remove the selected packages from your game installation, but keep'em handy if you decide to reinstall!";
             btnUninstall.Text = "Uninstall";
             btnUninstall.UseVisualStyleBackColor = true;
@@ -512,7 +518,7 @@
             btnReinstall.Location = new Point(208, 3);
             btnReinstall.Name = "btnReinstall";
             btnReinstall.Size = new Size(91, 23);
-            btnReinstall.TabIndex = 12;
+            btnReinstall.TabIndex = 18;
             btnReinstall.Tag = "Reinstall the selected packages. Useful if something seems broken or if you want a fresh start.";
             btnReinstall.Text = "Reinstall";
             btnReinstall.UseVisualStyleBackColor = true;
@@ -523,7 +529,7 @@
             btnInstallPackage.Location = new Point(111, 3);
             btnInstallPackage.Name = "btnInstallPackage";
             btnInstallPackage.Size = new Size(91, 23);
-            btnInstallPackage.TabIndex = 11;
+            btnInstallPackage.TabIndex = 17;
             btnInstallPackage.Tag = "Ready for more beautiful graphics? Click here to add new packages to the game!";
             btnInstallPackage.Text = "Add Package";
             btnInstallPackage.UseVisualStyleBackColor = true;
@@ -575,7 +581,7 @@
             pnlSettings.Location = new Point(0, 0);
             pnlSettings.Name = "pnlSettings";
             pnlSettings.Padding = new Padding(5);
-            pnlSettings.Size = new Size(506, 132);
+            pnlSettings.Size = new Size(506, 188);
             pnlSettings.TabIndex = 0;
             // 
             // btnTopMost
@@ -602,58 +608,150 @@
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 140F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 60F));
-            tableLayoutPanel1.Controls.Add(btnInstallGPosingway, 2, 2);
+            tableLayoutPanel1.Controls.Add(txtBrowserIntegration, 1, 4);
+            tableLayoutPanel1.Controls.Add(txtDesktopShortcut, 1, 3);
             tableLayoutPanel1.Controls.Add(txtGPosingwayStatus, 1, 2);
+            tableLayoutPanel1.Controls.Add(txtReShadeStatus, 1, 1);
+            tableLayoutPanel1.Controls.Add(btnSetDrowserIntegration, 2, 4);
+            tableLayoutPanel1.Controls.Add(textBox3, 0, 4);
+            tableLayoutPanel1.Controls.Add(btnCreateDesktopShortcut, 2, 3);
+            tableLayoutPanel1.Controls.Add(textBox1, 0, 3);
+            tableLayoutPanel1.Controls.Add(btnInstallGPosingway, 2, 2);
             tableLayoutPanel1.Controls.Add(label4, 0, 2);
             tableLayoutPanel1.Controls.Add(btnInstallReShade, 2, 1);
-            tableLayoutPanel1.Controls.Add(txtReShadeStatus, 1, 1);
             tableLayoutPanel1.Controls.Add(label3, 0, 1);
             tableLayoutPanel1.Controls.Add(label2, 0, 0);
             tableLayoutPanel1.Controls.Add(txtXivPath, 1, 0);
             tableLayoutPanel1.Controls.Add(btnDetectSettings, 2, 0);
-            tableLayoutPanel1.Dock = DockStyle.Top;
+            tableLayoutPanel1.Dock = DockStyle.Fill;
             tableLayoutPanel1.Location = new Point(5, 30);
             tableLayoutPanel1.Margin = new Padding(3, 10, 3, 3);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
             tableLayoutPanel1.Padding = new Padding(5);
-            tableLayoutPanel1.RowCount = 6;
+            tableLayoutPanel1.RowCount = 7;
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
             tableLayoutPanel1.RowStyles.Add(new RowStyle());
-            tableLayoutPanel1.Size = new Size(496, 101);
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
+            tableLayoutPanel1.Size = new Size(496, 153);
             tableLayoutPanel1.TabIndex = 1;
+            // 
+            // txtBrowserIntegration
+            // 
+            txtBrowserIntegration.AutoSize = true;
+            txtBrowserIntegration.Dock = DockStyle.Fill;
+            txtBrowserIntegration.Location = new Point(148, 125);
+            txtBrowserIntegration.Name = "txtBrowserIntegration";
+            txtBrowserIntegration.Padding = new Padding(0, 6, 0, 6);
+            txtBrowserIntegration.Size = new Size(280, 29);
+            txtBrowserIntegration.TabIndex = 50;
+            txtBrowserIntegration.Text = "ReShade";
+            txtBrowserIntegration.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // txtDesktopShortcut
+            // 
+            txtDesktopShortcut.AutoSize = true;
+            txtDesktopShortcut.Dock = DockStyle.Fill;
+            txtDesktopShortcut.Location = new Point(148, 96);
+            txtDesktopShortcut.Name = "txtDesktopShortcut";
+            txtDesktopShortcut.Padding = new Padding(0, 6, 0, 6);
+            txtDesktopShortcut.Size = new Size(280, 29);
+            txtDesktopShortcut.TabIndex = 49;
+            txtDesktopShortcut.Text = "ReShade";
+            txtDesktopShortcut.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // txtGPosingwayStatus
+            // 
+            txtGPosingwayStatus.AutoSize = true;
+            txtGPosingwayStatus.Dock = DockStyle.Fill;
+            txtGPosingwayStatus.Location = new Point(148, 67);
+            txtGPosingwayStatus.Name = "txtGPosingwayStatus";
+            txtGPosingwayStatus.Padding = new Padding(0, 6, 0, 6);
+            txtGPosingwayStatus.Size = new Size(280, 29);
+            txtGPosingwayStatus.TabIndex = 48;
+            txtGPosingwayStatus.Text = "ReShade";
+            txtGPosingwayStatus.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // txtReShadeStatus
+            // 
+            txtReShadeStatus.AutoSize = true;
+            txtReShadeStatus.Dock = DockStyle.Fill;
+            txtReShadeStatus.Location = new Point(148, 34);
+            txtReShadeStatus.Name = "txtReShadeStatus";
+            txtReShadeStatus.Padding = new Padding(0, 6, 0, 6);
+            txtReShadeStatus.Size = new Size(280, 33);
+            txtReShadeStatus.TabIndex = 47;
+            txtReShadeStatus.Text = "ReShade";
+            txtReShadeStatus.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // btnSetDrowserIntegration
+            // 
+            btnSetDrowserIntegration.Dock = DockStyle.Fill;
+            btnSetDrowserIntegration.Location = new Point(434, 128);
+            btnSetDrowserIntegration.Name = "btnSetDrowserIntegration";
+            btnSetDrowserIntegration.Size = new Size(54, 23);
+            btnSetDrowserIntegration.TabIndex = 14;
+            btnSetDrowserIntegration.Text = "Set";
+            btnSetDrowserIntegration.UseVisualStyleBackColor = true;
+            btnSetDrowserIntegration.Click += btnSetDrowserIntegration_Click;
+            // 
+            // textBox3
+            // 
+            textBox3.BorderStyle = BorderStyle.None;
+            textBox3.Dock = DockStyle.Fill;
+            textBox3.Location = new Point(8, 132);
+            textBox3.Margin = new Padding(3, 7, 3, 3);
+            textBox3.Name = "textBox3";
+            textBox3.ReadOnly = true;
+            textBox3.Size = new Size(134, 16);
+            textBox3.TabIndex = 45;
+            textBox3.Text = "Browser Integration";
+            textBox3.TextAlign = HorizontalAlignment.Right;
+            // 
+            // btnCreateDesktopShortcut
+            // 
+            btnCreateDesktopShortcut.Dock = DockStyle.Fill;
+            btnCreateDesktopShortcut.Location = new Point(434, 99);
+            btnCreateDesktopShortcut.Name = "btnCreateDesktopShortcut";
+            btnCreateDesktopShortcut.Size = new Size(54, 23);
+            btnCreateDesktopShortcut.TabIndex = 13;
+            btnCreateDesktopShortcut.Text = "Create";
+            btnCreateDesktopShortcut.UseVisualStyleBackColor = true;
+            btnCreateDesktopShortcut.Click += btnCreateDesktopShortcut_Click;
+            // 
+            // textBox1
+            // 
+            textBox1.BorderStyle = BorderStyle.None;
+            textBox1.Dock = DockStyle.Fill;
+            textBox1.Location = new Point(8, 103);
+            textBox1.Margin = new Padding(3, 7, 3, 3);
+            textBox1.Name = "textBox1";
+            textBox1.ReadOnly = true;
+            textBox1.Size = new Size(134, 16);
+            textBox1.TabIndex = 42;
+            textBox1.Text = "Desktop Shortcut";
+            textBox1.TextAlign = HorizontalAlignment.Right;
             // 
             // btnInstallGPosingway
             // 
             btnInstallGPosingway.Dock = DockStyle.Fill;
-            btnInstallGPosingway.Location = new Point(434, 66);
+            btnInstallGPosingway.Location = new Point(434, 70);
             btnInstallGPosingway.Name = "btnInstallGPosingway";
             btnInstallGPosingway.Size = new Size(54, 23);
-            btnInstallGPosingway.TabIndex = 9;
+            btnInstallGPosingway.TabIndex = 12;
             btnInstallGPosingway.Text = "Install";
             btnInstallGPosingway.UseVisualStyleBackColor = true;
             btnInstallGPosingway.Visible = false;
             btnInstallGPosingway.Click += btnInstallGPosingway_Click;
             // 
-            // txtGPosingwayStatus
-            // 
-            txtGPosingwayStatus.BorderStyle = BorderStyle.None;
-            txtGPosingwayStatus.Dock = DockStyle.Fill;
-            txtGPosingwayStatus.Location = new Point(148, 70);
-            txtGPosingwayStatus.Margin = new Padding(3, 7, 3, 3);
-            txtGPosingwayStatus.Name = "txtGPosingwayStatus";
-            txtGPosingwayStatus.ReadOnly = true;
-            txtGPosingwayStatus.Size = new Size(280, 16);
-            txtGPosingwayStatus.TabIndex = 41;
-            // 
             // label4
             // 
             label4.AutoSize = true;
             label4.Dock = DockStyle.Fill;
-            label4.Location = new Point(8, 63);
+            label4.Location = new Point(8, 67);
             label4.Name = "label4";
             label4.Size = new Size(134, 29);
             label4.TabIndex = 6;
@@ -665,8 +763,8 @@
             btnInstallReShade.Dock = DockStyle.Fill;
             btnInstallReShade.Location = new Point(434, 37);
             btnInstallReShade.Name = "btnInstallReShade";
-            btnInstallReShade.Size = new Size(54, 23);
-            btnInstallReShade.TabIndex = 8;
+            btnInstallReShade.Size = new Size(54, 27);
+            btnInstallReShade.TabIndex = 11;
             btnInstallReShade.Tag = "You need to shut down the game client before you can update!";
             btnInstallReShade.Text = "Install";
             btnInstallReShade.UseVisualStyleBackColor = true;
@@ -674,24 +772,13 @@
             btnInstallReShade.Click += btnInstallReShade_Click;
             btnInstallReShade.MouseEnter += btnInstallReShade_MouseEnter;
             // 
-            // txtReShadeStatus
-            // 
-            txtReShadeStatus.BorderStyle = BorderStyle.None;
-            txtReShadeStatus.Dock = DockStyle.Fill;
-            txtReShadeStatus.Location = new Point(148, 41);
-            txtReShadeStatus.Margin = new Padding(3, 7, 3, 3);
-            txtReShadeStatus.Name = "txtReShadeStatus";
-            txtReShadeStatus.ReadOnly = true;
-            txtReShadeStatus.Size = new Size(280, 16);
-            txtReShadeStatus.TabIndex = 40;
-            // 
             // label3
             // 
             label3.AutoSize = true;
             label3.Dock = DockStyle.Fill;
             label3.Location = new Point(8, 34);
             label3.Name = "label3";
-            label3.Size = new Size(134, 29);
+            label3.Size = new Size(134, 33);
             label3.TabIndex = 3;
             label3.Text = "ReShade";
             label3.TextAlign = ContentAlignment.MiddleRight;
@@ -723,7 +810,7 @@
             btnDetectSettings.Location = new Point(434, 8);
             btnDetectSettings.Name = "btnDetectSettings";
             btnDetectSettings.Size = new Size(54, 23);
-            btnDetectSettings.TabIndex = 7;
+            btnDetectSettings.TabIndex = 10;
             btnDetectSettings.Tag = "Let Bundlingway sniff out your game installation, ReShade and GPosingway settings automatically!";
             btnDetectSettings.Text = "Detect";
             btnDetectSettings.UseVisualStyleBackColor = true;
@@ -784,10 +871,8 @@
         private Label label2;
         private TextBox txtXivPath;
         private Button btnInstallReShade;
-        private TextBox txtReShadeStatus;
         private Button btnDetectSettings;
         private Button btnInstallGPosingway;
-        private TextBox txtGPosingwayStatus;
         private Label label4;
         private Label label3;
         private Panel pnlPackages;
@@ -825,5 +910,13 @@
         private ProgressBar prgCommon;
         private FontAwesome.Sharp.IconButton btnFixIt;
         private Button btnTopMost;
+        private Button btnSetDrowserIntegration;
+        private TextBox textBox3;
+        private Button btnCreateDesktopShortcut;
+        private TextBox textBox1;
+        private Label txtBrowserIntegration;
+        private Label txtDesktopShortcut;
+        private Label txtGPosingwayStatus;
+        private Label txtReShadeStatus;
     }
 }

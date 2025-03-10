@@ -10,6 +10,9 @@ namespace Bundlingway
         public static List<string> InstallableExtensions = [".zip", ".rar", ".7z", ".ini"];
         public static List<string> AcceptableFilesInPresetFolder = ["LICENSE", "README.*", "*.ini"];
 
+        public static string GPosingwayProtocolHandler = "gwpackage";
+
+
         public static ResourcePackage SingleFileCatalog = new()
         {
             LocalPresetFolder = Path.Combine(Instances.SinglePresetsFolder, Folders.PackagePresets),
@@ -64,6 +67,7 @@ namespace Bundlingway
         public static class Events
         {
             public static string PackageInstalled = "package-installed";
+            public static string DuplicatedInstances = "duplicated-instances";
         }
 
         public static class Folders

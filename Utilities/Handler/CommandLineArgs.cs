@@ -1,9 +1,5 @@
 ﻿using Serilog;
-using System;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -16,9 +12,12 @@ namespace Bundlingway.Utilities.Handler
             var firstArg = args[0];
             Log.Information($"Processing command line argument: {firstArg}");
 
-            if (firstArg.StartsWith("gwpreset://open/?", StringComparison.OrdinalIgnoreCase))
+            var prefix = Constants.GPosingwayProtocolHandler + "://open/?";
+
+
+            if (firstArg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
             {
-                firstArg = firstArg["gwpreset://open/?".Length..];
+                firstArg = firstArg[prefix.Length..];
                 Log.Information($"Opening preset with argument: {firstArg}");
 
                 // Run the installation form in a separate thread

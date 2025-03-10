@@ -20,8 +20,10 @@ namespace Bundlingway
             BindAllTaggedControls();
 
             _ = UI.Announce(Constants.MessageCategory.ApplicationStart);
-
             _ = Bootstrap.DetectSettings();
+
+            txtDesktopShortcut.DoAction(() => txtDesktopShortcut.Text = ProcessHelper.CheckDesktopShortcutStatus());
+            txtBrowserIntegration.DoAction(() => txtBrowserIntegration.Text = CustomProtocolHandler.IsCustomProtocolRegistered(Constants.GPosingwayProtocolHandler));
 
             PopulateGrid();
 
@@ -62,6 +64,10 @@ namespace Bundlingway
             {
                 PopulateGrid();
                 _ = UI.Announce(e.Message);
+            }
+            if (e.Topic == Constants.Events.DuplicatedInstances)
+            {
+                _ = UI.BringToFront();
             }
         }
 
@@ -300,12 +306,23 @@ namespace Bundlingway
             }
         }
 
+        internal async Task BringToFront()
+        {
+            this.DoAction(() =>
+            {
+                if (WindowState == FormWindowState.Minimized) WindowState = FormWindowState.Normal;
+                Activate();
+                Focus();
+            });
+        }
+
         internal async Task Announce(string message)
         {
             if (lblAnnouncement == null) return;
 
-            lblAnnouncement?.DoAction(() => {
-                lblAnnouncement.Text = message; 
+            lblAnnouncement?.DoAction(() =>
+            {
+                lblAnnouncement.Text = message;
                 this.Refresh();
             });
         }
@@ -601,11 +618,11 @@ namespace Bundlingway
                 {
 
                     foreach (var acceptableFile in Constants.AcceptableFilesInPresetFolder)
-                    foreach (var file in Directory.GetFiles(folder, acceptableFile))
-                    {
-                        var destFile = Path.Combine(target, Path.GetFileName(file));
-                        File.Copy(file, destFile, true);
-                    }
+                        foreach (var file in Directory.GetFiles(folder, acceptableFile))
+                        {
+                            var destFile = Path.Combine(target, Path.GetFileName(file));
+                            File.Copy(file, destFile, true);
+                        }
 
                 }
                 else
@@ -738,6 +755,20 @@ namespace Bundlingway
             Instances.LocalConfigProvider.Save();
             UpdateElements().Wait();
 
+        }
+
+        private async void btnCreateDesktopShortcut_Click(object sender, EventArgs e)
+        {
+            await ProcessHelper.PinToStartScreenAsync();
+            ProcessHelper.EnsureDesktopShortcut();
+            txtDesktopShortcut.DoAction(() => txtDesktopShortcut.Text = ProcessHelper.CheckDesktopShortcutStatus());
+
+        }
+
+        private async void btnSetDrowserIntegration_Click(object sender, EventArgs e)
+        {
+            await CustomProtocolHandler.RegisterCustomProtocolAsync(Constants.GPosingwayProtocolHandler, "A collection of GPosingway-compatible ReShade resources", true);
+            txtBrowserIntegration.DoAction(() => txtBrowserIntegration.Text = CustomProtocolHandler.IsCustomProtocolRegistered(Constants.GPosingwayProtocolHandler));
         }
     }
 }
