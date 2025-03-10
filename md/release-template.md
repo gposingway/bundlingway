@@ -16,7 +16,7 @@ Sure, here's a more concise version:
 - **Simplified Setup:** Easy installation and updates for ReShade and GPosingway.
 
 ### Changelog
-- Fixed ReShade update lock in specific circumstances.
+- [...]
 
 > [!CAUTION]  
 > **Windows Security Alert:**  
