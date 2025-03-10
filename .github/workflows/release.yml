@@ -74,6 +74,35 @@ jobs:
           git config --global user.email "${{ env.AUTHOR_EMAIL }}"
           git config --global user.name "${{ env.AUTHOR_NAME }}"
 
+      - name: Delete Existing Tag and Release
+        id: delete_existing_release
+        continue-on-error: true # If delete fails, continue workflow
+        env:
+          GITHUB_TOKEN: ${{ secrets.PAT }}
+        run: |
+          $tag_name = "v${{ env.VERSION }}"
+          Write-Host "Checking for existing tag: $($tag_name)"
+          $existing_tag = git tag --list "$tag_name"
+          if ($existing_tag) {
+            Write-Host "Tag '$tag_name' exists. Deleting tag..."
+            git tag -d "$tag_name"
+            git push origin --delete tag "$tag_name"
+            Write-Host "Tag '$tag_name' deleted."
+          } else {
+            Write-Host "Tag '$tag_name' does not exist."
+          }
+
+          Write-Host "Checking for existing release: Release $tag_name"
+          $existing_release = gh release list --repo="$GITHUB_REPOSITORY" --limit 100 | Where-Object { $_ -match "Release $tag_name" }
+          if ($existing_release) {
+            Write-Host "Release 'Release $tag_name' exists. Deleting release..."
+            gh release delete "$tag_name" --yes --repo="$GITHUB_REPOSITORY"
+            Write-Host "Release 'Release $tag_name' deleted."
+          } else {
+            Write-Host "Release 'Release $tag_name' does not exist."
+          }
+        shell: pwsh
+
       - name: Create and Push Tag
         id: create_tag
         run: |
@@ -102,6 +131,8 @@ jobs:
           $retryDelaySeconds = 5 # Delay between retries
 
           Write-Host "Scanning URL $($assetUrl) with VirusTotal..."
+          Write-Host "VirusTotal API URL: $($apiUrl)"
+          Write-Host "Asset URL: $($assetUrl)"
 
           # URL Scan Request
           $headers = @{
@@ -128,6 +159,7 @@ jobs:
               Write-Host "Polling VirusTotal for analysis status... Retry $($retryCount) of $($maxRetries)"
 
               $reportUrl = "$($analysisReportUrlBase)$analysisId"
+              Write-Host "Report URL for polling: $($reportUrl)" # Debug: Report URL
               try {
                   $reportResponse = Invoke-RestMethod -Uri $reportUrl -Headers @{"x-apikey" = $apiKey} -Method Get
                   $analysisStatus = $reportResponse.data.attributes.status
@@ -136,6 +168,7 @@ jobs:
                       $reportPermalink = $reportResponse.data.links.permalink
                       echo "VIRUSTOTAL_REPORT_URL=$reportPermalink" >> $env:GITHUB_ENV
                       Write-Host "VirusTotal report URL: $($reportPermalink)"
+                      Write-Host "Final VirusTotal Report Permalink: $($reportPermalink)" # Debug: Permalink
                       break # Exit loop if completed
                   }
               } catch {
@@ -154,7 +187,9 @@ jobs:
         shell: pwsh
         run: |
           $template_content = Get-Content -Path "./md/release-template.md" -Raw
-          $release_body = $template_content -replace '{{VIRUSTOTAL_LINK}}', "${{ env.VIRUSTOTAL_REPORT_URL }}"
+          Write-Host "Template Content before replacement: $($template_content)" # Debug: Template Content
+          $release_body = $template_content -replace '%VIRUSTOTAL_LINK%', "${{ env.VIRUSTOTAL_REPORT_URL }}"
+          Write-Host "Release Body after replacement: $($release_body)" # Debug: Release Body
           echo "RELEASE_BODY<<EOF" >> $env:GITHUB_ENV
           echo "$release_body" >> $env:GITHUB_ENV
           echo "EOF" >> $env:GITHUB_ENV
