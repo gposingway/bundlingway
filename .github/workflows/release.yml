@@ -102,6 +102,8 @@ jobs:
           $retryDelaySeconds = 5 # Delay between retries
 
           Write-Host "Scanning URL $($assetUrl) with VirusTotal..."
+          Write-Host "VirusTotal API URL: $($apiUrl)"
+          Write-Host "Asset URL: $($assetUrl)"
 
           # URL Scan Request
           $headers = @{
@@ -128,6 +130,7 @@ jobs:
               Write-Host "Polling VirusTotal for analysis status... Retry $($retryCount) of $($maxRetries)"
 
               $reportUrl = "$($analysisReportUrlBase)$analysisId"
+              Write-Host "Report URL for polling: $($reportUrl)" # Debug: Report URL
               try {
                   $reportResponse = Invoke-RestMethod -Uri $reportUrl -Headers @{"x-apikey" = $apiKey} -Method Get
                   $analysisStatus = $reportResponse.data.attributes.status
@@ -136,6 +139,7 @@ jobs:
                       $reportPermalink = $reportResponse.data.links.permalink
                       echo "VIRUSTOTAL_REPORT_URL=$reportPermalink" >> $env:GITHUB_ENV
                       Write-Host "VirusTotal report URL: $($reportPermalink)"
+                      Write-Host "Final VirusTotal Report Permalink: $($reportPermalink)" # Debug: Permalink
                       break # Exit loop if completed
                   }
               } catch {
@@ -154,7 +158,9 @@ jobs:
         shell: pwsh
         run: |
           $template_content = Get-Content -Path "./md/release-template.md" -Raw
-          $release_body = $template_content -replace '{{VIRUSTOTAL_LINK}}', "${{ env.VIRUSTOTAL_REPORT_URL }}"
+          Write-Host "Template Content before replacement: $($template_content)" # Debug: Template Content
+          $release_body = $template_content -replace '%VIRUSTOTAL_LINK%', "${{ env.VIRUSTOTAL_REPORT_URL }}"
+          Write-Host "Release Body after replacement: $($release_body)" # Debug: Release Body
           echo "RELEASE_BODY<<EOF" >> $env:GITHUB_ENV
           echo "$release_body" >> $env:GITHUB_ENV
           echo "EOF" >> $env:GITHUB_ENV
