@@ -19,6 +19,5 @@
 > 3. Locate the Bundlingway entry.  
 > 4. Select **Allow**.  
 > 5. Download the ZIP file again.
-> 5. Download the ZIP file again.
 >
 > Check the VirusTotal scan results for this release [here](%VIRUSTOTAL_LINK%).
