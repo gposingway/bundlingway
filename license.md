@@ -29,6 +29,6 @@ The full text of the Creative Commons Attribution 4.0 International License can 
 
 ### Contributions
 
-The Bundlingway project includes contributions from various contributors, each of which is subject to its own license terms. By using, sharing, or contributing to the Bundlingway project, you agree to comply with the terms of the respective licenses of the individual contributions.
+The Bundlingway project may include contributions from various contributors, each of which may be subject to its own license terms. By using, sharing, or contributing to the Bundlingway project, you agree to comply with the terms of the respective licenses of the individual contributions.
 
 Thank you for using Bundlingway!
