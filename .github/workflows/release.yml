@@ -125,71 +125,71 @@ jobs:
           echo "ZIP_FILE=$zip_file" >> $env:GITHUB_ENV
 
 
-      - name: Scan with VirusTotal
-        run: |
-          $apiKey = "${{ secrets.VIRUSTOTAL_API_KEY }}"
-          $assetUrl = "https://github.com/gposingway/bundlingway/releases/download/v${{ env.VERSION }}/Bundlingway.${{ env.VERSION }}.zip" # URL to scan
-          $apiUrl = "https://www.virustotal.com/api/v3/urls"
-          $analysisReportUrlBase = "https://www.virustotal.com/api/v3/analyses/"
-          $maxRetries = 10 # Maximum retries for polling
-          $retryDelaySeconds = 5 # Delay between retries
+- name: Scan with VirusTotal
+        run: |
+          $apiKey = "${{ secrets.VIRUSTOTAL_API_KEY }}"
+          $assetUrl = "https://github.com/gposingway/bundlingway/releases/download/v${{ env.VERSION }}/Bundlingway.${{ env.VERSION }}.zip" # URL to scan
+          $apiUrl = "https://www.virustotal.com/api/v3/urls"
+          $analysisReportUrlBase = "https://www.virustotal.com/api/v3/analyses/"
+          $maxRetries = 10 # Maximum retries for polling
+          $retryDelaySeconds = 5 # Delay between retries
 
-          Write-Host "Scanning URL $($assetUrl) with VirusTotal..."
-          Write-Host "VirusTotal API URL: $($apiUrl)"
-          Write-Host "Asset URL: $($assetUrl)"
+          Write-Host "Scanning URL $($assetUrl) with VirusTotal..."
+          Write-Host "VirusTotal API URL: $($apiUrl)"
+          Write-Host "Asset URL: $($assetUrl)"
 
-          # URL Scan Request
-          $headers = @{
-            "accept" = "application/json"
-            "x-apikey" = $apiKey
-            "Content-Type" = "application/x-www-form-urlencoded"
-          }
-          $body = "url=$($assetUrl)"
-          try {
-            $response = Invoke-RestMethod -Uri $apiUrl -Method Post -Headers $headers -Body $body -ContentType "application/x-www-form-urlencoded"
-            $analysisId = $response.data.id
-            Write-Host "URL submitted for analysis. Analysis ID: $($analysisId)"
-          } catch {
-            Write-Error "Error submitting URL to VirusTotal: $_"
-            throw
-          }
+          # URL Scan Request
+          $headers = @{
+            "accept" = "application/json"
+            "x-apikey" = $apiKey
+            "Content-Type" = "application/x-www-form-urlencoded"
+          }
+          $body = "url=$($assetUrl)"
+          try {
+            $response = Invoke-RestMethod -Uri $apiUrl -Method Post -Headers $headers -Body $body -ContentType "application/x-www-form-urlencoded"
+            $analysisId = $response.data.id
+            Write-Host "URL submitted for analysis. Analysis ID: $($analysisId)"
+          } catch {
+            Write-Error "Error submitting URL to VirusTotal: $_"
+            throw
+          }
 
-          # Poll for analysis completion
-          $retryCount = 0
-          $analysisStatus = "queued" # Initial status
-          while ($retryCount -lt $maxRetries -and $analysisStatus -ne "completed") {
-            Start-Sleep -Seconds $retryDelaySeconds
-            $retryCount++
-            Write-Host "Polling VirusTotal for analysis status... Retry $($retryCount) of $($maxRetries)"
+          # Poll for analysis completion
+          $retryCount = 0
+          $analysisStatus = "queued" # Initial status
+          while ($retryCount -lt $maxRetries -and $analysisStatus -ne "completed") {
+            Start-Sleep -Seconds $retryDelaySeconds
+            $retryCount++
+            Write-Host "Polling VirusTotal for analysis status... Retry $($retryCount) of $($maxRetries)"
 
-            $reportUrl = "$($analysisReportUrlBase)$analysisId"
-            Write-Host "Report URL for polling: $($reportUrl)" # Debug: Report URL
-            try {
-              $reportResponse = Invoke-RestMethod -Uri $reportUrl -Headers @{"x-apikey" = $apiKey} -Method Get
-              Write-Host "Full Report Response: $($reportResponse | ConvertTo-Json -Depth 10)" # Debug: Full API Response - CHANGED TO Write-Host
-              $analysisStatus = $reportResponse.data.attributes.status
-              Write-Host "Analysis status: $($analysisStatus)"
-              if ($analysisStatus -eq "completed") {
-                # Try using the 'item' link as the report URL
-                $reportPermalink = $reportResponse.data.links.item
-                echo "VIRUSTOTAL_REPORT_URL=$reportPermalink" >> $env:GITHUB_ENV
-                Write-Host "VirusTotal report URL (using item link): $($reportPermalink)"
-                Write-Host "Final VirusTotal Report URL: $($reportPermalink)" # Debug: Permalink
-                Write-Host "Links object: $($reportResponse.data.links | ConvertTo-Json -Depth 10)" # Debug: Output the links object to console
-                break # Exit loop if completed
-              }
-            } catch {
-              Write-Warning "Error retrieving VirusTotal report during polling: $_"
-              # Continue polling on error, as transient network issues might occur
-            }
-          }
+            $reportUrl = "$($analysisReportUrlBase)$analysisId"
+            Write-Host "Report URL for polling: $($reportUrl)" # Debug: Report URL
+            try {
+              $reportResponse = Invoke-RestMethod -Uri $reportUrl -Headers @{"x-apikey" = $apiKey} -Method Get
+              Write-Host "Full Report Response: $($reportResponse | ConvertTo-Json -Depth 10)" # Debug: Full API Response - CHANGED TO Write-Host
+              $analysisStatus = $reportResponse.data.attributes.status
+              Write-Host "Analysis status: $($analysisStatus)"
+              if ($analysisStatus -eq "completed") {
+                # Try using the 'item' link as the report URL
+                $reportPermalink = $reportResponse.data.links.item
+                $guiReportPermalink = $reportPermalink -replace '/api/v3/urls/', '/gui/url/' # Replace URL part
+                echo "VIRUSTOTAL_REPORT_URL=$guiReportPermalink" >> $env:GITHUB_ENV # Use the modified URL
+                Write-Host "VirusTotal report URL (using item link): $($guiReportPermalink)" # Use the modified URL
+                Write-Host "Final VirusTotal Report URL: $($guiReportPermalink)" # Debug: Permalink - Use the modified URL
+                break # Exit loop if completed
+              }
+            } catch {
+              Write-Warning "Error retrieving VirusTotal report during polling: $_"
+              # Continue polling on error, as transient network issues might occur
+            }
+          }
 
-          if ($analysisStatus -ne "completed") {
-            Write-Warning "VirusTotal analysis polling timed out or did not complete successfully after $($maxRetries) retries."
-            echo "VIRUSTOTAL_REPORT_URL=Error retrieving report or timeout" >> $env:GITHUB_ENV # Set a placeholder in case of timeout
-          }
+          if ($analysisStatus -ne "completed") {
+            Write-Warning "VirusTotal analysis polling timed out or did not complete successfully after $($maxRetries) retries."
+            echo "VIRUSTOTAL_REPORT_URL=Error retrieving report or timeout" >> $env:GITHUB_ENV # Set a placeholder in case of timeout
+          }
 
-          Write-Host "Environment variable VIRUSTOTAL_REPORT_URL after Scan: ${{ env.VIRUSTOTAL_REPORT_URL }}" # Debug: Check env var
+          Write-Host "Environment variable VIRUSTOTAL_REPORT_URL after Scan: ${{ env.VIRUSTOTAL_REPORT_URL }}" # Debug: Check env var
 
 
 
