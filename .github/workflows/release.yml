@@ -82,13 +82,81 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
 
+      - name: Create zip file
+        id: create_zip
+        shell: pwsh
+        run: |
+          $zip_file = "${{ env.EXE_NAME }}.${{ env.VERSION }}.zip"
+          Compress-Archive -Path "./publish/$env:EXE_NAME.exe" -DestinationPath $zip_file # Path is now ./publish
+          echo "ZIP_FILE=$zip_file" >> $env:GITHUB_ENV
+
+      - name: Scan with VirusTotal
+        id: virus_total_scan
+        shell: pwsh
+        run: |
+          $apiKey = "${{ secrets.VIRUSTOTAL_API_KEY }}"
+          $assetUrl = "https://github.com/gposingway/bundlingway/releases/download/v${{ env.VERSION }}/Bundlingway.${{ env.VERSION }}.zip" # URL to scan
+          $apiUrl = "https://www.virustotal.com/api/v3/urls"
+          $analysisReportUrlBase = "https://www.virustotal.com/api/v3/analyses/"
+          $maxRetries = 10 # Maximum retries for polling
+          $retryDelaySeconds = 5 # Delay between retries
+
+          Write-Host "Scanning URL $($assetUrl) with VirusTotal..."
+
+          # URL Scan Request
+          $headers = @{
+            "accept" = "application/json"
+            "x-apikey" = $apiKey
+            "Content-Type" = "application/x-www-form-urlencoded"
+          }
+          $body = "url=$($assetUrl)"
+          try {
+              $response = Invoke-RestMethod -Uri $apiUrl -Method Post -Headers $headers -Body $body -ContentType "application/x-www-form-urlencoded"
+              $analysisId = $response.data.id
+              Write-Host "URL submitted for analysis. Analysis ID: $($analysisId)"
+          } catch {
+              Write-Error "Error submitting URL to VirusTotal: $_"
+              throw
+          }
+
+          # Poll for analysis completion
+          $retryCount = 0
+          $analysisStatus = "queued" # Initial status
+          while ($retryCount -lt $maxRetries -and $analysisStatus -ne "completed") {
+              Start-Sleep -Seconds $retryDelaySeconds
+              $retryCount++
+              Write-Host "Polling VirusTotal for analysis status... Retry $($retryCount) of $($maxRetries)"
+
+              $reportUrl = "$($analysisReportUrlBase)$analysisId"
+              try {
+                  $reportResponse = Invoke-RestMethod -Uri $reportUrl -Headers @{"x-apikey" = $apiKey} -Method Get
+                  $analysisStatus = $reportResponse.data.attributes.status
+                  Write-Host "Analysis status: $($analysisStatus)"
+                  if ($analysisStatus -eq "completed") {
+                      $reportPermalink = $reportResponse.data.links.permalink
+                      echo "VIRUSTOTAL_REPORT_URL=$reportPermalink" >> $env:GITHUB_ENV
+                      Write-Host "VirusTotal report URL: $($reportPermalink)"
+                      break # Exit loop if completed
+                  }
+              } catch {
+                  Write-Warning "Error retrieving VirusTotal report during polling: $_"
+                  # Continue polling on error, as transient network issues might occur
+              }
+          }
+
+          if ($analysisStatus -ne "completed") {
+              Write-Warning "VirusTotal analysis polling timed out or did not complete successfully after $($maxRetries) retries."
+              echo "VIRUSTOTAL_REPORT_URL=Error retrieving report or timeout" >> $env:GITHUB_ENV # Set a placeholder in case of timeout
+          }
+
       - name: Read Release Template
         id: read_template
         shell: pwsh
         run: |
           $template_content = Get-Content -Path "./md/release-template.md" -Raw
+          $release_body = $template_content -replace '{{VIRUSTOTAL_LINK}}', "${{ env.VIRUSTOTAL_REPORT_URL }}"
           echo "RELEASE_BODY<<EOF" >> $env:GITHUB_ENV
-          echo "$template_content" >> $env:GITHUB_ENV
+          echo "$release_body" >> $env:GITHUB_ENV
           echo "EOF" >> $env:GITHUB_ENV
 
       - name: Create GitHub Release
@@ -102,13 +170,6 @@ jobs:
           body: ${{ env.RELEASE_BODY }}
           draft: false
           prerelease: false
-
-      - name: Create zip file
-        shell: pwsh
-        run: |
-          $zip_file = "${{ env.EXE_NAME }}.${{ env.VERSION }}.zip"
-          Compress-Archive -Path "./publish/$env:EXE_NAME.exe" -DestinationPath $zip_file # Path is now ./publish
-          echo "ZIP_FILE=$zip_file" >> $env:GITHUB_ENV
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
