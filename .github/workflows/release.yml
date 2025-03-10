@@ -128,7 +128,7 @@ jobs:
           $apiUrl = "https://www.virustotal.com/api/v3/urls"
           $analysisReportUrlBase = "https://www.virustotal.com/api/v3/analyses/"
           $maxRetries = 10 # Maximum retries for polling
-          $retryDelaySeconds = 10 # Delay between retries
+          $retryDelaySeconds = 5 # Delay between retries
 
           Write-Host "Scanning URL $($assetUrl) with VirusTotal..."
           Write-Host "VirusTotal API URL: $($apiUrl)"
@@ -162,6 +162,7 @@ jobs:
               Write-Host "Report URL for polling: $($reportUrl)" # Debug: Report URL
               try {
                   $reportResponse = Invoke-RestMethod -Uri $reportUrl -Headers @{"x-apikey" = $apiKey} -Method Get
+                  Write-Debug -Message "Full Report Response: $($reportResponse | ConvertTo-Json -Depth 10)" # Debug: Full API Response
                   $analysisStatus = $reportResponse.data.attributes.status
                   Write-Host "Analysis status: $($analysisStatus)"
                   if ($analysisStatus -eq "completed") {
@@ -182,6 +183,8 @@ jobs:
               echo "VIRUSTOTAL_REPORT_URL=Error retrieving report or timeout" >> $env:GITHUB_ENV # Set a placeholder in case of timeout
           }
 
+          Write-Host "Environment variable VIRUSTOTAL_REPORT_URL after Scan: ${{ env.VIRUSTOTAL_REPORT_URL }}" # Debug: Check env var
+          
       - name: Read Release Template
         id: read_template
         shell: pwsh
