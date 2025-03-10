@@ -23,17 +23,14 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet restore # Removed --runtime win-x64 from dotnet restore
       - run: dotnet build --configuration Release --no-restore
-      - name: List build directory contents
+      - run: dotnet publish --configuration Release --no-build --output ./publish --no-self-contained # Added --no-self-contained flag
+      - name: List publish directory contents
         shell: pwsh
-        run: Get-ChildItem -Path ./bin/Release -Recurse
+        run: Get-ChildItem -Path ./publish -Recurse # Listing publish directory
       - uses: actions/upload-artifact@v4
         with:
           name: build
-          path: ./bin/Release/net8.0 # Changed path to bin/Release/net8.0      
-      - uses: actions/upload-artifact@v4
-        with:
-          name: build
-          path: ./bin/Release/net8.0-windows/win-x64 # Corrected path to net8.0-windows/win-x64
+          path: ./publish # Path for artifact upload is now ./publish
 
   release:
     needs: build
@@ -44,13 +41,13 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: build
-          path: ./bin/Release/net8.0-windows/win-x64 # Corrected path to net8.0-windows/win-x64
+          path: ./publish # Path for download-artifact is now ./publish
 
       - name: Find and Extract Version
         id: extract_version
         shell: pwsh
         run: |
-          $exe_file = Get-ChildItem -Path "./bin/Release/net8.0-windows/win-x64" -Filter *.exe | Select-Object -First 1 # Corrected path
+          $exe_file = Get-ChildItem -Path "./publish" -Filter *.exe | Select-Object -First 1 # Path is now ./publish
           $file_info = Get-Item $exe_file.FullName
           $version = $file_info.VersionInfo.FileVersion
           $exe_name = $exe_file.BaseName
@@ -85,6 +82,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
 
+      - name: Read Release Template
+        id: read_template
+        shell: pwsh
+        run: |
+          $template_content = Get-Content -Path "./md/release-template.md" -Raw
+          echo "RELEASE_BODY<<EOF" >> $env:GITHUB_ENV
+          echo "$template_content" >> $env:GITHUB_ENV
+          echo "EOF" >> $env:GITHUB_ENV
+
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -93,6 +99,7 @@ jobs:
         with:
           tag_name: "v${{ env.VERSION }}"
           release_name: Release v${{ env.VERSION }}
+          body: ${{ env.RELEASE_BODY }}
           draft: false
           prerelease: false
 
@@ -100,7 +107,7 @@ jobs:
         shell: pwsh
         run: |
           $zip_file = "${{ env.EXE_NAME }}.${{ env.VERSION }}.zip"
-          Compress-Archive -Path "./bin/Release/net8.0-windows/win-x64/$env:EXE_NAME.exe" -DestinationPath $zip_file # Corrected path
+          Compress-Archive -Path "./publish/$env:EXE_NAME.exe" -DestinationPath $zip_file # Path is now ./publish
           echo "ZIP_FILE=$zip_file" >> $env:GITHUB_ENV
 
       - name: Upload Release Asset
