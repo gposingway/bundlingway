@@ -84,14 +84,7 @@ jobs:
           git config --global user.email "${{ env.AUTHOR_EMAIL }}"
           git config --global user.name "${{ env.AUTHOR_NAME }}"
 
-      - name: Force Delete Existing Tag
-        shell: bash
-        run: |
-          TAG_NAME="v${{ env.VERSION }}"
-          echo "Attempting to force-delete tag: $TAG_NAME"
-          gh tag delete --force "$TAG_NAME" || true # Ignore error if tag doesn't exist          
-
-      - name: Delete Existing Tag and Release
+      - name: Delete Existing Release
         id: delete_existing_release
         continue-on-error: true # If delete fails, continue workflow
         env:
@@ -112,8 +105,14 @@ jobs:
       - name: Create and Push Tag
         id: create_tag
         run: |
-          git tag -a "v${{ env.VERSION }}" -m "Release v${{ env.VERSION }}"
-          git push origin "v${{ env.VERSION }}"
+          TAG_NAME="v${{ env.VERSION }}"
+          if git tag --list "$TAG_NAME"; then
+            echo "Tag $TAG_NAME already exists. Skipping tag creation."
+          else
+            echo "Tag $TAG_NAME does not exist. Creating tag."
+            git tag -a "$TAG_NAME" -m "Release $TAG_NAME"
+            git push origin "$TAG_NAME"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
 
@@ -124,8 +123,6 @@ jobs:
           $zip_file = "${{ env.EXE_NAME }}.${{ env.VERSION }}.zip"
           Compress-Archive -Path "./publish/$env:EXE_NAME.exe" -DestinationPath $zip_file # Path is now ./publish
           echo "ZIP_FILE=$zip_file" >> $env:GITHUB_ENV
-
-
 
 
       - name: Scan with VirusTotal
@@ -165,7 +162,7 @@ jobs:
             $retryCount++
             Write-Host "Polling VirusTotal for analysis status... Retry $($retryCount) of $($maxRetries)"
 
-            $reportUrl = "$($analysisReportUrlBase)$analysisId"
+            $reportUrl = "https://www.virustotal.com/gui/url/$($analysisId)"
             Write-Host "Report URL for polling: $($reportUrl)" # Debug: Report URL
             try {
               $reportResponse = Invoke-RestMethod -Uri $reportUrl -Headers @{"x-apikey" = $apiKey} -Method Get
