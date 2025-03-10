@@ -82,6 +82,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.PAT }}
 
+      - name: Read Release Template
+        id: read_template
+        shell: pwsh
+        run: |
+          $template_content = Get-Content -Path "./md/release-template.md" -Raw
+          echo "RELEASE_BODY<<EOF" >> $env:GITHUB_ENV
+          echo "$template_content" >> $env:GITHUB_ENV
+          echo "EOF" >> $env:GITHUB_ENV
+
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -90,6 +99,7 @@ jobs:
         with:
           tag_name: "v${{ env.VERSION }}"
           release_name: Release v${{ env.VERSION }}
+          body: ${{ env.RELEASE_BODY }}
           draft: false
           prerelease: false
 
