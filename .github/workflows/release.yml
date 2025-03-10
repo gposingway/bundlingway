@@ -166,7 +166,6 @@ jobs:
             Write-Host "Report URL for polling: $($reportUrl)" # Debug: Report URL
             try {
               $reportResponse = Invoke-RestMethod -Uri $reportUrl -Headers @{"x-apikey" = $apiKey} -Method Get
-              Write-Host "Full Report Response: $($reportResponse | ConvertTo-Json -Depth 10)" # Debug: Full API Response - CHANGED TO Write-Host
               $analysisStatus = $reportResponse.data.attributes.status
               Write-Host "Analysis status: $($analysisStatus)"
               if ($analysisStatus -eq "completed") {
