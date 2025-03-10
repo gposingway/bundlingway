@@ -23,11 +23,10 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet restore --runtime win-x64
       - run: dotnet build --configuration Release --no-restore
-      - run: dotnet publish --configuration Release --no-build --output ./publish --runtime win-x64
       - uses: actions/upload-artifact@v4
         with:
           name: build
-          path: ./publish
+          path: ./bin/Release/net8.0 # Changed path to bin/Release/net8.0
 
   release:
     needs: build
@@ -38,13 +37,13 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: build
-          path: ./publish
+          path: ./bin/Release/net8.0 # Changed path to bin/Release/net8.0 to match build output
 
       - name: Find and Extract Version
         id: extract_version
         shell: pwsh
         run: |
-          $exe_file = Get-ChildItem -Path ./publish -Filter *.exe | Select-Object -First 1
+          $exe_file = Get-ChildItem -Path "./bin/Release/net8.0" -Filter *.exe | Select-Object -First 1 # Changed path to bin/Release/net8.0
           $file_info = Get-Item $exe_file.FullName
           $version = $file_info.VersionInfo.FileVersion
           $exe_name = $exe_file.BaseName
@@ -94,7 +93,7 @@ jobs:
         shell: pwsh
         run: |
           $zip_file = "${{ env.EXE_NAME }}.${{ env.VERSION }}.zip"
-          Compress-Archive -Path $env:EXE_FILE -DestinationPath $zip_file
+          Compress-Archive -Path "./bin/Release/net8.0/$env:EXE_NAME.exe" -DestinationPath $zip_file # Changed path to bin/Release/net8.0 and specific EXE
           echo "ZIP_FILE=$zip_file" >> $env:GITHUB_ENV
 
       - name: Upload Release Asset
