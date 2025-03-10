@@ -84,6 +84,13 @@ jobs:
           git config --global user.email "${{ env.AUTHOR_EMAIL }}"
           git config --global user.name "${{ env.AUTHOR_NAME }}"
 
+      - name: Force Delete Existing Tag
+        shell: bash
+        run: |
+          TAG_NAME="v${{ env.VERSION }}"
+          echo "Attempting to force-delete tag: $TAG_NAME"
+          gh tag delete --force "$TAG_NAME" || true # Ignore error if tag doesn't exist          
+
       - name: Delete Existing Tag and Release
         id: delete_existing_release
         continue-on-error: true # If delete fails, continue workflow
@@ -91,17 +98,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.PAT }}
         run: |
           $tag_name = "v${{ env.VERSION }}"
-          Write-Host "Checking for existing tag: $($tag_name)"
-          $existing_tag = git tag --list "$tag_name"
-          if ($existing_tag) {
-            Write-Host "Tag '$tag_name' exists. Deleting tag..."
-            git tag -d "$tag_name"
-            git push origin --delete tag "$tag_name"
-            Write-Host "Tag '$tag_name' deleted."
-          } else {
-            Write-Host "Tag '$tag_name' does not exist."
-          }
-
           Write-Host "Checking for existing release: Release $tag_name"
           $existing_release = gh release list --repo="$GITHUB_REPOSITORY" --limit 100 | Where-Object { $_ -match "Release $tag_name" }
           if ($existing_release) {
