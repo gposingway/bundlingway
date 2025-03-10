@@ -49,5 +49,11 @@ namespace Bundlingway.Utilities
         public static async Task StopProgress() => await _landing.StopProgress();
         internal static void DisableEverything() => _landing.DisableEverything();
         internal static void EnableEverything() => _landing.EnableEverything();
+
+        internal static async Task BringToFront()
+        {
+            await _landing.BringToFront();
+            throw new NotImplementedException();
+        }
     }
 }

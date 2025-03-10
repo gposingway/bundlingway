@@ -18,9 +18,7 @@ namespace Bundlingway
             ApplicationConfiguration.Initialize();
 
             Bootstrap.Initialize().Wait();
-
             Instances.LocalConfigProvider.Load();
-
             Maintenance.EnsureConfiguration().Wait();
 
             if (args.Length > 0)
@@ -35,6 +33,14 @@ namespace Bundlingway
                     Process.GetCurrentProcess().Kill();
                 }
             }
+
+            if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
+            {
+                // Notify other instances and close the client
+                ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.DuplicatedInstances });
+                Process.GetCurrentProcess().Kill();
+            }
+
 
             Application.Run(new frmLanding());
         }
