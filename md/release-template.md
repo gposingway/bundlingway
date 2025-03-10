@@ -20,4 +20,4 @@
 > 4. Select **Allow**.  
 > 5. Download the ZIP file again.
 > 
-> Check the VirusTotal scan results for this release [here](https://www.virustotal.com/gui/url/9b99a43cd3466f3395cc5746f97c5a64d0ab97f03c94199b4eb6d02418612133?nocache=1).
+> Check the VirusTotal scan results for this release [here]({{VIRUSTOTAL_LINK}}).
