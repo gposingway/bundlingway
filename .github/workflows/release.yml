@@ -23,6 +23,13 @@ jobs:
           dotnet-version: '8.0.x'
       - run: dotnet restore --runtime win-x64
       - run: dotnet build --configuration Release --no-restore
+      - name: List build directory contents
+        shell: pwsh
+        run: Get-ChildItem -Path ./bin/Release -Recurse
+      - uses: actions/upload-artifact@v4
+        with:
+          name: build
+          path: ./bin/Release/net8.0 # Changed path to bin/Release/net8.0      
       - uses: actions/upload-artifact@v4
         with:
           name: build
