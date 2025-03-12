@@ -747,14 +747,11 @@ namespace Bundlingway
 
         private void btnTopMost_Click(object sender, EventArgs e)
         {
-
-
             var c = Instances.LocalConfigProvider.Configuration;
-            if (c.UI == null) c.UI = new BundlingwayConfig.UIData();
+            c.UI ??= new BundlingwayConfig.UIData();
             c.UI.TopMost = !c.UI.TopMost;
             Instances.LocalConfigProvider.Save();
             UpdateElements().Wait();
-
         }
 
         private async void btnCreateDesktopShortcut_Click(object sender, EventArgs e)
@@ -762,7 +759,6 @@ namespace Bundlingway
             await ProcessHelper.PinToStartScreenAsync();
             ProcessHelper.EnsureDesktopShortcut();
             txtDesktopShortcut.DoAction(() => txtDesktopShortcut.Text = ProcessHelper.CheckDesktopShortcutStatus());
-
         }
 
         private async void btnSetDrowserIntegration_Click(object sender, EventArgs e)
