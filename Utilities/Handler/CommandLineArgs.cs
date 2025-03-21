@@ -28,9 +28,6 @@ namespace Bundlingway.Utilities.Handler
                     var name = queryParams["name"];
                     var url = queryParams["url"];
 
-                    System.Windows.MessageBox.Show("name:" + name + ", url: " + url, "arg");
-
-
                     if (url == null)
                     {
                         Log.Error("URL not found in query parameters.");
