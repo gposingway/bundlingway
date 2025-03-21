@@ -14,13 +14,18 @@ namespace Bundlingway.Utilities.Handler
 {
     public static class Package
     {
-        internal static async Task<ResourcePackage> OnboardSinglePresetFile(string filePath)
+        internal static async Task<ResourcePackage> OnboardSinglePresetFile(string filePath, string? presetName = null)
         {
             string fileName = Path.GetFileNameWithoutExtension(filePath);
             string fileExtension = Path.GetExtension(filePath);
 
             string newFileName = $"{fileName}{fileExtension}";
 
+            if (presetName != null)
+            {
+                newFileName = $"{presetName.ToFileSystemSafeName()}{fileExtension}";
+            }
+            else
             if (!System.Text.RegularExpressions.Regex.IsMatch(filePath, @"\[\w{6}\]"))
             {
                 string hashSignature = GetHashSignature(filePath);
@@ -118,8 +123,7 @@ namespace Bundlingway.Utilities.Handler
             return null;
         }
 
-
-        internal static async Task<ResourcePackage> Onboard(string filePath, bool autoInstall = true)
+        internal static async Task<ResourcePackage> Onboard(string filePath, string? packageName = null, bool autoInstall = true)
         {
             if (Path.GetExtension(filePath).Equals(".ini", StringComparison.CurrentCultureIgnoreCase))
                 return OnboardSinglePresetFile(filePath).Result;
@@ -139,7 +143,7 @@ namespace Bundlingway.Utilities.Handler
             Log.Information($"Package.Onboard: File extension: {fileExtension}");
 
             string collectionName = Path.GetFileNameWithoutExtension(filePath);
-            newCatalogEntry.Name = collectionName;
+            newCatalogEntry.Name = packageName != null ? packageName.ToFileSystemSafeName() : collectionName;
             newCatalogEntry.Status = ResourcePackage.EStatus.Unpacking;
 
             string originalTempFolderPath = Path.Combine(Instances.TempFolder, Guid.NewGuid().ToString());
@@ -232,8 +236,7 @@ namespace Bundlingway.Utilities.Handler
                             collectionName = Path.GetFileName(singleFolderPath);
 
                         tempFolderPath = Path.Combine(tempFolderPath, probe);
-
-                        newCatalogEntry.Name = collectionName;
+                        if (collectionName != null) newCatalogEntry.Name = collectionName;
                         changeEval = true;
                         Log.Information($"Package.Onboard: Single folder found, updated collection name to: {collectionName}");
                     }
@@ -243,20 +246,18 @@ namespace Bundlingway.Utilities.Handler
                         var singleFolderPath = Directory.GetDirectories(tempFolderPath).First();
                         tempFolderPath = Path.Combine(tempFolderPath, collectionName);
 
-                        newCatalogEntry.Name = collectionName;
+                        if (collectionName != null) newCatalogEntry.Name = collectionName;
                         changeEval = true;
                         Log.Information($"Package.Onboard: Single folder found, updated collection name to: {collectionName}");
                     }
 
                 } while (changeEval);
 
+                if (collectionName != null)
+                    if (newCatalogEntry.Name.EndsWith("-main"))
+                        newCatalogEntry.Name = newCatalogEntry.Name.Replace("-main", "");
 
-                if (newCatalogEntry.Name.EndsWith("-main"))
-                {
-                    newCatalogEntry.Name = newCatalogEntry.Name.Replace("-main", "");
-                }
-
-                targetPackagePath = Path.Combine(Instances.PackageFolder, newCatalogEntry.Name);
+                targetPackagePath = Path.Combine(Instances.PackageFolder, newCatalogEntry.Name.ToFileSystemSafeName());
 
                 if (!Directory.Exists(targetPackagePath)) Directory.CreateDirectory(targetPackagePath);
                 Log.Information($"Package.Onboard: Target package path created at: {targetPackagePath}");
@@ -938,43 +939,41 @@ namespace Bundlingway.Utilities.Handler
             _ = UI.StopProgress();
         }
 
-        public static async Task<string> DownloadAndInstall(string url)
+        public static async Task<string> DownloadAndInstall(string url, string? name)
         {
-            using (HttpClient client = new())
+            using HttpClient client = new();
+            try
             {
-                try
+                Log.Information($"DownloadAndInstall: Downloading from URL: {url}");
+
+                var response = await client.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var contentDisposition = response.Content.Headers.ContentDisposition;
+                var filename = contentDisposition != null && !string.IsNullOrEmpty(contentDisposition.FileName)
+                    ? contentDisposition.FileName.Trim('"')
+                    : Path.GetFileName(HttpUtility.UrlDecode(url));
+
+                Directory.CreateDirectory(Instances.CacheFolder);
+
+                var filePath = Path.Combine(Instances.CacheFolder, filename);
+                using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
                 {
-                    Log.Information($"DownloadAndInstall: Downloading from URL: {url}");
-
-                    var response = await client.GetAsync(url);
-                    response.EnsureSuccessStatusCode();
-
-                    var contentDisposition = response.Content.Headers.ContentDisposition;
-                    var filename = contentDisposition != null && !string.IsNullOrEmpty(contentDisposition.FileName)
-                        ? contentDisposition.FileName.Trim('"')
-                        : Path.GetFileName(HttpUtility.UrlDecode(url));
-
-                    Directory.CreateDirectory(Instances.CacheFolder);
-
-                    var filePath = Path.Combine(Instances.CacheFolder, filename);
-                    using (var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None))
-                    {
-                        await response.Content.CopyToAsync(fs);
-                    }
-
-                    Log.Information($"DownloadAndInstall: File saved to: {filePath}");
-
-                    ResourcePackage package = Onboard(filePath).Result;
-
-                    Maintenance.RemoveTempDir();
-
-                    return package.Name + " installed successfully!";
+                    await response.Content.CopyToAsync(fs);
                 }
-                catch (Exception ex)
-                {
-                    Log.Information($"Error downloading or installing file: {ex.Message}");
-                    return "Error installing from " + url + ": " + ex.Message;
-                }
+
+                Log.Information($"DownloadAndInstall: File saved to: {filePath}");
+
+                ResourcePackage package = Onboard(filePath, name).Result;
+
+                Maintenance.RemoveTempDir();
+
+                return package.Name + " installed successfully!";
+            }
+            catch (Exception ex)
+            {
+                Log.Information($"Error downloading or installing file: {ex.Message}");
+                return "Error installing from " + url + ": " + ex.Message;
             }
 
             return null;
