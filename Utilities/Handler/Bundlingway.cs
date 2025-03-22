@@ -1,4 +1,4 @@
-﻿using Bundlingway.Utilities.Extensions;
+﻿﻿﻿﻿using Bundlingway.Utilities.Extensions;
 using Serilog;
 using System.Text.Json;
 
@@ -6,21 +6,27 @@ namespace Bundlingway.Utilities.Handler
 {
     public static class Bundlingway
     {
+        /// <summary>
+        /// Fixes the game's shaders by updating ReShade and GPosingway, and reinstalling shader packages.
+        /// </summary>
+        /// <param name="refreshCache">Whether to refresh the GPosingway cache.</param>
         internal static async Task FixIt(bool refreshCache = false)
         {
             await UI.Announce("Doing Hydaelyn's work, fixing the game's shaders...");
 
+            // Backup the current shader and preset configuration
             await Backup();
 
-            // wipe all contents from the reshade-shaders/shaders folders
+            // Wipe all contents from the reshade-shaders/shaders folders
             var gameFolder = Instances.LocalConfigProvider.Configuration.Game.InstallationFolder;
             var reshadeShadersFolder = Path.Combine(gameFolder, Constants.Folders.GameShaders, Constants.Folders.PackageShaders);
             if (Directory.Exists(reshadeShadersFolder)) Directory.Delete(reshadeShadersFolder, true);
 
+            // Update ReShade and GPosingway
             await ReShade.Update();
             await GPosingway.Update(refreshCache);
 
-            //Reinstall all installed Shader packages
+            // Reinstall all installed Shader packages
             await Package.Scan();
             foreach (var package in Instances.ResourcePackages)
             {
@@ -29,9 +35,12 @@ namespace Bundlingway.Utilities.Handler
             }
 
             _ = UI.Announce("Done!");
-
         }
 
+        /// <summary>
+        /// Backs up the reshade-shaders and reshade-presets folders to a timestamped backup folder.
+        /// </summary>
+        /// <returns>The timestamp of the backup folder.</returns>
         internal static async Task<string> Backup()
         {
             var timestamp = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
@@ -85,12 +94,18 @@ namespace Bundlingway.Utilities.Handler
             return timestamp;
         }
 
-
+        /// <summary>
+        /// Gets the local Bundlingway information.
+        /// </summary>
         internal static async Task GetLocalInfo()
         {
+            // Set the local version to the current application version
             Instances.LocalConfigProvider.Configuration.Bundlingway.LocalVersion = Instances.AppVersion;
         }
 
+        /// <summary>
+        /// Gets the remote Bundlingway information from the latest tag on GitHub.
+        /// </summary>
         internal static async Task GetRemoteInfo()
         {
             try
@@ -100,6 +115,7 @@ namespace Bundlingway.Utilities.Handler
                 using HttpClient client = new();
                 client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3");
 
+                // Get the latest tag information from GitHub
                 HttpResponseMessage response = await client.GetAsync(Constants.Urls.BundlingwayPackageLatestTag);
                 response.EnsureSuccessStatusCode();
                 string content = await response.Content.ReadAsStringAsync();
@@ -107,6 +123,7 @@ namespace Bundlingway.Utilities.Handler
                 var jsonDocument = JsonDocument.Parse(content);
                 string tagName = jsonDocument.RootElement.GetProperty("tag_name").GetString();
 
+                // Remove the "v" prefix from the tag name if it exists
                 if (tagName.StartsWith("v")) tagName = tagName.Substring(1);
 
                 // Convert all parts of the tagName to numeric
@@ -114,11 +131,11 @@ namespace Bundlingway.Utilities.Handler
 
                 b.RemoteVersion = tagName;
 
+                // Get the download URL from the assets
                 string downloadUrl = jsonDocument.RootElement.GetProperty("assets")[0].GetProperty("browser_download_url").GetString();
                 b.RemoteLink = downloadUrl;
 
                 Log.Information($"Bundlingway.GetRemoteInfo: Remote version is {tagName}, download URL is {downloadUrl}.");
-
             }
             catch (Exception e)
             {
@@ -126,26 +143,34 @@ namespace Bundlingway.Utilities.Handler
             }
         }
 
+        /// <summary>
+        /// Updates the Bundlingway application to the latest version.
+        /// </summary>
+        /// <param name="control">The control to update the UI with progress information.</param>
         internal static async Task Update(Control control)
         {
             var b = Instances.LocalConfigProvider.Configuration.Bundlingway;
 
             _ = UI.Announce("Downloading a new Bundlingway version...");
 
+            // Set the location of the current executable
             b.Location = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
             Instances.LocalConfigProvider.Save();
 
+            // Create the storage folder if it doesn't exist
             var storageFolder = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Core, Constants.Folders.BundlingwayPackage);
 
             if (!Directory.Exists(storageFolder)) Directory.CreateDirectory(storageFolder);
 
+            // Get the file name from the remote link
             string fileName = Path.GetFileName(new Uri(b.RemoteLink).LocalPath);
             string filePath = Path.Combine(storageFolder, fileName);
 
+            // Create a temporary folder for extracting the package
             var tempFolder = Path.Combine(Instances.TempFolder, Constants.Folders.BundlingwayPackage);
             if (!Directory.Exists(tempFolder)) Directory.CreateDirectory(tempFolder);
 
-
+            // Download the file from the remote link
             using (HttpClient client = new())
             using (HttpResponseMessage response = await client.GetAsync(b.RemoteLink, HttpCompletionOption.ResponseHeadersRead)) // Get headers first
             {
@@ -177,7 +202,7 @@ namespace Bundlingway.Utilities.Handler
                         await fileStream.WriteAsync(buffer, 0, bytesRead);
                         downloadedBytes += bytesRead;
 
-
+                        // Report progress to the UI
                         if (totalFileSize > 0) // Only report progress if total size is known
                         {
                             _ = UI.SetProgress(downloadedBytes);
