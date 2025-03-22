@@ -1,4 +1,4 @@
-﻿using Serilog;
+﻿﻿using Serilog;
 using System.Diagnostics;
 using System.Web;
 using System.Windows;
@@ -7,6 +7,11 @@ namespace Bundlingway.Utilities.Handler
 {
     public static class CommandLineArgs
     {
+        /// <summary>
+        /// Processes command-line arguments.
+        /// </summary>
+        /// <param name="args">The command-line arguments.</param>
+        /// <returns>A string result, if applicable, or null.</returns>
         public static async Task<string> ProcessAsync(string[] args)
         {
             if (args == null || args.Length == 0) return null;
@@ -16,7 +21,7 @@ namespace Bundlingway.Utilities.Handler
                 var currentArg = arg;
                 Log.Information($"Processing command line argument: {currentArg}");
 
-                
+                // Handle custom protocol for opening presets (e.g., gposingway://)
                 var prefix = Constants.GPosingwayProtocolHandler + "://open/?";
 
                 if (currentArg.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
@@ -46,6 +51,7 @@ namespace Bundlingway.Utilities.Handler
                     return packageName;
                 }
 
+                // Handle client update command
                 if (currentArg == Constants.CommandLineOptions.UpdateClient)
                 {
                     var targetFile = Instances.LocalConfigProvider.Configuration.Bundlingway.Location;
@@ -56,6 +62,7 @@ namespace Bundlingway.Utilities.Handler
                         var currentExePath = Process.GetCurrentProcess().MainModule.FileName;
                         Log.Information($"Copying current executable from {currentExePath} to {targetFile}");
 
+                        // Ensure no other instances of the application are running
                         var processName = Path.GetFileNameWithoutExtension(currentExePath);
                         var existingProcesses = Process.GetProcessesByName(processName)
                                                          .Where(p => p.Id != Process.GetCurrentProcess().Id)
@@ -85,6 +92,7 @@ namespace Bundlingway.Utilities.Handler
                             }
                         }
 
+                        // Copy the current executable to the target location, with retries
                         bool copySuccess = false;
                         int copyRetries = 3;
                         while (!copySuccess && copyRetries > 0)
@@ -112,6 +120,7 @@ namespace Bundlingway.Utilities.Handler
                         {
                             try
                             {
+                                // Start the new executable
                                 var processStartInfo = new ProcessStartInfo { FileName = targetFile, UseShellExecute = true };
                                 var process = Process.Start(processStartInfo);
                                 Log.Information("New client process started. Exiting current process.");
