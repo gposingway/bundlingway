@@ -11,18 +11,21 @@ namespace Bundlingway
         [STAThread]
         static void Main(string[] args)
         {
+            // Prepare the environment (e.g., create necessary directories)
             Maintenance.PrepareEnvironmentAsync().Wait();
 
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
+            // Initialize application configuration
             ApplicationConfiguration.Initialize();
 
+            // Initialize the application (e.g., load settings)
             Bootstrap.Initialize().Wait();
             Instances.LocalConfigProvider.Load();
             Maintenance.EnsureConfiguration().Wait();
 
+            // Check if command-line arguments are provided (headless mode)
             if (args.Length > 0)
             {
+                // Process command-line arguments
                 var result = Utilities.Handler.CommandLineArgs.ProcessAsync(args).Result;
 
                 // Check if another instance of the application is already running
@@ -34,6 +37,7 @@ namespace Bundlingway
                 }
             }
 
+            // Check for duplicate instances (UI mode)
             if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
             {
                 // Notify other instances and close the client
@@ -41,7 +45,7 @@ namespace Bundlingway
                 Process.GetCurrentProcess().Kill();
             }
 
-
+            // Run the application in UI mode
             Application.Run(new frmLanding());
         }
     }
