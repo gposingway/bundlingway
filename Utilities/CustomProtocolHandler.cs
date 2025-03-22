@@ -1,13 +1,16 @@
-﻿using Microsoft.Win32;
+﻿﻿using Microsoft.Win32;
 using Serilog;
 
 namespace Bundlingway.Utilities
 {
     public static class CustomProtocolHandler
     {
-
-
-
+        /// <summary>
+        /// Registers a custom protocol for browser integration.
+        /// </summary>
+        /// <param name="protocolName">The name of the protocol to register.</param>
+        /// <param name="description">The description of the protocol.</param>
+        /// <param name="forceRegister">Whether to force the registration even if it's already registered.</param>
         public static async Task RegisterCustomProtocolAsync(string protocolName, string description = "", bool forceRegister = false)
         {
             var isExtensionRegistered = true;
@@ -34,9 +37,9 @@ namespace Bundlingway.Utilities
                 }
             }
 
+            // If the protocol is not registered, create the registry keys
             if (!isMainProtocolRegistered)
             {
-                // Create registry keys
                 using (RegistryKey key = Registry.ClassesRoot.CreateSubKey(protocolName))
                 {
                     key.SetValue("", $"URL: {protocolName} Protocol");
@@ -70,9 +73,9 @@ namespace Bundlingway.Utilities
                 }
             }
 
+            // If the extension is not registered, create the registry keys
             if (!isExtensionRegistered)
             {
-                // Create registry keys
                 using (RegistryKey key = Registry.ClassesRoot.CreateSubKey(extensionName))
                 {
                     key.SetValue("", protocolName);
@@ -81,6 +84,12 @@ namespace Bundlingway.Utilities
                 Log.Information($"Registered {extensionName} extension handler.");
             }
         }
+
+        /// <summary>
+        /// Checks if a custom protocol is registered.
+        /// </summary>
+        /// <param name="protocolName">The name of the protocol to check.</param>
+        /// <returns>The status of the protocol registration.</returns>
         public static string IsCustomProtocolRegistered(string protocolName)
         {
             var appPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
