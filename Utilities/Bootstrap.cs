@@ -1,4 +1,4 @@
-﻿using Bundlingway.Model;
+﻿﻿using Bundlingway.Model;
 using Bundlingway.Utilities.Handler;
 using Serilog;
 
@@ -6,10 +6,14 @@ namespace Bundlingway.Utilities
 {
     public class Bootstrap
     {
+        /// <summary>
+        /// Initializes the application.
+        /// </summary>
         public static async Task Initialize()
         {
             try
             {
+                // Initialize the local configuration provider
                 Instances.LocalConfigProvider = new ConfigProvider<BundlingwayConfig>();
 
                 Log.Information("Bootstrap.Initialize: Initialization completed.");
@@ -20,19 +24,26 @@ namespace Bundlingway.Utilities
             }
         }
 
+        /// <summary>
+        /// Detects settings for the application and related components.
+        /// </summary>
         public static async Task DetectSettings()
         {
             try
             {
                 _ = UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.DetectingSettings));
                 Log.Information("Bootstrap.DetectSettings: Starting settings detection.");
+                // Load the local configuration
                 Instances.LocalConfigProvider.Load();
 
+                // Initialize the resource packages list if it's null
                 if (Instances.ResourcePackages == null)
                     Instances.ResourcePackages = [];
 
+                // Check for Bundlingway updates
                 await CheckBundlingway();
 
+                // Check for the game client and related components
                 await CheckGameClient().ContinueWith(async a =>
                 {
                     await Task.WhenAll(
@@ -41,6 +52,7 @@ namespace Bundlingway.Utilities
                         );
                 });
 
+                // Save the local configuration
                 Instances.LocalConfigProvider.Save();
 
                 
@@ -56,11 +68,15 @@ namespace Bundlingway.Utilities
             }
         }
 
+        /// <summary>
+        /// Checks for Bundlingway updates.
+        /// </summary>
         private static async Task CheckBundlingway()
         {
             try
             {
                 Log.Information("Bootstrap.CheckBundlingway: Checking Bundlingway.");
+                // Get local and remote Bundlingway information
                 await Handler.Bundlingway.GetLocalInfo();
                 await Handler.Bundlingway.GetRemoteInfo();
                 Instances.LocalConfigProvider.Save();
@@ -72,6 +88,9 @@ namespace Bundlingway.Utilities
             }
         }
 
+        /// <summary>
+        /// Checks for the game client and related settings.
+        /// </summary>
         public static async Task CheckGameClient()
         {
             try
@@ -80,6 +99,7 @@ namespace Bundlingway.Utilities
 
                 Log.Information("Bootstrap.CheckGameClient: Checking game client.");
 
+                // If the game is running, get the process path
                 if (Instances.IsGameRunning)
                 {
                     var procPath = ProcessHelper.GetProcessPath(Constants.Files.GameProcess);
@@ -90,6 +110,7 @@ namespace Bundlingway.Utilities
                     }
                 }
 
+                // If the client location is not valid, reset it
                 if (c.ClientLocation != null)
                     if (!File.Exists(c.ClientLocation))
                     {
@@ -98,10 +119,12 @@ namespace Bundlingway.Utilities
                     }
                     else
                     {
+                        // Get the installation folder and shader folder path
                         c.InstallationFolder = Path.GetDirectoryName(c.ClientLocation);
 
                         var shaderFolderPath = Path.Combine(c.InstallationFolder, Constants.Folders.GameShaders);
 
+                        // If the shader folder exists, analyze the shaders
                         if (Directory.Exists(shaderFolderPath))
                         {
                             // In the background we will save the shader analysis to the data folder.
@@ -117,6 +140,9 @@ namespace Bundlingway.Utilities
             }
         }
 
+        /// <summary>
+        /// Checks for GPosingway updates.
+        /// </summary>
         public static async Task CheckGPosingway()
         {
             try
@@ -133,6 +159,9 @@ namespace Bundlingway.Utilities
             }
         }
 
+        /// <summary>
+        /// Checks for ReShade updates.
+        /// </summary>
         public static async Task CheckReShade()
         {
             try
