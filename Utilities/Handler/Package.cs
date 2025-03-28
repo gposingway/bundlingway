@@ -19,6 +19,8 @@ namespace Bundlingway.Utilities.Handler
             string fileName = Path.GetFileNameWithoutExtension(filePath);
             string fileExtension = Path.GetExtension(filePath);
 
+            if (fileExtension.Equals(".txt", StringComparison.InvariantCultureIgnoreCase)) fileExtension = ".ini";
+
             string newFileName = $"{fileName}{fileExtension}";
 
             if (presetName != null)
@@ -51,7 +53,7 @@ namespace Bundlingway.Utilities.Handler
             await Install(Instances.SinglePresetsFolder);
             Log.Information("Package.Onboard: Package installation completed.");
 
-            return new ResourcePackage() { Name = fileName, Type = ResourcePackage.EType.SinglePreset };
+            return new ResourcePackage() { Name = newFileName, Type = ResourcePackage.EType.SinglePreset };
 
         }
 
@@ -126,7 +128,20 @@ namespace Bundlingway.Utilities.Handler
         internal static async Task<ResourcePackage> Onboard(string filePath, string? packageName = null, bool autoInstall = true)
         {
             if (Path.GetExtension(filePath).Equals(".ini", StringComparison.CurrentCultureIgnoreCase))
-                return OnboardSinglePresetFile(filePath).Result;
+                return OnboardSinglePresetFile(filePath, packageName).Result;
+
+            if (Path.GetExtension(filePath).Equals(".txt", StringComparison.CurrentCultureIgnoreCase))
+            {
+                string fileContent = await File.ReadAllTextAsync(filePath);
+                if (fileContent.Contains("Techniques=", StringComparison.InvariantCultureIgnoreCase))
+                {
+                    return OnboardSinglePresetFile(filePath, packageName).Result;
+                }
+                else
+                {
+                    throw new Exception("Invalid file content (not a preset).");
+                }
+            }
 
             var packageHasPresets = false;
             var packageHasShaders = false;
@@ -148,6 +163,12 @@ namespace Bundlingway.Utilities.Handler
 
             string originalTempFolderPath = Path.Combine(Instances.TempFolder, Guid.NewGuid().ToString());
             string tempFolderPath = originalTempFolderPath;
+
+
+            Log.Information($"newCatalogEntry.Name  : {newCatalogEntry.Name}");
+            Log.Information($"newCatalogEntry.Status: {newCatalogEntry.Status}");
+            Log.Information($"tempFolderPath        : {tempFolderPath}");
+
 
             if (Directory.Exists(tempFolderPath)) Directory.Delete(tempFolderPath, true);
             Directory.CreateDirectory(tempFolderPath);
@@ -232,13 +253,18 @@ namespace Bundlingway.Utilities.Handler
 
                         var probe = Path.GetFileName(singleFolderPath);
 
-                        if (probe != Constants.Folders.PackageShaders && probe != Constants.Folders.PackageTextures && probe != Constants.Folders.PackagePresets)
-                            collectionName = Path.GetFileName(singleFolderPath);
+                        if (packageName == null)
+                            if (probe != Constants.Folders.PackageShaders && probe != Constants.Folders.PackageTextures && probe != Constants.Folders.PackagePresets)
+                                collectionName = Path.GetFileName(singleFolderPath);
 
                         tempFolderPath = Path.Combine(tempFolderPath, probe);
-                        if (collectionName != null) newCatalogEntry.Name = collectionName;
                         changeEval = true;
-                        Log.Information($"Package.Onboard: Single folder found, updated collection name to: {collectionName}");
+
+                        if (collectionName == null)
+                        {
+                            newCatalogEntry.Name = collectionName;
+                            Log.Information($"Package.Onboard: Single folder found, updated collection name to: {collectionName}");
+                        }
                     }
 
                     if (Directory.GetDirectories(tempFolderPath, "Presets").Length == 1 && Directory.GetFiles(tempFolderPath, "*.ini").Length == 0)
@@ -248,7 +274,7 @@ namespace Bundlingway.Utilities.Handler
 
                         if (collectionName != null) newCatalogEntry.Name = collectionName;
                         changeEval = true;
-                        Log.Information($"Package.Onboard: Single folder found, updated collection name to: {collectionName}");
+                        Log.Information($"Package.Onboard: Single Presets folder found, updated collection name to: {collectionName}");
                     }
 
                 } while (changeEval);
@@ -941,6 +967,17 @@ namespace Bundlingway.Utilities.Handler
 
         public static async Task<string> DownloadAndInstall(string url, string? name)
         {
+            return await DownloadAndInstall(new DownloadPackage { Url = url, Name = name });
+        }
+
+        public static async Task<string> DownloadAndInstall(DownloadPackage sourcePackage)
+        {
+
+            Log.Information($"DownloadAndInstall: Downloading package: {sourcePackage.ToJson()}");
+
+            var url = sourcePackage.Url;
+            var name = sourcePackage.Name;
+
             using HttpClient client = new();
             try
             {
@@ -969,6 +1006,11 @@ namespace Bundlingway.Utilities.Handler
                 Maintenance.RemoveTempDir();
 
                 return package.Name + " installed successfully!";
+            }
+            catch (AggregateException exs)
+            {
+                Log.Information($"Error downloading or installing file: {exs.InnerExceptions[0].Message}");
+                return "Error installing from " + url + ": " + exs.InnerExceptions[0].Message;
             }
             catch (Exception ex)
             {
