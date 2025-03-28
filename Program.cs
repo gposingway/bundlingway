@@ -33,6 +33,7 @@ namespace Bundlingway
                 {
                     // Notify other instances and close the client
                     ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.PackageInstalled, Message = result });
+
                     Process.GetCurrentProcess().Kill();
                 }
             }
