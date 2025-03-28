@@ -1,6 +1,4 @@
-﻿
-using Bundlingway.Utilities.Extensions;
-using Newtonsoft.Json.Converters;
+﻿using Bundlingway.Utilities.Extensions;
 using Newtonsoft.Json;
 using Serilog;
 
@@ -32,9 +30,7 @@ namespace Bundlingway.Utilities
                 {
                     Instances.LocalConfigProvider.Configuration.Shortcuts.Add(kvp.Key, kvp.Value);
                     mustRefresh = true;
-
                 }
-
             }
 
             if (mustRefresh) Instances.LocalConfigProvider.Save();
@@ -64,11 +60,12 @@ namespace Bundlingway.Utilities
             Log.Logger = new LoggerConfiguration()
                       .WriteTo.File(
                         Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.Log),
-                        fileSizeLimitBytes: 1 * 1024 * 1024, // 1 MB
-                        retainedFileCountLimit: 6,
+                        fileSizeLimitBytes: 1 * 1024 * 1024 * 1024, // 1 GB
+                        retainedFileCountLimit: 10,
                         rollingInterval: RollingInterval.Day,
                         rollOnFileSizeLimit: true
                       )
+                      .WriteTo.Console(Serilog.Events.LogEventLevel.Verbose)
                       .CreateLogger();
 
             Log.Information("==============================================================================================");
