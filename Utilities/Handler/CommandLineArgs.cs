@@ -1,5 +1,7 @@
-﻿﻿using Serilog;
+﻿using Bundlingway.Utilities.Extensions;
+using Serilog;
 using System.Diagnostics;
+using System.Text;
 using System.Web;
 using System.Windows;
 
@@ -30,13 +32,38 @@ namespace Bundlingway.Utilities.Handler
                     Log.Information($"Opening preset with argument: {currentArg}");
 
                     var queryParams = HttpUtility.ParseQueryString(currentArg);
+
                     var name = queryParams["name"];
                     var url = queryParams["url"];
+                    var packagePayload = queryParams["package"];
 
-                    if (url == null)
+                    var package = new DownloadPackage();
+
+                    if (packagePayload != null)
                     {
-                        Log.Error("URL not found in query parameters.");
-                        return null;
+                        try
+                        {
+                            var base64EncodedBytes = Convert.FromBase64String(packagePayload);
+                            var decodedPayload = Encoding.UTF8.GetString(base64EncodedBytes);
+                            package = decodedPayload.FromJson<DownloadPackage>();
+
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error(ex, "Error deserializing package payload.");
+                            return null;
+                        }
+
+                    }
+                    else
+                    {
+                        if (url == null)
+                        {
+                            Log.Error("URL not found in query parameters.");
+                            return null;
+                        }
+
+                        package = new DownloadPackage { Name = name, Url = url };
                     }
 
                     Log.Information($"Parsed name: {name}, url: {url}");
@@ -44,7 +71,7 @@ namespace Bundlingway.Utilities.Handler
                     // Run the installation form in a separate thread
                     await UI.NotifyAsync("Installing package", name ?? url);
 
-                    var packageName = Package.DownloadAndInstall(url, name).Result;
+                    var packageName = Package.DownloadAndInstall(package).Result;
                     await UI.NotifyAsync("Installation", packageName);
                     Log.Information(packageName);
 
