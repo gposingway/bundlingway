@@ -4,6 +4,7 @@ using Bundlingway.Utilities.Extensions;
 using Bundlingway.Utilities.Handler;
 using Serilog;
 using System.ComponentModel;
+using System.Diagnostics;
 
 namespace Bundlingway
 {
@@ -60,14 +61,15 @@ namespace Bundlingway
 
         private void ProcessHelper_NotificationReceived(object? sender, IPCNotification e)
         {
-            if (e.Topic == Constants.Events.PackageInstalled)
+            switch(e.Topic)
             {
-                PopulateGrid();
-                _ = UI.Announce(e.Message);
-            }
-            if (e.Topic == Constants.Events.DuplicatedInstances)
-            {
-                _ = UI.BringToFront();
+                case Constants.Events.PackageInstalling:
+                case Constants.Events.PackageInstalled:
+                    _ = UI.Announce(e.Message);
+                    break;
+                case Constants.Events.DuplicatedInstances:
+                    _ = UI.BringToFront();
+                    break;
             }
         }
 
@@ -765,6 +767,128 @@ namespace Bundlingway
         {
             await CustomProtocolHandler.RegisterCustomProtocolAsync(Constants.GPosingwayProtocolHandler, "A collection of GPosingway-compatible ReShade resources", true);
             txtBrowserIntegration.DoAction(() => txtBrowserIntegration.Text = CustomProtocolHandler.IsCustomProtocolRegistered(Constants.GPosingwayProtocolHandler));
+        }
+
+        private void contextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // Clear existing items
+            contextMenuStrip1.Items.Clear();
+
+            // Check if we have any rows selected
+            if (dgvPackages.SelectedRows.Count == 0)
+            {
+                e.Cancel = true;
+                return;
+            }
+
+            // For single row selection
+            if (dgvPackages.SelectedRows.Count == 1)
+            {
+                // Add single row options
+                ToolStripMenuItem openFolderItem = new ToolStripMenuItem("Open Folder");
+                openFolderItem.Click += (s, args) => OpenPackageFolder();
+                contextMenuStrip1.Items.Add(openFolderItem);
+
+                ToolStripMenuItem renameItem = new ToolStripMenuItem("Rename");
+                renameItem.Click += (s, args) => RenamePackage();
+                contextMenuStrip1.Items.Add(renameItem);
+
+                contextMenuStrip1.Items.Add(new ToolStripSeparator());
+            }
+
+            // Add common options for both single and multiple selection
+            ToolStripMenuItem installItem = new ToolStripMenuItem("Install");
+            installItem.Click += (s, args) => InstallSelectedPackages();
+            contextMenuStrip1.Items.Add(installItem);
+
+            ToolStripMenuItem uninstallItem = new ToolStripMenuItem("Uninstall");
+            uninstallItem.Click += (s, args) => UninstallSelectedPackages();
+            contextMenuStrip1.Items.Add(uninstallItem);
+
+            ToolStripMenuItem removeItem = new ToolStripMenuItem("Remove");
+            removeItem.Click += (s, args) => RemoveSelectedPackages();
+            contextMenuStrip1.Items.Add(removeItem);
+        }
+
+        // Helper method to open the folder of the selected package
+        private void OpenPackageFolder()
+        {
+            if (dgvPackages.SelectedRows.Count != 1) return;
+            
+            var selectedRow = dgvPackages.SelectedRows[0];
+            var package = selectedRow.Tag as ResourcePackage;
+            
+            if (package == null) return;
+            
+            try
+            {
+                string packagePath = package.LocalFolder;
+                if (Directory.Exists(packagePath))
+                {
+                    Process.Start("explorer.exe", packagePath);
+                }
+                else
+                {
+                    UI.Announce("Package folder not found!");
+                }
+            }
+            catch (Exception ex)
+            {
+                UI.Announce($"Could not open folder: {ex.Message}");
+            }
+        }
+
+        // Helper method to rename the selected package
+        private void RenamePackage()
+        {
+            if (dgvPackages.SelectedRows.Count != 1) return;
+            
+            var selectedRow = dgvPackages.SelectedRows[0];
+            var package = selectedRow.Tag as ResourcePackage;
+            
+            if (package == null) return;
+
+            string currentName = package.Label ?? package.Name;
+            string newName = Microsoft.VisualBasic.Interaction.InputBox(
+                "Enter new package name:",
+                "Rename Package",
+                currentName);
+            
+            if (!string.IsNullOrWhiteSpace(newName) && newName != currentName)
+            {
+                try
+                {
+                    package.Label = newName;
+                    // Update UI
+                    PopulateGrid();
+                    UI.Announce($"Package renamed to \"{newName}\"");
+                }
+                catch (Exception ex)
+                {
+                    UI.Announce($"Could not rename package: {ex.Message}");
+                }
+            }
+        }
+
+        // Helper method to install the selected packages
+        private void InstallSelectedPackages()
+        {
+            // Reuse functionality from btnReinstall_Click
+            btnReinstall_Click(null, EventArgs.Empty);
+        }
+
+        // Helper method to uninstall the selected packages
+        private void UninstallSelectedPackages()
+        {
+            // Reuse functionality from btnUninstall_Click
+            btnUninstall_Click(null, EventArgs.Empty);
+        }
+
+        // Helper method to remove the selected packages
+        private void RemoveSelectedPackages()
+        {
+            // Reuse functionality from btnRemove_Click
+            btnRemove_Click(null, EventArgs.Empty);
         }
     }
 }

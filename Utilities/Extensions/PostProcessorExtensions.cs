@@ -8,7 +8,6 @@ namespace Bundlingway.Utilities.Extensions
 {
     public static class PostProcessorExtensions
     {
-
         public static void ReplaceValues(string folderPath, Dictionary<string, string> replacements, bool scanSubfolders = true)
         {
             if (replacements == null || replacements.Count == 0) return;
@@ -28,6 +27,11 @@ namespace Bundlingway.Utilities.Extensions
 
                     foreach (var kvp in replacements)
                         content = content.Replace(kvp.Key, kvp.Value);
+
+                    // Also replace invalid lines
+
+                    // If a line starts with "//", remove it
+                    content = Regex.Replace(content, @"^\s*//.*$", "", RegexOptions.Multiline);
 
                     if (originalContent != content)
                     {

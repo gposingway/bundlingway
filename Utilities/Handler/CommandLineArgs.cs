@@ -1,6 +1,7 @@
 ﻿using Bundlingway.Utilities.Extensions;
 using Serilog;
 using System.Diagnostics;
+using System.Net;
 using System.Text;
 using System.Web;
 using System.Windows;
@@ -35,6 +36,7 @@ namespace Bundlingway.Utilities.Handler
 
                     var name = queryParams["name"];
                     var url = queryParams["url"];
+
                     var packagePayload = queryParams["package"];
 
                     var package = new DownloadPackage();
@@ -45,6 +47,8 @@ namespace Bundlingway.Utilities.Handler
                         {
                             var base64EncodedBytes = Convert.FromBase64String(packagePayload);
                             var decodedPayload = Encoding.UTF8.GetString(base64EncodedBytes);
+                            decodedPayload = WebUtility.HtmlDecode(decodedPayload);
+
                             package = decodedPayload.FromJson<DownloadPackage>();
 
                         }

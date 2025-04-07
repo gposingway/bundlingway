@@ -17,6 +17,7 @@ namespace Bundlingway.Utilities.Handler
             AllowDuplicateSections = true,
             AllowKeysWithoutSection = true,
             AssigmentSpacer = "",
+            SkipInvalidLines = true,
         });
 
         internal static void RunPipeline(ResourcePackage package)

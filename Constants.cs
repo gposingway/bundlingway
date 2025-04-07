@@ -66,8 +66,9 @@ namespace Bundlingway
 
         public static class Events
         {
-            public static string PackageInstalled = "package-installed";
-            public static string DuplicatedInstances = "duplicated-instances";
+            public const string PackageInstalling = "package-installing";
+            public const string PackageInstalled = "package-installed";
+            public const string DuplicatedInstances = "duplicated-instances";
         }
 
         public static class Folders

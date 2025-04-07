@@ -9,6 +9,7 @@ using System.Text;
 using SharpCompress.Common;
 using System.Collections.Concurrent;
 using Bundlingway.Utilities.ManagedResources;
+using System.Diagnostics.Eventing.Reader;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -147,6 +148,7 @@ namespace Bundlingway.Utilities.Handler
             var packageHasShaders = false;
 
             Log.Information($"Package.Onboard: Preparing package catalog for: {filePath}");
+            Log.Information($"Package.Onboard:                  Package name: {packageName}");
 
             var newCatalogEntry = new ResourcePackage
             {
@@ -258,6 +260,7 @@ namespace Bundlingway.Utilities.Handler
                                 collectionName = Path.GetFileName(singleFolderPath);
 
                         tempFolderPath = Path.Combine(tempFolderPath, probe);
+                        Log.Information($"Package.Onboard: Single folder found, updated temp folder path to: {tempFolderPath}");
                         changeEval = true;
 
                         if (collectionName == null)
@@ -270,14 +273,22 @@ namespace Bundlingway.Utilities.Handler
                     if (Directory.GetDirectories(tempFolderPath, "Presets").Length == 1 && Directory.GetFiles(tempFolderPath, "*.ini").Length == 0)
                     {
                         var singleFolderPath = Directory.GetDirectories(tempFolderPath).First();
-                        tempFolderPath = Path.Combine(tempFolderPath, collectionName);
-
-                        if (collectionName != null) newCatalogEntry.Name = collectionName;
+                        tempFolderPath = Path.Combine(tempFolderPath, singleFolderPath);
+                        Log.Information($"Package.Onboard: Single Presets folder found, updated temp folder path to: {tempFolderPath}");
                         changeEval = true;
-                        Log.Information($"Package.Onboard: Single Presets folder found, updated collection name to: {collectionName}");
+
+                        if (collectionName == null)
+                        {
+                            newCatalogEntry.Name = collectionName;
+                            Log.Information($"Package.Onboard: Single Presets folder found, updated collection name to: {collectionName}");
+                        }
                     }
 
                 } while (changeEval);
+
+                Log.Information($"Package.Onboard: Temp folder path: {tempFolderPath}");
+                Log.Information($"Package.Onboard: newCatalogEntry: {newCatalogEntry}");
+                Log.Information($"Package.Onboard: ToFileSystemSafeName: {newCatalogEntry.Name.ToFileSystemSafeName()}");
 
                 if (collectionName != null)
                     if (newCatalogEntry.Name.EndsWith("-main"))
@@ -285,8 +296,13 @@ namespace Bundlingway.Utilities.Handler
 
                 targetPackagePath = Path.Combine(Instances.PackageFolder, newCatalogEntry.Name.ToFileSystemSafeName());
 
-                if (!Directory.Exists(targetPackagePath)) Directory.CreateDirectory(targetPackagePath);
-                Log.Information($"Package.Onboard: Target package path created at: {targetPackagePath}");
+                if (!Directory.Exists(targetPackagePath))
+                {
+                    Directory.CreateDirectory(targetPackagePath);
+                    Log.Information($"Package.Onboard: Target package path created at: {targetPackagePath}");
+                }
+                else
+                    Log.Information($"Package.Onboard: Package folder already exists at: {targetPackagePath}");
 
                 if (Instances.ResourcePackages.Any(p => p.Name == newCatalogEntry.Name && p.Locked))
                 {
@@ -972,7 +988,6 @@ namespace Bundlingway.Utilities.Handler
 
         public static async Task<string> DownloadAndInstall(DownloadPackage sourcePackage)
         {
-
             Log.Information($"DownloadAndInstall: Downloading package: {sourcePackage.ToJson()}");
 
             var url = sourcePackage.Url;
@@ -986,10 +1001,19 @@ namespace Bundlingway.Utilities.Handler
                 var response = await client.GetAsync(url);
                 response.EnsureSuccessStatusCode();
 
-                var contentDisposition = response.Content.Headers.ContentDisposition;
-                var filename = contentDisposition != null && !string.IsNullOrEmpty(contentDisposition.FileName)
-                    ? contentDisposition.FileName.Trim('"')
+                Log.Information($"DownloadAndInstall: Download successful.");
+
+                var contentDispositionFilename = response.Content.Headers.ContentDisposition?.FileName;
+
+                var filename = !string.IsNullOrEmpty(contentDispositionFilename)
+                    ? contentDispositionFilename.ToFileSystemSafeName().Trim('"').Trim('_')
                     : Path.GetFileName(HttpUtility.UrlDecode(url));
+
+                if (string.IsNullOrEmpty(filename))
+                {
+                    var extension = GetFileExtensionFromMediaType(response.Content.Headers.ContentType.MediaType);
+                    filename = $"{Guid.NewGuid()}{extension}";
+                }
 
                 Directory.CreateDirectory(Instances.CacheFolder);
 
@@ -1001,6 +1025,8 @@ namespace Bundlingway.Utilities.Handler
 
                 Log.Information($"DownloadAndInstall: File saved to: {filePath}");
 
+                ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.PackageInstalling, Message = $"Installing {name ?? url}..." });
+
                 ResourcePackage package = Onboard(filePath, name).Result;
 
                 Maintenance.RemoveTempDir();
@@ -1010,15 +1036,28 @@ namespace Bundlingway.Utilities.Handler
             catch (AggregateException exs)
             {
                 Log.Information($"Error downloading or installing file: {exs.InnerExceptions[0].Message}");
-                return "Error installing from " + url + ": " + exs.InnerExceptions[0].Message;
+                return "Error installing " + (name ?? "from " + url) + ": " + exs.InnerExceptions[0].Message;
             }
             catch (Exception ex)
             {
                 Log.Information($"Error downloading or installing file: {ex.Message}");
-                return "Error installing from " + url + ": " + ex.Message;
+                return "Error installing " + (name ?? "from " + url) + ": " + ex.Message;
             }
 
             return null;
+        }
+
+        private static string GetFileExtensionFromMediaType(string mediaType)
+        {
+            return mediaType switch
+            {
+                "text/plain" => ".txt",
+                "application/json" => ".json",
+                "application/zip" => ".zip",
+                "application/x-rar-compressed" => ".rar",
+                "application/x-7z-compressed" => ".7z",
+                _ => ".dat"
+            };
         }
 
         public static void ToggleFavorite(ResourcePackage package)
