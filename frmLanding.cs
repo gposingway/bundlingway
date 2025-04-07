@@ -769,10 +769,10 @@ namespace Bundlingway
             txtBrowserIntegration.DoAction(() => txtBrowserIntegration.Text = CustomProtocolHandler.IsCustomProtocolRegistered(Constants.GPosingwayProtocolHandler));
         }
 
-        private void contextMenuStrip1_Opening(object sender, System.ComponentModel.CancelEventArgs e)
+        private void dvgPackagesContextMenu_Opening(object sender, CancelEventArgs e)
         {
             // Clear existing items
-            contextMenuStrip1.Items.Clear();
+            dvgPackagesContextMenu.Items.Clear();
 
             // Check if we have any rows selected
             if (dgvPackages.SelectedRows.Count == 0)
@@ -785,29 +785,29 @@ namespace Bundlingway
             if (dgvPackages.SelectedRows.Count == 1)
             {
                 // Add single row options
-                ToolStripMenuItem openFolderItem = new ToolStripMenuItem("Open Folder");
+                ToolStripMenuItem openFolderItem = new("Open Folder");
                 openFolderItem.Click += (s, args) => OpenPackageFolder();
-                contextMenuStrip1.Items.Add(openFolderItem);
+                dvgPackagesContextMenu.Items.Add(openFolderItem);
 
-                ToolStripMenuItem renameItem = new ToolStripMenuItem("Rename");
+                ToolStripMenuItem renameItem = new("Rename");
                 renameItem.Click += (s, args) => RenamePackage();
-                contextMenuStrip1.Items.Add(renameItem);
+                dvgPackagesContextMenu.Items.Add(renameItem);
 
-                contextMenuStrip1.Items.Add(new ToolStripSeparator());
+                dvgPackagesContextMenu.Items.Add(new ToolStripSeparator());
             }
 
             // Add common options for both single and multiple selection
-            ToolStripMenuItem installItem = new ToolStripMenuItem("Install");
+            ToolStripMenuItem installItem = new ("Install");
             installItem.Click += (s, args) => InstallSelectedPackages();
-            contextMenuStrip1.Items.Add(installItem);
+            dvgPackagesContextMenu.Items.Add(installItem);
 
-            ToolStripMenuItem uninstallItem = new ToolStripMenuItem("Uninstall");
+            ToolStripMenuItem uninstallItem = new ("Uninstall");
             uninstallItem.Click += (s, args) => UninstallSelectedPackages();
-            contextMenuStrip1.Items.Add(uninstallItem);
+            dvgPackagesContextMenu.Items.Add(uninstallItem);
 
-            ToolStripMenuItem removeItem = new ToolStripMenuItem("Remove");
+            ToolStripMenuItem removeItem = new ("Remove");
             removeItem.Click += (s, args) => RemoveSelectedPackages();
-            contextMenuStrip1.Items.Add(removeItem);
+            dvgPackagesContextMenu.Items.Add(removeItem);
         }
 
         // Helper method to open the folder of the selected package

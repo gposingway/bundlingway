@@ -30,7 +30,7 @@
             components = new System.ComponentModel.Container();
             DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmLanding));
-            contextMenuStrip1 = new ContextMenuStrip(components);
+            dvgPackagesContextMenu = new ContextMenuStrip(components);
             splitContainer1 = new SplitContainer();
             flpSideMenu = new FlowLayoutPanel();
             btnShortcuts = new FontAwesome.Sharp.IconButton();
@@ -103,11 +103,11 @@
             ((System.ComponentModel.ISupportInitialize)instancesBindingSource1).BeginInit();
             SuspendLayout();
             // 
-            // contextMenuStrip1
+            // dvgPackagesContextMenu
             // 
-            contextMenuStrip1.Name = "contextMenuStrip1";
-            contextMenuStrip1.Size = new Size(61, 4);
-            contextMenuStrip1.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip1_Opening);
+            dvgPackagesContextMenu.Name = "dvgPackagesContextMenu";
+            dvgPackagesContextMenu.Size = new Size(61, 4);
+            dvgPackagesContextMenu.Opening += dvgPackagesContextMenu_Opening;
             // 
             // splitContainer1
             // 
@@ -431,7 +431,7 @@
             dgvPackages.CausesValidation = false;
             dgvPackages.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dgvPackages.Columns.AddRange(new DataGridViewColumn[] { FavCol, TypeCol, NameCol, StatusCol });
-            dgvPackages.ContextMenuStrip = contextMenuStrip1;
+            dgvPackages.ContextMenuStrip = dvgPackagesContextMenu;
             dgvPackages.Dock = DockStyle.Fill;
             dgvPackages.Location = new Point(5, 30);
             dgvPackages.Name = "dgvPackages";
@@ -862,7 +862,7 @@
 
         #endregion
 
-        private ContextMenuStrip contextMenuStrip1;
+        private ContextMenuStrip dvgPackagesContextMenu;
         private SplitContainer splitContainer1;
         private FlowLayoutPanel flpSideMenu;
         private Panel pnlSettings;
