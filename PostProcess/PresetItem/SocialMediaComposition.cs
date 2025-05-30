@@ -18,7 +18,7 @@ namespace Bundlingway.PostProcess.PresetItem
                 { "iUIGridType", "1" }
             }
         }];
-        public List<string> PresetExclusionList { get; set; } = ["- Note -*",];
+        public List<string> PresetExclusionList { get; set; } = ["- Note -*","*WiFi*"];
 
         public bool PostProcess(Preset preset)
         {
