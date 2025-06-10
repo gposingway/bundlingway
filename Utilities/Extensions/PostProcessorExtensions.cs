@@ -84,13 +84,20 @@ namespace Bundlingway.Utilities.Extensions
                 if (templateProcess != null)
                 {
                     if (templateProcess.PresetExclusionList?.Any(i =>
-                        i.Contains("*")
-                            ? Regex.IsMatch(preset.Filename, "^" + Regex.Escape(i).Replace("\\*", ".*") + "$", RegexOptions.IgnoreCase)
-                            : preset.Filename.EndsWith(i, StringComparison.InvariantCultureIgnoreCase)
-                        ) == true) continue;
+                    {
 
-                    if (templateProcess.PresetExclusionList?.Any(i => preset.Filename.EndsWith(i, StringComparison.InvariantCultureIgnoreCase)) == true) 
-                        continue;
+                        // Check if the preset filename matches any of the exclusion patterns. It may include ? for single character and * for multiple characters. Matching is case-insensitive.
+                        if (string.IsNullOrEmpty(i)) return false;
+                        if (i.Contains('?') || i.Contains('*'))
+                        {
+                            var regexPattern = "^" + Regex.Escape(i.ToLower()).Replace("\\?", ".").Replace("\\*", ".*") + "$";
+                            var probe = Regex.IsMatch(Path.GetFileName(preset.Filename).ToLower(), regexPattern, RegexOptions.IgnoreCase);
+                            return probe;
+                        }
+
+                        return preset.Filename.EndsWith(i, StringComparison.InvariantCultureIgnoreCase);
+
+                    }) == true) continue;
 
                     if (templateProcess?.Techniques?.StartWith?.Count != 0)
                     {

@@ -20,26 +20,7 @@ namespace Bundlingway.PostProcess.PresetItem
             "StageDepth5@StageDepth.fx",
             "MultiStageDepth@MultiStageDepth.fx"];
 
-        private List<string> ExcludePresets = [
-            "GPosingwayIntro.ini",
-            "Wifi_TicketAoi.ini",
-            "Wifi_TicketAoi2 - NoFrame.ini",
-            "Wifi_TicketKiiro.ini",
-            "Wifi_TicketKiiro2 - NoFrame.ini",
-            "Wifi_TicketMidori.ini",
-            "Wifi_TicketMidori2 - NoFrame.ini",
-            "Wifi_TicketPinku.ini",
-            "Wifi_TicketPinku2 - NoFrame.ini",
-            "Wifi_Memory1.ini",
-            "Wifi_Memory2.ini",
-            "Wifi_Memory3.ini",
-
-            "- Note -  Disable Glamarye_Fast_Effects for even more FPS.ini",
-            "- Note -  Enable Fast AO under Glamarye_Fast_Effects for better quality.ini",
-            "- Note -  Disable 'DAMP RT' if shading looks weird.ini",
-            "- Note - Enable 'DAMP RT' for Raytraced Global Illumination.ini",
-            "- Note -  Check README for list of required shaders.ini",
-            ];
+        public List<string> PresetExclusionList { get; set; } = ["- Note -*", "WiFi*"];
 
         public ParameterList Techniques { get; set; } = new ParameterList()
         {
@@ -49,7 +30,6 @@ namespace Bundlingway.PostProcess.PresetItem
             { "KeyVertical_Previewer@VerticalPreviewer.fx", "%KeyVertical_Previewer@VerticalPreviewer.fx%" }
         };
 
-
         public List<Section> Sections { get; set; } = [new()
         {
             Name = "VerticalPreviewer.fx",
@@ -58,13 +38,11 @@ namespace Bundlingway.PostProcess.PresetItem
                 { "cLayerVPre_Angle", "2" },
             }
         }];
-        public List<string> PresetExclusionList { get; set; } = [];
 
         public bool PostProcess(Preset preset)
         {
 
             preset.Techniques["Vertical_Previewer@VerticalPreviewer.fx"] = false;
-            if (ExcludePresets.Any(preset.Filename.EndsWith)) return false;
 
             preset.IniHandler.Global.RemoveKey("KeyLayer@Layer.fx");
 

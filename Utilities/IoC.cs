@@ -43,14 +43,15 @@ namespace Bundlingway.Utilities
 
             int num = -1;
             int num2 = 0;
-            while (num2 != num)
+            while (num2 != num && num2 < 10) // Add safety limit to prevent infinite loops
             {
                 num = num2;
-                foreach (KeyValuePair<string, Assembly> item in AssemblyLoadMap)
+                foreach (KeyValuePair<string, Assembly> item in AssemblyLoadMap.ToList()) // ToList to avoid collection modification
                 {
                     try
                     {
                         item.Value.GetTypes();
+                        num2++;
                     }
                     catch (Exception e)
                     {
