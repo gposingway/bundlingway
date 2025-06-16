@@ -1,4 +1,5 @@
-﻿﻿﻿﻿using Bundlingway.Utilities.Extensions;
+﻿﻿using Bundlingway.Utilities.Extensions;
+using Bundlingway.Core.Services;
 using Serilog;
 using System.Text.Json;
 
@@ -240,6 +241,26 @@ namespace Bundlingway.Utilities.Handler
                 Log.Information($"Bundlingway.Update: Started {executablePath} with 'update-client' argument.");
                 Environment.Exit(0);
             }
+        }
+
+        /// <summary>
+        /// Modern version of GetRemoteInfo that uses the new service architecture.
+        /// This demonstrates how to migrate existing methods to use dependency injection.
+        /// </summary>
+        internal static async Task GetRemoteInfoModern()
+        {
+            var bundlingwayService = BundlingwayService.Create();
+            await bundlingwayService.GetRemoteInfoAsync();
+        }
+
+        /// <summary>
+        /// Modern version of Update that uses the new service architecture.
+        /// This demonstrates how to migrate existing methods to use dependency injection.
+        /// </summary>
+        internal static async Task UpdateModern()
+        {
+            var bundlingwayService = BundlingwayService.Create();
+            await bundlingwayService.UpdateAsync();
         }
     }
 }

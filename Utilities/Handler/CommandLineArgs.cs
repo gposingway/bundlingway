@@ -5,6 +5,8 @@ using System.Net;
 using System.Text;
 using System.Web;
 using System.Windows;
+using Bundlingway.Core.Interfaces;
+using Bundlingway.Core.Services;
 
 namespace Bundlingway.Utilities.Handler
 {
@@ -75,7 +77,8 @@ namespace Bundlingway.Utilities.Handler
                     // Run the installation form in a separate thread
                     await UI.NotifyAsync("Installing package", name ?? url);
 
-                    var packageName = Package.DownloadAndInstall(package).Result;
+                    var packageName = await ServiceLocator.TryGetService<IPackageService>()!
+                        .DownloadAndInstallAsync(package.Url!, package.Name);
                     await UI.NotifyAsync("Installation", packageName);
                     Log.Information(packageName);
 

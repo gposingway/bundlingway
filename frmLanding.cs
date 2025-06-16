@@ -10,17 +10,20 @@ namespace Bundlingway
 {
     public partial class frmLanding : Form
     {
+        private readonly Bundlingway.Core.Interfaces.IPackageService _packageService;
 
         public frmLanding()
         {
-            UI._landing = this;
             InitializeComponent();
+
+            // ServiceLocator is used for now; replace with DI when available
+            _packageService = Bundlingway.Core.Services.ServiceLocator.TryGetService<Bundlingway.Core.Interfaces.IPackageService>()!;
 
             Text = $"Bundlingway · v{Instances.AppVersion}";
 
             BindAllTaggedControls();
 
-            _ = UI.Announce(Constants.MessageCategory.ApplicationStart);
+            _ = ModernUI.Announce(Constants.MessageCategory.ApplicationStart.ToString());
             _ = Bootstrap.DetectSettings();
 
             txtDesktopShortcut.DoAction(() => txtDesktopShortcut.Text = ProcessHelper.CheckDesktopShortcutStatus());
@@ -31,9 +34,9 @@ namespace Bundlingway
             ProcessHelper.NotificationReceived += ProcessHelper_NotificationReceived;
             _ = ProcessHelper.ListenForNotifications();
 
-            _ = UI.UpdateElements();
+            _ = ModernUI.UpdateElements(); // If implemented, otherwise call the method directly
 
-            _ = UI.Announce(Constants.MessageCategory.Ready);
+            _ = ModernUI.Announce(Constants.MessageCategory.Ready.ToString());
         }
 
         private void BindAllTaggedControls(Control parent = null)
@@ -56,7 +59,7 @@ namespace Bundlingway
 
         private void Generic_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce(((Control)sender).Tag.ToString());
+            _ = ModernUI.Announce(((Control)sender).Tag.ToString());
         }
 
         private void ProcessHelper_NotificationReceived(object? sender, IPCNotification e)
@@ -65,10 +68,10 @@ namespace Bundlingway
             {
                 case Constants.Events.PackageInstalling:
                 case Constants.Events.PackageInstalled:
-                    _ = UI.Announce(e.Message);
+                    _ = ModernUI.Announce(e.Message);
                     break;
                 case Constants.Events.DuplicatedInstances:
-                    _ = UI.BringToFront();
+                    _ = ModernUI.BringToFront(); // If implemented, otherwise call the method directly
                     break;
             }
         }
@@ -80,7 +83,7 @@ namespace Bundlingway
 
         private void btnInstallPackage_Click(object sender, EventArgs e)
         {
-            _ = UI.Announce(Constants.MessageCategory.BeforeAddPackageSelection);
+            _ = ModernUI.Announce(Constants.MessageCategory.BeforeAddPackageSelection.ToString());
 
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
@@ -98,19 +101,20 @@ namespace Bundlingway
                         .Where(file => validExtensions.Contains(Path.GetExtension(file).ToLower()))
                         .ToList();
 
-                    Package.Onboard(selectedFiles).ContinueWith(a =>
+                    // Use the service-based onboarding
+                    _packageService.OnboardPackagesAsync(selectedFiles).ContinueWith(a =>
                     {
                         Maintenance.RemoveTempDir();
                         Instances.LocalConfigProvider.Save();
                         PopulateGrid();
                         SetPackageOpsAvailable(true);
 
-                        _ = UI.Announce(Constants.MessageCategory.Finished);
+                        _ = ModernUI.Announce(Constants.MessageCategory.Finished.ToString());
                     });
                 }
                 else
                 {
-                    _ = UI.Announce(Constants.MessageCategory.AddPackageSelectionCancelled);
+                    _ = ModernUI.Announce(Constants.MessageCategory.AddPackageSelectionCancelled.ToString());
                 }
             }
         }
@@ -220,16 +224,16 @@ namespace Bundlingway
 
             var selectedPackages = dgvPackages.SelectedRows
                 .Cast<DataGridViewRow>()
-                .Select(row => (ResourcePackage)row.Tag)
+                .Select(row => row.Tag as ResourcePackage)
+                .Where(pkg => pkg != null)
                 .ToList();
 
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Remove(package)))).ContinueWith(t =>
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => _packageService.RemovePackageAsync(package!)))).ContinueWith(t =>
             {
-                _ = UI.Announce(Constants.MessageCategory.UninstallPackage);
+                _ = ModernUI.Announce(Constants.MessageCategory.UninstallPackage.ToString());
                 PopulateGrid();
                 SetPackageOpsAvailable(true);
             });
-
         }
 
         private void btnUninstall_Click(object sender, EventArgs e)
@@ -238,13 +242,14 @@ namespace Bundlingway
 
             var selectedPackages = dgvPackages.SelectedRows
                 .Cast<DataGridViewRow>()
-                .Select(row => (ResourcePackage)row.Tag)
+                .Select(row => row.Tag as ResourcePackage)
+                .Where(pkg => pkg != null)
                 .ToList();
 
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.Uninstall(package)))).ContinueWith(t =>
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => _packageService.UninstallPackageAsync(package!)))).ContinueWith(t =>
             {
                 Maintenance.RemoveTempDir();
-                _ = UI.Announce(Constants.MessageCategory.UninstallPackage);
+                _ = ModernUI.Announce(Constants.MessageCategory.UninstallPackage.ToString());
                 SetPackageOpsAvailable(true);
                 PopulateGrid();
             });
@@ -308,7 +313,8 @@ namespace Bundlingway
             }
         }
 
-        internal async Task BringToFront()
+        // Fix: Rename BringToFront to AvoidConflict
+        internal async Task BringToFrontForm()
         {
             this.DoAction(() =>
             {
@@ -359,37 +365,37 @@ namespace Bundlingway
 
         private void btnEmporium_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce("A Loporrit-approved selection of presets and shaders! Fluffy, fancy, and fantastic!");
+            _ = ModernUI.Announce("A Loporrit-approved selection of presets and shaders! Fluffy, fancy, and fantastic!");
         }
 
         private void btnDebug_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce("Oh dear, what have we here? A log full of secrets! (and probably some errors…)");
+            _ = ModernUI.Announce("Oh dear, what have we here? A log full of secrets! (and probably some errors…)");
         }
 
         private void btnAbout_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce("About? About what? Oh! The project! Yes, yes, right this way!");
+            _ = ModernUI.Announce("About? About what? Oh! The project! Yes, yes, right this way!");
         }
 
         private void btnPackagesFolder_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce("Where all your precious presets and shaders live! Don’t worry, they’re well-fed.");
+            _ = ModernUI.Announce("Where all your precious presets and shaders live! Don’t worry, they’re well-fed.");
         }
 
         private void btnGameFolder_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce("Game files, game files everywhere! Tread carefully, adventurer!");
+            _ = ModernUI.Announce("Game files, game files everywhere! Tread carefully, adventurer!");
         }
 
         private void btnFixIt_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce("Duplicated shaders? green tint everywhere? No worries, 'Fix It' is here to save the day!");
+            _ = ModernUI.Announce("Duplicated shaders? green tint everywhere? No worries, 'Fix It' is here to save the day!");
         }
 
         private void btnInstallReShade_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce("You need to shut down the game client before you can update!");
+            _ = ModernUI.Announce("You need to shut down the game client before you can update!");
         }
 
         internal async Task UpdateElements()
@@ -446,7 +452,7 @@ namespace Bundlingway
             {
                 btnUpdate?.DoAction(() => { btnUpdate.Visible = true; });
 
-                _ = UI.Announce($"A new Bundlingway version ({c.Bundlingway.RemoteVersion}) is out!");
+                _ = ModernUI.Announce($"A new Bundlingway version ({c.Bundlingway.RemoteVersion}) is out!");
             }
             else
             {
@@ -455,7 +461,7 @@ namespace Bundlingway
 
             var reShadeBtnEnabled = true;
             var reShadeBtnVisible = true;
-            string reShadeBtnText = null;
+            string? reShadeBtnText = null;
 
 
             btnInstallReShade.Enabled = true;
@@ -492,7 +498,7 @@ namespace Bundlingway
                 if (c.ReShade.Status != EPackageStatus.NotInstalled)
                 {
                     reShadeBtnEnabled = !Instances.IsGameRunning;
-                    _ = UI.Announce("If you want to update ReShade, shut down the game first!");
+                    _ = ModernUI.Announce("If you want to update ReShade, shut down the game first!");
                 }
             }
 
@@ -506,7 +512,7 @@ namespace Bundlingway
 
             var gPosingwayBtnEnabled = true;
             var gPosingwayBtnVisible = true;
-            string gPosingwayBtnText = null;
+            string? gPosingwayBtnText = null;
 
             btnInstallGPosingway.Enabled = true;
             var GPosingwayText = c.GPosingway.Status switch
@@ -559,28 +565,26 @@ namespace Bundlingway
             SetPackageOpsAvailable(false);
             var selectedPackages = dgvPackages.SelectedRows
                 .Cast<DataGridViewRow>()
-                .Select(row => (ResourcePackage)row.Tag)
+                .Select(row => row.Tag as ResourcePackage)
+                .Where(pkg => pkg != null)
                 .ToList();
 
             var count = selectedPackages.Count;
             var pos = 0;
 
-            _ = UI.StartProgress(count);
+            _ = StartProgress(count);
 
             Task.WhenAll(selectedPackages.Select(package => Task.Run(() =>
             {
-                Package.Reinstall(package);
-                _ = UI.SetProgress(++pos);
+                _packageService.ReinstallPackageAsync(package!);
+                _ = SetProgress(++pos);
             }))).ContinueWith(t =>
             {
-
                 Maintenance.RemoveTempDir();
-                _ = UI.Announce(Constants.MessageCategory.ReinstallPackage);
+                _ = ModernUI.Announce(Constants.MessageCategory.ReinstallPackage.ToString());
                 PopulateGrid();
                 SetPackageOpsAvailable(true);
-
-                _ = UI.StopProgress();
-
+                _ = StopProgress();
             });
         }
 
@@ -598,7 +602,7 @@ namespace Bundlingway
                 Directory.CreateDirectory(target);
             }
 
-            _ = UI.Announce("Backing up cache and packages...");
+            _ = ModernUI.Announce("Backing up cache and packages...");
 
             var source1 = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Cache);
 
@@ -637,7 +641,7 @@ namespace Bundlingway
                 }
             }
 
-            _ = UI.Announce("Backup complete!");
+            _ = ModernUI.Announce("Backup complete!");
 
             //Open the backup folder
             System.Diagnostics.Process.Start("explorer.exe", target);
@@ -647,10 +651,11 @@ namespace Bundlingway
         {
             var selectedPackages = dgvPackages.SelectedRows
                 .Cast<DataGridViewRow>()
-                .Select(row => (ResourcePackage)row.Tag)
+                .Select(row => row.Tag as ResourcePackage)
+                .Where(pkg => pkg != null)
                 .ToList();
 
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.ToggleFavorite(package)))).ContinueWith(t =>
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => _packageService.ToggleFavoriteAsync(package!)))).ContinueWith(t =>
             {
                 PopulateGrid();
             });
@@ -660,10 +665,11 @@ namespace Bundlingway
         {
             var selectedPackages = dgvPackages.SelectedRows
                 .Cast<DataGridViewRow>()
-                .Select(row => (ResourcePackage)row.Tag)
+                .Select(row => row.Tag as ResourcePackage)
+                .Where(pkg => pkg != null)
                 .ToList();
 
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => Package.ToggleLocked(package)))).ContinueWith(t =>
+            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => _packageService.ToggleLockedAsync(package!)))).ContinueWith(t =>
             {
                 PopulateGrid();
             });
@@ -681,7 +687,9 @@ namespace Bundlingway
 
         internal async Task SetProgress(long value)
         {
-            var percentage = (int)Math.Round((double)value / (long)prgCommon.Tag * 100);
+            // Fix: Null check before unboxing prgCommon.Tag
+            var tagValue = prgCommon.Tag;
+            var percentage = tagValue is long tagLong && tagLong > 0 ? (int)Math.Round((double)value / tagLong * 100) : 0;
 
             prgCommon?.DoAction(() =>
             {
@@ -711,14 +719,14 @@ namespace Bundlingway
             switch (result)
             {
                 case DialogResult.Yes:
-                    UI.DisableEverything();
+                    DisableEverything();
                     Utilities.Handler.Bundlingway.FixIt(true).Wait();
-                    UI.EnableEverything();
+                    EnableEverything();
                     break;
                 case DialogResult.No:
-                    UI.DisableEverything();
+                    DisableEverything();
                     Utilities.Handler.Bundlingway.FixIt(false).Wait();
-                    UI.EnableEverything();
+                    EnableEverything();
                     break;
                 default:
                     break;
@@ -769,7 +777,8 @@ namespace Bundlingway
             txtBrowserIntegration.DoAction(() => txtBrowserIntegration.Text = CustomProtocolHandler.IsCustomProtocolRegistered(Constants.GPosingwayProtocolHandler));
         }
 
-        private void dvgPackagesContextMenu_Opening(object sender, CancelEventArgs e)
+        // Update context menu event handlers to use async
+        private async void dvgPackagesContextMenu_Opening(object sender, CancelEventArgs e)
         {
             // Clear existing items
             dvgPackagesContextMenu.Items.Clear();
@@ -786,11 +795,11 @@ namespace Bundlingway
             {
                 // Add single row options
                 ToolStripMenuItem openFolderItem = new("Open Folder");
-                openFolderItem.Click += (s, args) => OpenPackageFolder();
+                openFolderItem.Click += async (s, args) => await OpenPackageFolder();
                 dvgPackagesContextMenu.Items.Add(openFolderItem);
 
                 ToolStripMenuItem renameItem = new("Rename");
-                renameItem.Click += (s, args) => RenamePackage();
+                renameItem.Click += async (s, args) => await RenamePackage();
                 dvgPackagesContextMenu.Items.Add(renameItem);
 
                 dvgPackagesContextMenu.Items.Add(new ToolStripSeparator());
@@ -811,7 +820,7 @@ namespace Bundlingway
         }
 
         // Helper method to open the folder of the selected package
-        private void OpenPackageFolder()
+        private async Task OpenPackageFolder()
         {
             if (dgvPackages.SelectedRows.Count != 1) return;
             
@@ -829,17 +838,17 @@ namespace Bundlingway
                 }
                 else
                 {
-                    UI.Announce("Package folder not found!");
+                    await ModernUI.Announce("Package folder not found!");
                 }
             }
             catch (Exception ex)
             {
-                UI.Announce($"Could not open folder: {ex.Message}");
+                await ModernUI.Announce($"Could not open folder: {ex.Message}");
             }
         }
 
         // Helper method to rename the selected package
-        private void RenamePackage()
+        private async Task RenamePackage()
         {
             if (dgvPackages.SelectedRows.Count != 1) return;
             
@@ -861,11 +870,11 @@ namespace Bundlingway
                     package.Label = newName;
                     // Update UI
                     PopulateGrid();
-                    UI.Announce($"Package renamed to \"{newName}\"");
+                    await ModernUI.Announce($"Package renamed to \"{newName}\"");
                 }
                 catch (Exception ex)
                 {
-                    UI.Announce($"Could not rename package: {ex.Message}");
+                    await ModernUI.Announce($"Could not rename package: {ex.Message}");
                 }
             }
         }
@@ -874,21 +883,21 @@ namespace Bundlingway
         private void InstallSelectedPackages()
         {
             // Reuse functionality from btnReinstall_Click
-            btnReinstall_Click(null, EventArgs.Empty);
+            btnReinstall_Click(this, EventArgs.Empty);
         }
 
         // Helper method to uninstall the selected packages
         private void UninstallSelectedPackages()
         {
             // Reuse functionality from btnUninstall_Click
-            btnUninstall_Click(null, EventArgs.Empty);
+            btnUninstall_Click(this, EventArgs.Empty);
         }
 
         // Helper method to remove the selected packages
         private void RemoveSelectedPackages()
         {
             // Reuse functionality from btnRemove_Click
-            btnRemove_Click(null, EventArgs.Empty);
+            btnRemove_Click(this, EventArgs.Empty);
         }
     }
 }

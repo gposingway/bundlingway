@@ -105,7 +105,7 @@ namespace Bundlingway.Utilities
         internal static async Task BringToFront()
         {
             if (_landingForm == null) return;
-            await _landingForm.BringToFront();
+            await _landingForm.BringToFrontForm();
         }
     }
 }

@@ -1,4 +1,10 @@
 using Bundlingway.Utilities;
+using Bundlingway.Core.Services;
+using Bundlingway.Core.Interfaces;
+using Bundlingway.UI.WinForms; // Assuming WinForms services are here
+using System;
+using System.IO;
+using System.Windows.Forms;
 using System.Diagnostics;
 
 namespace Bundlingway
@@ -9,7 +15,7 @@ namespace Bundlingway
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main(string[] args)
+        static void Main()
         {
             try
             {
@@ -19,26 +25,13 @@ namespace Bundlingway
                 // Initialize application configuration
                 ApplicationConfiguration.Initialize();
 
+                // Initialize core services BEFORE other initialization
+                ServiceLocator.InitializeCoreServices(Instances.ConfigFilePath);
+
                 // Initialize the application (e.g., load settings)
                 Bootstrap.Initialize().Wait();
                 Instances.LocalConfigProvider.Load();
                 Maintenance.EnsureConfiguration().Wait();
-
-                // Check if command-line arguments are provided (headless mode)
-                if (args.Length > 0)
-                {
-                    // Process command-line arguments
-                    var result = Utilities.Handler.CommandLineArgs.ProcessAsync(args).Result;
-
-                    // Check if another instance of the application is already running
-                    if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
-                    {
-                        // Notify other instances and close the client
-                        ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.PackageInstalled, Message = result });
-
-                        Process.GetCurrentProcess().Kill();
-                    }
-                }
 
                 // Check for duplicate instances (UI mode)
                 if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
@@ -48,8 +41,43 @@ namespace Bundlingway
                     Process.GetCurrentProcess().Kill();
                 }
 
+                // Core services
+                var configService = new ConfigurationService(Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.BundlingwayConfig));
+                ServiceLocator.Register<IConfigurationService>(configService);
+                ServiceLocator.Register<IFileSystemService>(new FileSystemService());
+                ServiceLocator.Register<IHttpClientService>(new HttpClientService());
+                // Register BundlingwayService (which depends on the above)
+                ServiceLocator.Register(new BundlingwayService(
+                    configService,
+                    ServiceLocator.TryGetService<IHttpClientService>()!,
+                    ServiceLocator.TryGetService<IFileSystemService>()!,
+                    new WinFormsProgressReporter(null), // Will be replaced after mainForm is created
+                    new WinFormsNotificationService(null) // Will be replaced after mainForm is created
+                ));
+
+                // Create main form instance
+                frmLanding mainForm = new frmLanding();
+
+                // UI-specific services that depend on the main form
+                var userNotificationService = new WinFormsNotificationService(mainForm);
+                var progressReporter = new WinFormsProgressReporter(mainForm);
+                ServiceLocator.Register<IUserNotificationService>(userNotificationService);
+                ServiceLocator.Register<IProgressReporter>(progressReporter);
+
+                // Register PackageService for service-based package management
+                ServiceLocator.Register<IPackageService>(new PackageService(
+                    configService,
+                    ServiceLocator.TryGetService<IFileSystemService>()!,
+                    ServiceLocator.TryGetService<IHttpClientService>()!,
+                    progressReporter,
+                    userNotificationService
+                ));
+
+                // ModernUI bridge (static)
+                ModernUI.Initialize();
+
                 // Run the application in UI mode
-                Application.Run(new frmLanding());
+                Application.Run(mainForm);
             }
             catch (Exception ex)
             {

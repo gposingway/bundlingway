@@ -51,9 +51,12 @@ namespace Bundlingway
             { "D0", "0" }
         };
 
+        private readonly Bundlingway.Core.Interfaces.IPackageService _packageService;
+
         public frmShortcuts()
         {
             InitializeComponent();
+            _packageService = Bundlingway.Core.Services.ServiceLocator.TryGetService<Bundlingway.Core.Interfaces.IPackageService>()!;
         }
 
         private void fromShortcuts_Load(object sender, EventArgs e)
@@ -76,7 +79,7 @@ namespace Bundlingway
             foreach (TextBox textBox in textBoxes)
             {
 
-                var key = textBox.Tag.ToString();
+                var key = textBox.Tag?.ToString() ?? string.Empty;
 
                 string shortcutKey = GetShortcutKeyFromSettings(key);
 
@@ -91,25 +94,26 @@ namespace Bundlingway
 
         private string GetShortcutKeyFromSettings(string textBoxName)
         {
-            if (temporaryShortcuts.TryGetValue(textBoxName, out string shortcutKey))
+            var safeTextBoxName = textBoxName ?? string.Empty;
+            if (!string.IsNullOrEmpty(safeTextBoxName) && temporaryShortcuts.TryGetValue(safeTextBoxName, out var shortcutKey) && shortcutKey != null)
             {
                 return shortcutKey;
             }
 
-            if (Utilities.Handler.ReShadeConfig.Shortcuts.TryGetValue(textBoxName, out shortcutKey))
+            if (!string.IsNullOrEmpty(safeTextBoxName) && Utilities.Handler.ReShadeConfig.Shortcuts.TryGetValue(safeTextBoxName, out var shortcutKey2) && shortcutKey2 != null)
             {
-                return shortcutKey;
+                return shortcutKey2;
             }
 
 
-            if (Instances.LocalConfigProvider.Configuration.Shortcuts.TryGetValue(textBoxName, out shortcutKey))
+            if (!string.IsNullOrEmpty(safeTextBoxName) && Instances.LocalConfigProvider.Configuration.Shortcuts.TryGetValue(safeTextBoxName, out var shortcutKey3) && shortcutKey3 != null)
             {
-                return shortcutKey;
+                return shortcutKey3;
             }
 
-            if (Constants.DefaultShortcuts.TryGetValue(textBoxName, out shortcutKey))
+            if (!string.IsNullOrEmpty(safeTextBoxName) && Constants.DefaultShortcuts.TryGetValue(safeTextBoxName, out var shortcutKey4) && shortcutKey4 != null)
             {
-                return shortcutKey;
+                return shortcutKey4;
             }
 
             return null;
@@ -132,7 +136,8 @@ namespace Bundlingway
 
                 string keyName = ((Keys)keyCode).ToString();
 
-                if (KeyNameMappings.TryGetValue(keyName, out string mappedName))
+                var safeKeyName = keyName ?? string.Empty;
+                if (!string.IsNullOrEmpty(safeKeyName) && KeyNameMappings.TryGetValue(safeKeyName, out var mappedName) && mappedName != null)
                 {
                     keyName = mappedName;
                 }
@@ -172,7 +177,7 @@ namespace Bundlingway
             }
             else if (e.KeyCode == Keys.Delete)
             {
-                temporaryShortcuts.Remove(textBox.Tag.ToString());
+                temporaryShortcuts.Remove(textBox.Tag?.ToString() ?? string.Empty);
                 textBox.Text = string.Empty;
                 btnSave.Enabled = true;
             }
@@ -188,13 +193,13 @@ namespace Bundlingway
 
                 textBox.Font = new Font(textBox.Font, FontStyle.Bold);
 
-                if (textBox.Tag.ToString().Contains("@"))
+                if ((textBox.Tag?.ToString() ?? string.Empty).Contains("@"))
                 {
                     _mustPropagate = true;
                     lblWarning.Visible = true;
                 }
 
-                temporaryShortcuts[textBox.Tag.ToString()] = shortcut;
+                temporaryShortcuts[textBox.Tag?.ToString() ?? string.Empty] = shortcut;
 
                 btnSave.Enabled = true;
 
@@ -219,9 +224,9 @@ namespace Bundlingway
 
             if (_mustPropagate)
             {
-                _ = UI.Announce("Shortcuts saved! Updating installed presets...");
-                _ = Utilities.Handler.Package.RefreshInstalled();
-                _ = UI.Announce("Installed presets updated!");
+                _ = ModernUI.Announce("Shortcuts saved! Updating installed presets...");
+                _ = _packageService.ScanPackagesAsync();
+                _ = ModernUI.Announce("Installed presets updated!");
             }
 
             Close();
@@ -237,28 +242,28 @@ namespace Bundlingway
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            _ = UI.Announce("A-Okay!");
+            _ = ModernUI.Announce("A-Okay!");
             Close();
         }
 
         private void btnCancel_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce(((Control)sender).Tag.ToString());
+            _ = ModernUI.Announce(((Control)sender).Tag?.ToString() ?? string.Empty);
         }
 
         private void btnSave_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce(((Control)sender).Tag.ToString());
+            _ = ModernUI.Announce(((Control)sender).Tag?.ToString() ?? string.Empty);
         }
 
         private void btnApplyAll_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce(((Control)sender).Tag.ToString());
+            _ = ModernUI.Announce(((Control)sender).Tag?.ToString() ?? string.Empty);
         }
 
         private void btnDefault_MouseEnter(object sender, EventArgs e)
         {
-            _ = UI.Announce(((Control)sender).Tag.ToString());
+            _ = ModernUI.Announce(((Control)sender).Tag?.ToString() ?? string.Empty);
         }
 
         private void btnDefault_Click(object sender, EventArgs e)
@@ -267,17 +272,18 @@ namespace Bundlingway
 
             foreach (var kvp in Constants.DefaultShortcuts)
             {
-                if (temporaryShortcuts.TryGetValue(kvp.Key, out string currentShortcut) && currentShortcut != kvp.Value)
+                var safeKvpKey = kvp.Key ?? string.Empty;
+                if (!string.IsNullOrEmpty(safeKvpKey) && temporaryShortcuts.TryGetValue(safeKvpKey, out var currentShortcut) && currentShortcut != null && currentShortcut != kvp.Value)
                 {
-                    temporaryShortcuts[kvp.Key] = kvp.Value;
+                    temporaryShortcuts[safeKvpKey] = kvp.Value;
 
-                    var textBox = textBoxes.FirstOrDefault(tb => tb.Tag.ToString() == kvp.Key);
+                    var textBox = textBoxes.FirstOrDefault(tb => (tb.Tag?.ToString() ?? string.Empty) == kvp.Key);
                     if (textBox != null)
                     {
                         textBox.Text = FormatShortcutString(kvp.Value);
                         textBox.Font = new Font(textBox.Font, FontStyle.Bold);
 
-                        if (textBox.Tag.ToString().Contains("@"))
+                        if ((textBox.Tag?.ToString() ?? string.Empty).Contains("@"))
                         {
                             _mustPropagate = true;
                             lblWarning.Visible = true;

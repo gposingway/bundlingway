@@ -1,3 +1,5 @@
+using Bundlingway.Core.Interfaces;
+using Bundlingway.Core.Services;
 using Bundlingway.Model;
 using Bundlingway.Utilities.Extensions;
 using Bundlingway.Utilities.Handler;
@@ -10,6 +12,7 @@ namespace Bundlingway.Utilities
     public static class GPosingway
     {
         private static readonly HttpClient client = new();
+        private static readonly IPackageService _packageService = ServiceLocator.TryGetService<IPackageService>()!;
 
         public static async Task<(bool success, string version)> GetRemoteInfo()
         {
@@ -77,12 +80,12 @@ namespace Bundlingway.Utilities
         {
             string methodName = ProcessHelper.GetCurrentMethodName();
 
-            ResourcePackage gposingwayPackage = Handler.Package.GetByName(Constants.GPosingwayDefaultPackage.Name);
+            var gposingwayPackage = await _packageService.GetPackageByNameAsync(Constants.GPosingwayDefaultPackage.Name);
 
             if (gposingwayPackage == null)
             {
                 Instances.LocalConfigProvider.Configuration.GPosingway.Status = EPackageStatus.NotInstalled;
-                Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion = null;
+                Instances.LocalConfigProvider.Configuration.GPosingway.LocalVersion = string.Empty;
                 Log.Information($"{methodName}: GPosingway not installed locally");
             }
             else
@@ -104,7 +107,9 @@ namespace Bundlingway.Utilities
 
             var downloadUrl = Constants.Urls.GPosingwayConfigFileUrl;
 
-            var gposingwayPackage = Package.Prepare(Constants.GPosingwayDefaultPackage, true).Result;
+            // Prepare or get the package using the service
+            var gposingwayPackage = await _packageService.GetPackageByNameAsync(Constants.GPosingwayDefaultPackage.Name)
+                ?? await _packageService.OnboardPackageAsync(Constants.GPosingwayDefaultPackage.Name);
 
             var destinationPath = Path.Combine(gposingwayPackage.LocalFolder, Constants.Files.GPosingwayConfig);
 
@@ -120,7 +125,9 @@ namespace Bundlingway.Utilities
 
                     response.EnsureSuccessStatusCode();
 
-                    Directory.CreateDirectory(Path.GetDirectoryName(destinationPath)); // Create the directory if it doesn't exist
+                    var dirPath = Path.GetDirectoryName(destinationPath);
+                    if (!string.IsNullOrEmpty(dirPath))
+                        Directory.CreateDirectory(dirPath); // Create the directory if it doesn't exist
 
                     using var fs = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
                     using var stream = response.Content.ReadAsStream();
@@ -151,7 +158,7 @@ namespace Bundlingway.Utilities
 
                 gposingwayPackage.Version = definitions.version;
                 gposingwayPackage.Label = $"GPosingway {definitions.version}";
-                gposingwayPackage.Save();
+                gposingwayPackage.ToJsonFile(Path.Combine(gposingwayPackage.LocalFolder, "package.json"));
 
                 var storageFolder = Path.Combine(gposingwayPackage.LocalFolder, Constants.Folders.SourcePackage);
                 var storageFile = Path.Combine(storageFolder, Constants.Files.GPosingwayPackage);
@@ -238,7 +245,7 @@ namespace Bundlingway.Utilities
                             var fullZipToPath = Path.Combine(extractPath, entryFileName);
                             var directoryName = Path.GetDirectoryName(fullZipToPath);
 
-                            if (directoryName.Length > 0)
+                            if (!string.IsNullOrEmpty(directoryName) && directoryName.Length > 0)
                                 Directory.CreateDirectory(directoryName);
 
                             using (var zipStream = zf.GetInputStream(entry))
@@ -317,9 +324,9 @@ namespace Bundlingway.Utilities
                     Task.Run(() => PostProcessor.RunPipeline(gposingwayPackage)).Wait();
 
                     gposingwayPackage.Status = ResourcePackage.EStatus.Installed;
-                    gposingwayPackage.Save();
+                    gposingwayPackage.ToJsonFile(Path.Combine(gposingwayPackage.LocalFolder, "package.json"));
 
-                    Package.Install(gposingwayPackage.LocalFolder).Wait();
+                    await _packageService.InstallPackageAsync(gposingwayPackage);
                 }
                 catch (Exception e)
                 {
