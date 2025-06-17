@@ -30,7 +30,7 @@ namespace Bundlingway
 
                 // Initialize the application (e.g., load settings)
                 Bootstrap.Initialize().Wait();
-                Instances.LocalConfigProvider.Load();
+                _configService.Load();
                 Maintenance.EnsureConfiguration().Wait();
 
                 // Check for duplicate instances (UI mode)

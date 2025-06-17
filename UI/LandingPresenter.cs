@@ -16,19 +16,20 @@ namespace Bundlingway.UI
         private readonly IPackageService _packageService;
         private readonly ReShadeService _reShadeService;
         private readonly GPosingwayService _gPosingwayService;
-        // Add other services as needed
+        private readonly IConfigurationService _configService;
 
-        public LandingPresenter(ILandingView view, IPackageService packageService, ReShadeService reShadeService, GPosingwayService gPosingwayService)
+        public LandingPresenter(ILandingView view, IPackageService packageService, ReShadeService reShadeService, GPosingwayService gPosingwayService, IConfigurationService configService)
         {
             _view = view;
             _packageService = packageService;
             _reShadeService = reShadeService;
             _gPosingwayService = gPosingwayService;
+            _configService = configService;
         }
 
         public async Task InitializeAsync()
         {
-            var c = Instances.LocalConfigProvider.Configuration;
+            var c = _configService.Configuration;
             var gamePath = c.Game.InstallationFolder;
             if (!string.IsNullOrEmpty(gamePath))
             {
@@ -46,7 +47,7 @@ namespace Bundlingway.UI
             // Perform real detection
             await Bundlingway.Utilities.Bootstrap.DetectSettings();
             // After detection, fetch local/remote info if game path is present
-            var c = Instances.LocalConfigProvider.Configuration;
+            var c = _configService.Configuration;
             var gamePath = c.Game.InstallationFolder;
             if (!string.IsNullOrEmpty(gamePath))
             {
@@ -56,14 +57,14 @@ namespace Bundlingway.UI
                 await _gPosingwayService.GetRemoteInfoAsync();
             }
             // Persist any newly detected values
-            Instances.LocalConfigProvider.Save();
+            _configService.Save();
             await UpdateElementsAsync();
             await PopulateGridAsync();
         }
 
         public async Task UpdateElementsAsync()
         {
-            var c = Instances.LocalConfigProvider.Configuration;
+            var c = _configService.Configuration;
             var gamePath = c.Game.InstallationFolder;
             var gameIsInstalled = !string.IsNullOrEmpty(gamePath);
             await _view.SetGameElementsEnabledAsync(gameIsInstalled);
@@ -204,7 +205,7 @@ namespace Bundlingway.UI
 
         public void OpenGameFolder()
         {
-            var config = Instances.LocalConfigProvider?.Configuration;
+            var config = _configService.Configuration;
             var gamePath = config?.Game?.InstallationFolder;
             if (string.IsNullOrEmpty(gamePath) || !System.IO.Directory.Exists(gamePath))
             {
@@ -290,10 +291,10 @@ namespace Bundlingway.UI
 
         public void ToggleTopMost()
         {
-            var c = Instances.LocalConfigProvider.Configuration;
+            var c = _configService.Configuration;
             c.UI ??= new Bundlingway.Model.BundlingwayConfig.UIData();
             c.UI.TopMost = !c.UI.TopMost;
-            Instances.LocalConfigProvider.Save();
+            _configService.Save();
             // The view should update itself after this
         }
 

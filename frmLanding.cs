@@ -1,21 +1,22 @@
 ﻿#nullable disable
+using Bundlingway.Core.Interfaces;
+using Bundlingway.Core.Services;
 using Bundlingway.Model;
+using Bundlingway.UI;
 using Bundlingway.Utilities;
 using Bundlingway.Utilities.Extensions;
-using Bundlingway.Utilities.Handler;
 using Serilog;
 using System.ComponentModel;
 using System.Diagnostics;
-using Bundlingway.UI;
-using Bundlingway.Core.Services;
 
 namespace Bundlingway
 {
     public partial class frmLanding : Form, ILandingView
     {
-        private readonly Bundlingway.Core.Interfaces.IPackageService _packageService;
+        private readonly IPackageService _packageService;
         private readonly ReShadeService _reShadeService;
         private readonly GPosingwayService _gPosingwayService;
+        private readonly IConfigurationService _configService;
         private LandingPresenter _presenter;
 
         public frmLanding()
@@ -23,17 +24,12 @@ namespace Bundlingway
             InitializeComponent();
 
             // ServiceLocator is used for now; replace with DI when available
-            _packageService = Bundlingway.Core.Services.ServiceLocator.TryGetService<Bundlingway.Core.Interfaces.IPackageService>()!;
-            _reShadeService = Bundlingway.Core.Services.ServiceLocator.TryGetService<ReShadeService>()!;
-            _gPosingwayService = Bundlingway.Core.Services.ServiceLocator.TryGetService<GPosingwayService>()!;
+            _packageService = ServiceLocator.TryGetService<IPackageService>()!;
+            _reShadeService = ServiceLocator.TryGetService<ReShadeService>()!;
+            _gPosingwayService = ServiceLocator.TryGetService<GPosingwayService>()!;
+            _configService = ServiceLocator.TryGetService<IConfigurationService>()!;
 
-            _presenter = new Bundlingway.UI.LandingPresenter(
-                (Bundlingway.UI.ILandingView)this,
-                _packageService,
-                _reShadeService,
-                _gPosingwayService
-            );
-
+            _presenter = new LandingPresenter(this, _packageService, _reShadeService, _gPosingwayService, _configService);
             Text = $"Bundlingway · v{Instances.AppVersion}";
 
             BindAllTaggedControls();
@@ -346,7 +342,7 @@ namespace Bundlingway
         internal async Task UpdateElements()
         {
 
-            var c = Instances.LocalConfigProvider.Configuration;
+            var c = _configService.Configuration;
 
             var txtGamePathText = "";
             var mustDetect = false;

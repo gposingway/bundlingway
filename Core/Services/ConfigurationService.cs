@@ -2,8 +2,6 @@ using Bundlingway.Core.Interfaces;
 using Bundlingway.Model;
 using Bundlingway.Utilities.Extensions;
 using Serilog;
-using System.IO;
-using System.Threading.Tasks;
 
 namespace Bundlingway.Core.Services
 {
@@ -123,6 +121,11 @@ namespace Bundlingway.Core.Services
 
             await Task.CompletedTask;
             return true;
+        }
+
+        public void Save()
+        {
+            throw new NotImplementedException();
         }
     }
 }

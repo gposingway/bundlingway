@@ -31,7 +31,7 @@ namespace Bundlingway.Core.Services
 
         public async Task GetRemoteInfoAsync()
         {
-            var c = Instances.LocalConfigProvider.Configuration.ReShade;
+            var c = _configService.Configuration.ReShade;
             Log.Information("ReShadeService.GetRemoteInfoAsync: Starting to get remote info.");
             var version = "N/A";
             var downloadLink = "N/A";
@@ -73,7 +73,7 @@ namespace Bundlingway.Core.Services
         public async Task GetLocalInfoAsync()
         {
             Log.Information("ReShadeService.GetLocalInfoAsync: Starting to get local info.");
-            var c = Instances.LocalConfigProvider.Configuration;
+            var c = _configService.Configuration;
             if (!string.IsNullOrEmpty(c.Game.InstallationFolder))
             {
                 var reShadeProbe = Path.Combine(c.Game.InstallationFolder, Constants.Files.LocalReshadeBinary);

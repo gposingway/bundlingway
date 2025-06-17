@@ -23,9 +23,9 @@ namespace Bundlingway.Utilities.Handler
 
         public static Dictionary<string, string> Load()
         {
-            if (Instances.LocalConfigProvider.Configuration?.Game?.InstallationFolder == null) return null;
+            if (_configService.Configuration?.Game?.InstallationFolder == null) return null;
 
-            fileLocation = Path.Combine(Instances.LocalConfigProvider.Configuration.Game.InstallationFolder, Constants.Files.LocalReshadeConfig);
+            fileLocation = Path.Combine(_configService.Configuration.Game.InstallationFolder, Constants.Files.LocalReshadeConfig);
             if (!File.Exists(fileLocation)) return null;
 
             _iniHandler = new FileIniDataParser().ReadFile(fileLocation);

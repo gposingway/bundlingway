@@ -1,10 +1,11 @@
-﻿using Bundlingway.Utilities;
+﻿using Bundlingway.Core.Interfaces;
+using Bundlingway.Utilities;
 
 namespace Bundlingway
 {
     public partial class frmShortcuts : Form
     {
-        private Dictionary<string, string> temporaryShortcuts = new Dictionary<string, string>();
+        private Dictionary<string, string> temporaryShortcuts = [];
 
         private bool _mustPropagate = false;
 
@@ -51,12 +52,15 @@ namespace Bundlingway
             { "D0", "0" }
         };
 
-        private readonly Bundlingway.Core.Interfaces.IPackageService _packageService;
+        private readonly IPackageService _packageService;
+        private readonly IConfigurationService _configService;
+
 
         public frmShortcuts()
         {
             InitializeComponent();
-            _packageService = Bundlingway.Core.Services.ServiceLocator.TryGetService<Bundlingway.Core.Interfaces.IPackageService>()!;
+            _packageService = Core.Services.ServiceLocator.TryGetService<IPackageService>()!;
+            _configService = Core.Services.ServiceLocator.TryGetService<IConfigurationService>()!;
         }
 
         private void fromShortcuts_Load(object sender, EventArgs e)
@@ -106,7 +110,7 @@ namespace Bundlingway
             }
 
 
-            if (!string.IsNullOrEmpty(safeTextBoxName) && Instances.LocalConfigProvider.Configuration.Shortcuts.TryGetValue(safeTextBoxName, out var shortcutKey3) && shortcutKey3 != null)
+            if (!string.IsNullOrEmpty(safeTextBoxName) && _configService.Configuration.Shortcuts.TryGetValue(safeTextBoxName, out var shortcutKey3) && shortcutKey3 != null)
             {
                 return shortcutKey3;
             }
@@ -216,9 +220,9 @@ namespace Bundlingway
             Refresh();
 
             foreach (var kvp in temporaryShortcuts)
-                Instances.LocalConfigProvider.Configuration.Shortcuts[kvp.Key] = kvp.Value;
+                _configService.Configuration.Shortcuts[kvp.Key] = kvp.Value;
 
-            Instances.LocalConfigProvider.Save();
+            _configService.Save();
 
             Utilities.Handler.ReShadeConfig.SaveShortcuts(temporaryShortcuts);
 

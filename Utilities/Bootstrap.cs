@@ -35,7 +35,7 @@ namespace Bundlingway.Utilities
                 _ = UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.DetectingSettings));
                 Log.Information("Bootstrap.DetectSettings: Starting settings detection.");
                 // Load the local configuration
-                Instances.LocalConfigProvider.Load();
+                _configService.Load();
 
                 // Initialize the resource packages list if it's null
                 if (Instances.ResourcePackages == null)
@@ -54,7 +54,7 @@ namespace Bundlingway.Utilities
                 });
 
                 // Save the local configuration
-                Instances.LocalConfigProvider.Save();
+                _configService.Save();
 
                 
 
@@ -95,7 +95,7 @@ namespace Bundlingway.Utilities
         {
             try
             {
-                var c = Instances.LocalConfigProvider.Configuration.Game;
+                var c = _configService.Configuration.Game;
                 Log.Information("Bootstrap.CheckGameClient: Checking game client.");
 
                 // If the game is running, get the process path
@@ -155,7 +155,7 @@ namespace Bundlingway.Utilities
                     await gPosingwayService.GetLocalInfoAsync();
                     await gPosingwayService.GetRemoteInfoAsync();
                 }
-                Instances.LocalConfigProvider.Save();
+                _configService.Save();
                 Log.Information("Bootstrap.CheckGPosingway: GPosingway check completed.");
             }
             catch (Exception ex)

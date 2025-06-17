@@ -7,7 +7,6 @@ namespace Bundlingway
 {
     public class Instances
     {
-        public static ConfigProvider<BundlingwayConfig> LocalConfigProvider { get; set; }
         public static string AppName { get; private set; } = Assembly.GetExecutingAssembly().GetCustomAttribute<AssemblyProductAttribute>().Product;
         public static string AppVersion { get; private set; } = Assembly.GetExecutingAssembly().GetName().Version.ToString();
         public static string OSAppDataPath { get; private set; } = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);

@@ -1,8 +1,5 @@
 using Bundlingway.Core.Interfaces;
 using Bundlingway.Model;
-using Bundlingway.Utilities;
-using Bundlingway.Utilities.Extensions;
-using ICSharpCode.SharpZipLib.Zip;
 using Newtonsoft.Json.Linq;
 using Serilog;
 
@@ -32,8 +29,8 @@ namespace Bundlingway.Core.Services
 
         public async Task<(bool success, string version)> GetRemoteInfoAsync()
         {
-            var c = _configService.Configuration.GPosingway;
-            string url = Bundlingway.Constants.Urls.GPosingwayConfigFileUrl;
+            var c =  _configService.Configuration.GPosingway;
+            string url = Constants.Urls.GPosingwayConfigFileUrl;
             string methodName = nameof(GetRemoteInfoAsync);
 
             // Fetch the webpage HTML content

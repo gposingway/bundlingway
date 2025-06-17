@@ -18,22 +18,22 @@ namespace Bundlingway.Utilities
 
             var mustRefresh = false;
 
-            if (Instances.LocalConfigProvider.Configuration.Shortcuts == null)
+            if (_configService.Configuration.Shortcuts == null)
             {
-                Instances.LocalConfigProvider.Configuration.Shortcuts = [];
+                _configService.Configuration.Shortcuts = [];
                 mustRefresh = true;
             }
 
             foreach (var kvp in Constants.DefaultShortcuts)
             {
-                if (!Instances.LocalConfigProvider.Configuration.Shortcuts.ContainsKey(kvp.Key))
+                if (!_configService.Configuration.Shortcuts.ContainsKey(kvp.Key))
                 {
-                    Instances.LocalConfigProvider.Configuration.Shortcuts.Add(kvp.Key, kvp.Value);
+                    _configService.Configuration.Shortcuts.Add(kvp.Key, kvp.Value);
                     mustRefresh = true;
                 }
             }
 
-            if (mustRefresh) Instances.LocalConfigProvider.Save();
+            if (mustRefresh) _configService.Save();
         }
 
         internal static async Task PrepareEnvironmentAsync()
