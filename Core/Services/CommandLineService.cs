@@ -1,7 +1,6 @@
 using Bundlingway.Core.Interfaces;
 using Bundlingway.Model;
 using Bundlingway.Utilities.Extensions;
-using Bundlingway.Utilities.Handler;
 using Serilog;
 using System.Diagnostics;
 using System.Net;

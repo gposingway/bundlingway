@@ -6,7 +6,6 @@ using Bundlingway.Core.Interfaces;
 using Bundlingway.Core.Services;
 using Bundlingway.Model;
 using Bundlingway.Utilities;
-using Bundlingway.Utilities.Handler;
 
 namespace Bundlingway.UI
 {
@@ -57,7 +56,7 @@ namespace Bundlingway.UI
                 await _gPosingwayService.GetRemoteInfoAsync();
             }
             // Persist any newly detected values
-            _configService.Save();
+            await _configService.SaveAsync();
             await UpdateElementsAsync();
             await PopulateGridAsync();
         }
@@ -289,12 +288,12 @@ namespace Bundlingway.UI
             System.Diagnostics.Process.Start("explorer.exe", target);
         }
 
-        public void ToggleTopMost()
+        public async Task ToggleTopMostAsync()
         {
             var c = _configService.Configuration;
             c.UI ??= new Bundlingway.Model.BundlingwayConfig.UIData();
             c.UI.TopMost = !c.UI.TopMost;
-            _configService.Save();
+            await _configService.SaveAsync();
             // The view should update itself after this
         }
 

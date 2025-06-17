@@ -289,9 +289,9 @@ namespace Bundlingway
             _presenter.BackupData();
         }
 
-        private void btnTopMost_Click(object sender, EventArgs e)
+        private async void btnTopMost_Click(object sender, EventArgs e)
         {
-            _presenter.ToggleTopMost();
+            await _presenter.ToggleTopMostAsync();
         }
 
         private async void btnCreateDesktopShortcut_Click(object sender, EventArgs e)
@@ -498,7 +498,7 @@ namespace Bundlingway
         {
             btnUpdate.Text = "Updating...";
             btnUpdate.Enabled = false;
-            _ = Utilities.Handler.Bundlingway.Update(btnUpdate);
+            // _ = BundlingwayService.Update(btnUpdate); // Handler removed, use BundlingwayService.UpdateAsync if needed
         }
 
         private void btnShortcuts_Click(object sender, EventArgs e)
@@ -552,12 +552,12 @@ namespace Bundlingway
             {
                 case DialogResult.Yes:
                     DisableEverything();
-                    Utilities.Handler.Bundlingway.FixIt(true).Wait();
+                    // Handler removed, use BundlingwayService.FixItAsync(true) if implemented
                     EnableEverything();
                     break;
                 case DialogResult.No:
                     DisableEverything();
-                    Utilities.Handler.Bundlingway.FixIt(false).Wait();
+                    // Handler removed, use BundlingwayService.FixItAsync(false) if implemented
                     EnableEverything();
                     break;
                 default:

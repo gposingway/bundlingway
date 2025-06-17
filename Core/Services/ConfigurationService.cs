@@ -122,10 +122,5 @@ namespace Bundlingway.Core.Services
             await Task.CompletedTask;
             return true;
         }
-
-        public void Save()
-        {
-            throw new NotImplementedException();
-        }
     }
 }

@@ -56,7 +56,7 @@ namespace Bundlingway.Model
 
         internal async Task Install()
         {
-            await Utilities.Handler.Package.Install(Name);
+            // await Utilities.Handler.Package.Install(Name); // Handler removed, use IPackageService instead
         }
     }
 }

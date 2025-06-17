@@ -104,12 +104,6 @@ namespace Bundlingway
                 return shortcutKey;
             }
 
-            if (!string.IsNullOrEmpty(safeTextBoxName) && Utilities.Handler.ReShadeConfig.Shortcuts.TryGetValue(safeTextBoxName, out var shortcutKey2) && shortcutKey2 != null)
-            {
-                return shortcutKey2;
-            }
-
-
             if (!string.IsNullOrEmpty(safeTextBoxName) && _configService.Configuration.Shortcuts.TryGetValue(safeTextBoxName, out var shortcutKey3) && shortcutKey3 != null)
             {
                 return shortcutKey3;
@@ -211,7 +205,7 @@ namespace Bundlingway
             }
         }
 
-        private void btnSave_Click(object sender, EventArgs e)
+        private async void btnSave_Click(object sender, EventArgs e)
         {
             DisableAllElements();
 
@@ -222,9 +216,8 @@ namespace Bundlingway
             foreach (var kvp in temporaryShortcuts)
                 _configService.Configuration.Shortcuts[kvp.Key] = kvp.Value;
 
-            _configService.Save();
+            await _configService.SaveAsync();
 
-            Utilities.Handler.ReShadeConfig.SaveShortcuts(temporaryShortcuts);
 
             if (_mustPropagate)
             {

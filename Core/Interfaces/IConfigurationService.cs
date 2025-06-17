@@ -35,8 +35,6 @@ namespace Bundlingway.Core.Interfaces
         /// <returns>True if configuration is valid, false otherwise</returns>
         Task<bool> ValidateAsync();
 
-        void Save();
-
         /// <summary>
         /// Gets the configuration file path.
         /// </summary>

@@ -1,4 +1,6 @@
-﻿using Bundlingway.Utilities.Extensions;
+﻿using Bundlingway.Core.Interfaces;
+using Bundlingway.Core.Services;
+using Bundlingway.Utilities.Extensions;
 using Newtonsoft.Json;
 using Serilog;
 
@@ -6,6 +8,7 @@ namespace Bundlingway.Utilities
 {
     public static class Maintenance
     {
+        private static IConfigurationService ConfigService => ServiceLocator.GetService<IConfigurationService>();
 
         public static void RemoveTempDir()
         {
@@ -18,22 +21,22 @@ namespace Bundlingway.Utilities
 
             var mustRefresh = false;
 
-            if (_configService.Configuration.Shortcuts == null)
+            if (ConfigService.Configuration.Shortcuts == null)
             {
-                _configService.Configuration.Shortcuts = [];
+                ConfigService.Configuration.Shortcuts = [];
                 mustRefresh = true;
             }
 
             foreach (var kvp in Constants.DefaultShortcuts)
             {
-                if (!_configService.Configuration.Shortcuts.ContainsKey(kvp.Key))
+                if (!ConfigService.Configuration.Shortcuts.ContainsKey(kvp.Key))
                 {
-                    _configService.Configuration.Shortcuts.Add(kvp.Key, kvp.Value);
+                    ConfigService.Configuration.Shortcuts.Add(kvp.Key, kvp.Value);
                     mustRefresh = true;
                 }
             }
 
-            if (mustRefresh) _configService.Save();
+            if (mustRefresh) await ConfigService.SaveAsync();
         }
 
         internal static async Task PrepareEnvironmentAsync()

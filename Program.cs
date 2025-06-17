@@ -30,7 +30,8 @@ namespace Bundlingway
 
                 // Initialize the application (e.g., load settings)
                 Bootstrap.Initialize().Wait();
-                _configService.Load();
+                var configService = new ConfigurationService(Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.BundlingwayConfig));
+                configService.LoadAsync().Wait();
                 Maintenance.EnsureConfiguration().Wait();
 
                 // Check for duplicate instances (UI mode)
@@ -42,7 +43,6 @@ namespace Bundlingway
                 }
 
                 // Core services
-                var configService = new ConfigurationService(Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.BundlingwayConfig));
                 ServiceLocator.Register<IConfigurationService>(configService);
                 ServiceLocator.Register<IFileSystemService>(new FileSystemService());
                 ServiceLocator.Register<IHttpClientService>(new HttpClientService());

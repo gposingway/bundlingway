@@ -1,6 +1,6 @@
-﻿using Bundlingway.Core.Services;
+﻿﻿using Bundlingway.Core.Interfaces;
+using Bundlingway.Core.Services;
 using Bundlingway.Model;
-using Bundlingway.Utilities.Handler;
 using Serilog;
 
 namespace Bundlingway.Utilities
@@ -14,9 +14,6 @@ namespace Bundlingway.Utilities
         {
             try
             {
-                // Initialize the local configuration provider
-                Instances.LocalConfigProvider = new ConfigProvider<BundlingwayConfig>();
-
                 Log.Information("Bootstrap.Initialize: Initialization completed.");
             }
             catch (Exception ex)
@@ -35,7 +32,7 @@ namespace Bundlingway.Utilities
                 _ = UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.DetectingSettings));
                 Log.Information("Bootstrap.DetectSettings: Starting settings detection.");
                 // Load the local configuration
-                _configService.Load();
+                await ConfigService.LoadAsync();
 
                 // Initialize the resource packages list if it's null
                 if (Instances.ResourcePackages == null)
@@ -54,7 +51,7 @@ namespace Bundlingway.Utilities
                 });
 
                 // Save the local configuration
-                _configService.Save();
+                await ConfigService.SaveAsync();
 
                 
 
@@ -78,8 +75,8 @@ namespace Bundlingway.Utilities
             {
                 Log.Information("Bootstrap.CheckBundlingway: Checking Bundlingway.");
                 // Get local and remote Bundlingway information
-                await Handler.Bundlingway.GetLocalInfo();
-                await Handler.Bundlingway.GetRemoteInfo();
+                await BundlingwayService.Create().GetLocalInfoAsync();
+                await BundlingwayService.Create().GetRemoteInfoAsync();
                 Log.Information("Bootstrap.CheckBundlingway: Bundlingway check completed.");
             }
             catch (Exception ex)
@@ -95,7 +92,7 @@ namespace Bundlingway.Utilities
         {
             try
             {
-                var c = _configService.Configuration.Game;
+                var c = ConfigService.Configuration.Game;
                 Log.Information("Bootstrap.CheckGameClient: Checking game client.");
 
                 // If the game is running, get the process path
@@ -155,7 +152,7 @@ namespace Bundlingway.Utilities
                     await gPosingwayService.GetLocalInfoAsync();
                     await gPosingwayService.GetRemoteInfoAsync();
                 }
-                _configService.Save();
+                await ConfigService.SaveAsync();
                 Log.Information("Bootstrap.CheckGPosingway: GPosingway check completed.");
             }
             catch (Exception ex)
@@ -182,5 +179,7 @@ namespace Bundlingway.Utilities
                 Log.Information($"Bootstrap.CheckReShade: Error in CheckReShade: {ex.Message}");
             }
         }
+
+        private static IConfigurationService ConfigService => Core.Services.ServiceLocator.GetService<IConfigurationService>();
     }
 }
