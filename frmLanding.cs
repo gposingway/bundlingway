@@ -11,6 +11,7 @@ namespace Bundlingway
     public partial class frmLanding : Form
     {
         private readonly Bundlingway.Core.Interfaces.IPackageService _packageService;
+        private readonly Bundlingway.Core.Interfaces.IReShadeService _reShadeService;
 
         public frmLanding()
         {
@@ -18,6 +19,7 @@ namespace Bundlingway
 
             // ServiceLocator is used for now; replace with DI when available
             _packageService = Bundlingway.Core.Services.ServiceLocator.TryGetService<Bundlingway.Core.Interfaces.IPackageService>()!;
+            _reShadeService = Bundlingway.Core.Services.ServiceLocator.TryGetService<Bundlingway.Core.Interfaces.IReShadeService>()!;
 
             Text = $"Bundlingway · v{Instances.AppVersion}";
 
@@ -29,7 +31,7 @@ namespace Bundlingway
             txtDesktopShortcut.DoAction(() => txtDesktopShortcut.Text = ProcessHelper.CheckDesktopShortcutStatus());
             txtBrowserIntegration.DoAction(() => txtBrowserIntegration.Text = CustomProtocolHandler.IsCustomProtocolRegistered(Constants.GPosingwayProtocolHandler));
 
-            PopulateGrid();
+            _ = PopulateGridAsync();
 
             ProcessHelper.NotificationReceived += ProcessHelper_NotificationReceived;
             _ = ProcessHelper.ListenForNotifications();
@@ -102,11 +104,11 @@ namespace Bundlingway
                         .ToList();
 
                     // Use the service-based onboarding
-                    _packageService.OnboardPackagesAsync(selectedFiles).ContinueWith(a =>
+                    _packageService.OnboardPackagesAsync(selectedFiles).ContinueWith(async a =>
                     {
                         Maintenance.RemoveTempDir();
                         Instances.LocalConfigProvider.Save();
-                        PopulateGrid();
+                        await PopulateGridAsync();
                         SetPackageOpsAvailable(true);
 
                         _ = ModernUI.Announce(Constants.MessageCategory.Finished.ToString());
@@ -130,10 +132,17 @@ namespace Bundlingway
             });
         }
 
-        private void PopulateGrid()
+        private async Task PopulateGridAsync()
         {
             Log.Information("frmLanding: PopulateGrid - Populating the grid with resource packages");
-            Package.Scan().Wait();
+            await _packageService.ScanPackagesAsync();
+            var packages = await _packageService.GetAllPackagesAsync() ?? [];
+
+            if (dgvPackages == null)
+            {
+                Log.Warning("frmLanding: PopulateGrid - dgvPackages is null. UI not initialized?");
+                return;
+            }
 
             List<SortOrder> sortOrders = new List<SortOrder>();
             List<string> sortColumnNames = new List<string>();
@@ -159,7 +168,7 @@ namespace Bundlingway
                 }
             });
 
-            foreach (var package in Instances.ResourcePackages)
+            foreach (var package in packages)
             {
                 var rowObj = new DataGridViewRow();
 
@@ -187,7 +196,7 @@ namespace Bundlingway
                 // 2. Re-select rows *after* repopulating
                 foreach (DataGridViewRow row in dgvPackages.Rows)
                 {
-                    if (row.Tag != null && selectedPackages.Contains(((ResourcePackage)row.Tag).Name)) // Or use custom comparison if needed (see previous response)
+                    if (row.Tag != null && selectedPackages.Contains(((ResourcePackage)row.Tag).Name))
                     {
                         row.Selected = true;
                     }
@@ -231,7 +240,7 @@ namespace Bundlingway
             Task.WhenAll(selectedPackages.Select(package => Task.Run(() => _packageService.RemovePackageAsync(package!)))).ContinueWith(t =>
             {
                 _ = ModernUI.Announce(Constants.MessageCategory.UninstallPackage.ToString());
-                PopulateGrid();
+                _ = PopulateGridAsync();
                 SetPackageOpsAvailable(true);
             });
         }
@@ -251,16 +260,14 @@ namespace Bundlingway
                 Maintenance.RemoveTempDir();
                 _ = ModernUI.Announce(Constants.MessageCategory.UninstallPackage.ToString());
                 SetPackageOpsAvailable(true);
-                PopulateGrid();
+                _ = PopulateGridAsync();
             });
         }
 
         private void btnInstallReShade_Click(object sender, EventArgs e)
         {
-
             btnInstallReShade.Enabled = false;
-
-            ReShade.Update().ContinueWith(a =>
+            _reShadeService.UpdateAsync().ContinueWith(a =>
             {
                 Bootstrap.DetectSettings().ContinueWith(async b =>
                 {
@@ -279,7 +286,7 @@ namespace Bundlingway
                 Bootstrap.DetectSettings().ContinueWith(b =>
                 {
                     Maintenance.RemoveTempDir();
-                    PopulateGrid();
+                    _ = PopulateGridAsync();
                 });
             });
         }
@@ -582,7 +589,7 @@ namespace Bundlingway
             {
                 Maintenance.RemoveTempDir();
                 _ = ModernUI.Announce(Constants.MessageCategory.ReinstallPackage.ToString());
-                PopulateGrid();
+                _ = PopulateGridAsync();
                 SetPackageOpsAvailable(true);
                 _ = StopProgress();
             });
@@ -657,7 +664,7 @@ namespace Bundlingway
 
             Task.WhenAll(selectedPackages.Select(package => Task.Run(() => _packageService.ToggleFavoriteAsync(package!)))).ContinueWith(t =>
             {
-                PopulateGrid();
+                _ = PopulateGridAsync();
             });
         }
 
@@ -671,7 +678,7 @@ namespace Bundlingway
 
             Task.WhenAll(selectedPackages.Select(package => Task.Run(() => _packageService.ToggleLockedAsync(package!)))).ContinueWith(t =>
             {
-                PopulateGrid();
+                _ = PopulateGridAsync();
             });
         }
 
@@ -869,7 +876,7 @@ namespace Bundlingway
                 {
                     package.Label = newName;
                     // Update UI
-                    PopulateGrid();
+                    _ = PopulateGridAsync();
                     await ModernUI.Announce($"Package renamed to \"{newName}\"");
                 }
                 catch (Exception ex)

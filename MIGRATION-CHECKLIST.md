@@ -117,11 +117,14 @@
   - [x] Remove all static handler calls from UI and handlers
   - [x] Refactor all handler usages to use IPackageService
 
-#### **Phase 2.3: ReShade Handler Migration** 📋 **PLANNED**
-- [ ] Create `ReShadeService` implementation
-- [ ] Migrate ReShade.Update method
-- [ ] Migrate ReShade detection logic
-- [ ] Replace UI dependencies
+#### **Phase 2.3: ReShade Handler Migration** ✅ **COMPLETED**
+- [x] Create `ReShadeService` implementation
+- [x] Migrate ReShade.Update method
+- [x] Migrate ReShade detection logic
+- [x] Replace UI dependencies
+- [x] All usages in UI and handlers refactored to use IReShadeService
+- [x] Service registered in ServiceLocator and wired in Program.cs
+- [x] Static handler is now obsolete and unused
 
 #### **Phase 2.4: GPosingway Handler Migration** 📋 **PLANNED**
 - [ ] Create `GPosingwayService` implementation

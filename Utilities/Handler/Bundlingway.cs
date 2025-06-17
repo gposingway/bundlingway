@@ -1,5 +1,6 @@
 ﻿﻿using Bundlingway.Utilities.Extensions;
 using Bundlingway.Core.Services;
+using Bundlingway.Core.Interfaces;
 using Serilog;
 using System.Text.Json;
 
@@ -24,11 +25,12 @@ namespace Bundlingway.Utilities.Handler
             if (Directory.Exists(reshadeShadersFolder)) Directory.Delete(reshadeShadersFolder, true);
 
             // Update ReShade and GPosingway
-            await ReShade.Update();
+            await ServiceLocator.GetService<IReShadeService>().UpdateAsync();
             await GPosingway.Update(refreshCache);
 
             // Reinstall all installed Shader packages
-            await Package.Scan();
+            var packageService = ServiceLocator.GetService<IPackageService>();
+            packageService.ScanPackagesAsync().Wait();
             foreach (var package in Instances.ResourcePackages)
             {
                 if (package.Type == Model.ResourcePackage.EType.ShaderCollection && package.Status == Model.ResourcePackage.EStatus.Installed)

@@ -55,6 +55,23 @@ namespace Bundlingway
                     new WinFormsNotificationService(null) // Will be replaced after mainForm is created
                 ));
 
+                // Register PackageService for service-based package management
+                ServiceLocator.Register<IPackageService>(new PackageService(
+                    configService,
+                    ServiceLocator.TryGetService<IFileSystemService>()!,
+                    ServiceLocator.TryGetService<IHttpClientService>()!,
+                    new WinFormsProgressReporter(null), // Will be replaced after mainForm is created
+                    new WinFormsNotificationService(null) // Will be replaced after mainForm is created
+                ));
+
+                // Register ReShadeService for service-based ReShade management
+                ServiceLocator.Register<IReShadeService>(new ReShadeService(
+                    configService,
+                    ServiceLocator.TryGetService<IFileSystemService>()!,
+                    new WinFormsNotificationService(null),
+                    ServiceLocator.TryGetService<IHttpClientService>()!
+                ));
+
                 // Create main form instance
                 frmLanding mainForm = new frmLanding();
 
@@ -63,15 +80,6 @@ namespace Bundlingway
                 var progressReporter = new WinFormsProgressReporter(mainForm);
                 ServiceLocator.Register<IUserNotificationService>(userNotificationService);
                 ServiceLocator.Register<IProgressReporter>(progressReporter);
-
-                // Register PackageService for service-based package management
-                ServiceLocator.Register<IPackageService>(new PackageService(
-                    configService,
-                    ServiceLocator.TryGetService<IFileSystemService>()!,
-                    ServiceLocator.TryGetService<IHttpClientService>()!,
-                    progressReporter,
-                    userNotificationService
-                ));
 
                 // ModernUI bridge (static)
                 ModernUI.Initialize();

@@ -167,8 +167,9 @@ namespace Bundlingway.Utilities
             try
             {
                 Log.Information("Bootstrap.CheckReShade: Checking ReShade.");
-                await ReShade.GetLocalInfo();
-                await ReShade.GetRemoteInfo();
+                var reShadeService = Core.Services.ServiceLocator.GetService<Core.Interfaces.IReShadeService>();
+                await reShadeService.GetLocalInfoAsync();
+                await reShadeService.GetRemoteInfoAsync();
                 Instances.LocalConfigProvider.Save();
                 Log.Information("Bootstrap.CheckReShade: ReShade check completed.");
             }

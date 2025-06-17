@@ -20,6 +20,8 @@ namespace Bundlingway.Core.Services
         private readonly IProgressReporter _progressReporter;
         private readonly IUserNotificationService _notifications;
 
+        private List<ResourcePackage> _cachedPackages = new List<ResourcePackage>();
+
         public PackageService(
             IConfigurationService configService,
             IFileSystemService fileSystem,
@@ -40,8 +42,8 @@ namespace Bundlingway.Core.Services
 
         public async Task<IEnumerable<ResourcePackage>> GetAllPackagesAsync()
         {
-            // TODO: Implement logic to enumerate all packages from storage
-            throw new System.NotImplementedException();
+            // Return cached packages if available
+            return _cachedPackages;
         }
 
         public async Task<ResourcePackage?> GetPackageByNameAsync(string packageName)
@@ -52,17 +54,27 @@ namespace Bundlingway.Core.Services
 
         public async Task ScanPackagesAsync()
         {
-            // Example: Scan package folder and update list
             var packageFolder = _fileSystem.GetPackageFolder();
             var packageDirs = _fileSystem.GetDirectories(packageFolder);
             var foundPackages = new List<ResourcePackage>();
             foreach (var dir in packageDirs)
             {
-                // TODO: Load package metadata from catalog file
-                // foundPackages.Add(...)
+                var catalogPath = Path.Combine(dir, Bundlingway.Constants.Files.CatalogEntry);
+                if (_fileSystem.FileExists(catalogPath))
+                {
+                    try
+                    {
+                        var json = await _fileSystem.ReadAllTextAsync(catalogPath);
+                        var pkg = json.FromJson<ResourcePackage>();
+                        if (pkg != null)
+                            foundPackages.Add(pkg);
+                    }
+                    catch { /* Ignore invalid or missing catalog files */ }
+                }
             }
+            _cachedPackages = foundPackages;
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = foundPackages, Message = "Scan complete" });
-            await Task.CompletedTask;
+            await Task.CompletedTask.ConfigureAwait(false);
         }
 
         public async Task<ResourcePackage> OnboardPackageAsync(string filePath, string? packageName = null, bool autoInstall = true)
