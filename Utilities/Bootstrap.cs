@@ -1,4 +1,5 @@
-﻿﻿using Bundlingway.Model;
+﻿using Bundlingway.Core.Services;
+using Bundlingway.Model;
 using Bundlingway.Utilities.Handler;
 using Serilog;
 
@@ -79,7 +80,6 @@ namespace Bundlingway.Utilities
                 // Get local and remote Bundlingway information
                 await Handler.Bundlingway.GetLocalInfo();
                 await Handler.Bundlingway.GetRemoteInfo();
-                Instances.LocalConfigProvider.Save();
                 Log.Information("Bootstrap.CheckBundlingway: Bundlingway check completed.");
             }
             catch (Exception ex)
@@ -96,41 +96,42 @@ namespace Bundlingway.Utilities
             try
             {
                 var c = Instances.LocalConfigProvider.Configuration.Game;
-
                 Log.Information("Bootstrap.CheckGameClient: Checking game client.");
 
                 // If the game is running, get the process path
                 if (Instances.IsGameRunning)
                 {
                     var procPath = ProcessHelper.GetProcessPath(Constants.Files.GameProcess);
-
                     if (procPath != null)
                     {
                         c.ClientLocation = procPath;
+                        c.InstallationFolder = Path.GetDirectoryName(procPath);
                     }
                 }
-
-                // If the client location is not valid, reset it
-                if (c.ClientLocation != null)
-                    if (!File.Exists(c.ClientLocation))
+                else if (!string.IsNullOrEmpty(c.InstallationFolder) && !string.IsNullOrEmpty(c.ClientLocation))
+                {
+                    // Game is not running, but a path is present
+                    bool folderExists = Directory.Exists(c.InstallationFolder);
+                    bool exeExists = File.Exists(c.ClientLocation);
+                    if (!folderExists || !exeExists)
                     {
+                        // If either is missing, clear both
                         c.ClientLocation = null;
                         c.InstallationFolder = null;
                     }
-                    else
+                    // else: both exist, proceed without overwriting (allow GPosingway/ReShade checks)
+                }
+                // else: no path, do nothing
+
+                // Shader analysis (if valid)
+                if (!string.IsNullOrEmpty(c.InstallationFolder))
+                {
+                    var shaderFolderPath = Path.Combine(c.InstallationFolder, Constants.Folders.GameShaders);
+                    if (Directory.Exists(shaderFolderPath))
                     {
-                        // Get the installation folder and shader folder path
-                        c.InstallationFolder = Path.GetDirectoryName(c.ClientLocation);
-
-                        var shaderFolderPath = Path.Combine(c.InstallationFolder, Constants.Folders.GameShaders);
-
-                        // If the shader folder exists, analyze the shaders
-                        if (Directory.Exists(shaderFolderPath))
-                        {
-                            // In the background we will save the shader analysis to the data folder.
-                            // _ = ManagedResources.Shader.SaveShaderAnalysisToPath(shaderFolderPath, Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.ShaderAnalysis)).ContinueWith(i=> UI.Announce("Installed shaders analysis finished!"));
-                        }
+                        // _ = ManagedResources.Shader.SaveShaderAnalysisToPath(shaderFolderPath, Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.ShaderAnalysis)).ContinueWith(i=> UI.Announce("Installed shaders analysis finished!"));
                     }
+                }
 
                 Log.Information("Bootstrap.CheckGameClient: Game client check completed.");
             }
@@ -148,8 +149,12 @@ namespace Bundlingway.Utilities
             try
             {
                 Log.Information("Bootstrap.CheckGPosingway: Checking GPosingway.");
-                await GPosingway.GetLocalInfo();
-                await GPosingway.GetRemoteInfo();
+                var gPosingwayService = ServiceLocator.TryGetService<GPosingwayService>();
+                if (gPosingwayService != null)
+                {
+                    await gPosingwayService.GetLocalInfoAsync();
+                    await gPosingwayService.GetRemoteInfoAsync();
+                }
                 Instances.LocalConfigProvider.Save();
                 Log.Information("Bootstrap.CheckGPosingway: GPosingway check completed.");
             }
@@ -167,10 +172,9 @@ namespace Bundlingway.Utilities
             try
             {
                 Log.Information("Bootstrap.CheckReShade: Checking ReShade.");
-                var reShadeService = Core.Services.ServiceLocator.GetService<Core.Interfaces.IReShadeService>();
+                var reShadeService = ServiceLocator.GetService<ReShadeService>();
                 await reShadeService.GetLocalInfoAsync();
                 await reShadeService.GetRemoteInfoAsync();
-                Instances.LocalConfigProvider.Save();
                 Log.Information("Bootstrap.CheckReShade: ReShade check completed.");
             }
             catch (Exception ex)

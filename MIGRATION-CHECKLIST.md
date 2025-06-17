@@ -126,29 +126,33 @@
 - [x] Service registered in ServiceLocator and wired in Program.cs
 - [x] Static handler is now obsolete and unused
 
-#### **Phase 2.4: GPosingway Handler Migration** 📋 **PLANNED**
-- [ ] Create `GPosingwayService` implementation
-- [ ] Migrate GPosingway.Update method
-- [ ] Migrate configuration download logic
-- [ ] Replace UI dependencies
+#### **Phase 2.4: GPosingway Handler Migration** ✅ **COMPLETED (June 17, 2025)**
+- [x] Create `IGPosingwayService` interface
+- [x] Create `GPosingwayService` implementation
+- [x] Migrate GPosingway.Update method
+- [x] Migrate configuration download logic
+- [x] Replace UI dependencies
 
-#### **Phase 2.5: Command Line Handler Migration** 📋 **PLANNED**
-- [ ] Create `CommandLineService` implementation
-- [ ] Migrate CommandLineArgs.ProcessAsync method
-- [ ] Enable headless package operations
-- [ ] Test CLI functionality without UI
+#### **Phase 2.5: Command Line Handler Migration** ✅ **COMPLETED (June 17, 2025)**
+- [x] Create `ICommandLineService` interface
+- [x] Create `CommandLineService` implementation
+- [x] Migrate ProcessAsync logic from static handler
+- [x] Replace UI dependencies
+- [x] Register and wire up service in Program.cs
+- [x] Test CLI functionality without UI
 
 ---
 
-### **Milestone 3: UI Decoupling** 📋 **PLANNED**
+### **Milestone 3: UI Decoupling** 🚧 **IN PROGRESS**
 **Target**: Week 7-10  
-**Status**: 📋 Not Started
+**Status**: 🚧 Started
 
-#### **Phase 3.1: Complete UI Abstraction**
-- [ ] Remove direct `UI._landing` references from business logic
-- [ ] Remove all static UI dependencies from handlers
-- [ ] Implement observer pattern for UI updates
-- [ ] Create UI interface contracts (IMainView, etc.)
+#### **Phase 3.1: Complete UI Abstraction** 🚧
+- [x] Remove direct `UI._landing` references from business logic
+- [x] Remove all static UI dependencies from handlers
+- [x] Refactor Bundlingway, GPosingway, and ReShade handlers to use service abstractions
+- [x] Remove `_landing` field and all direct references from `UI.cs`
+- [ ] Test all handler operations for UI decoupling
 
 #### **Phase 3.2: WinForms Refactoring**
 - [ ] Update `frmLanding` to implement view interfaces

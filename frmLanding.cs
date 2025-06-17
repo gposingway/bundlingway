@@ -1,17 +1,22 @@
-﻿using Bundlingway.Model;
+﻿#nullable disable
+using Bundlingway.Model;
 using Bundlingway.Utilities;
 using Bundlingway.Utilities.Extensions;
 using Bundlingway.Utilities.Handler;
 using Serilog;
 using System.ComponentModel;
 using System.Diagnostics;
+using Bundlingway.UI;
+using Bundlingway.Core.Services;
 
 namespace Bundlingway
 {
-    public partial class frmLanding : Form
+    public partial class frmLanding : Form, ILandingView
     {
         private readonly Bundlingway.Core.Interfaces.IPackageService _packageService;
-        private readonly Bundlingway.Core.Interfaces.IReShadeService _reShadeService;
+        private readonly ReShadeService _reShadeService;
+        private readonly GPosingwayService _gPosingwayService;
+        private LandingPresenter _presenter;
 
         public frmLanding()
         {
@@ -19,7 +24,15 @@ namespace Bundlingway
 
             // ServiceLocator is used for now; replace with DI when available
             _packageService = Bundlingway.Core.Services.ServiceLocator.TryGetService<Bundlingway.Core.Interfaces.IPackageService>()!;
-            _reShadeService = Bundlingway.Core.Services.ServiceLocator.TryGetService<Bundlingway.Core.Interfaces.IReShadeService>()!;
+            _reShadeService = Bundlingway.Core.Services.ServiceLocator.TryGetService<ReShadeService>()!;
+            _gPosingwayService = Bundlingway.Core.Services.ServiceLocator.TryGetService<GPosingwayService>()!;
+
+            _presenter = new Bundlingway.UI.LandingPresenter(
+                (Bundlingway.UI.ILandingView)this,
+                _packageService,
+                _reShadeService,
+                _gPosingwayService
+            );
 
             Text = $"Bundlingway · v{Instances.AppVersion}";
 
@@ -41,7 +54,7 @@ namespace Bundlingway
         protected override async void OnShown(EventArgs e)
         {
             base.OnShown(e);
-            await InitializeAsync();
+            await _presenter.InitializeAsync();
         }
 
         private async Task InitializeAsync()
@@ -74,7 +87,7 @@ namespace Bundlingway
             _ = ModernUI.Announce(((Control)sender).Tag.ToString());
         }
 
-        private void ProcessHelper_NotificationReceived(object? sender, IPCNotification e)
+        private void ProcessHelper_NotificationReceived(object sender, IPCNotification e)
         {
             switch (e.Topic)
             {
@@ -90,56 +103,47 @@ namespace Bundlingway
 
         private void btnDetectSettings_Click(object sender, EventArgs e)
         {
-            _ = Bootstrap.DetectSettings().ContinueWith(async a => { await UpdateElements(); });
+            _ = _presenter.OnDetectSettingsAsync();
         }
 
         private void btnInstallPackage_Click(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce(Constants.MessageCategory.BeforeAddPackageSelection.ToString());
-
-            using (OpenFileDialog openFileDialog = new OpenFileDialog())
-            {
-                var filter = string.Join(";", Constants.InstallableExtensions.Select(ext => $"*{ext}"));
-                openFileDialog.Filter = $"Archive files ({filter})|{filter}";
-                openFileDialog.Title = "Select a Package File";
-                openFileDialog.Multiselect = true;
-
-                if (openFileDialog.ShowDialog() == DialogResult.OK)
-                {
-                    SetPackageOpsAvailable(false);
-
-                    var validExtensions = new HashSet<string>(Constants.InstallableExtensions);
-                    var selectedFiles = openFileDialog.FileNames
-                        .Where(file => validExtensions.Contains(Path.GetExtension(file).ToLower()))
-                        .ToList();
-
-                    // Use the service-based onboarding
-                    _packageService.OnboardPackagesAsync(selectedFiles).ContinueWith(async a =>
-                    {
-                        Maintenance.RemoveTempDir();
-                        Instances.LocalConfigProvider.Save();
-                        await PopulateGridAsync();
-                        SetPackageOpsAvailable(true);
-
-                        _ = ModernUI.Announce(Constants.MessageCategory.Finished.ToString());
-                    });
-                }
-                else
-                {
-                    _ = ModernUI.Announce(Constants.MessageCategory.AddPackageSelectionCancelled.ToString());
-                }
-            }
+            _ = _presenter.OnInstallPackageAsync();
         }
 
-        private void SetPackageOpsAvailable(bool v)
+        private void btnRemove_Click(object sender, EventArgs e)
         {
-            btnInstallPackage?.DoAction(() =>
-            {
-                btnInstallPackage.Enabled = v;
-                btnRemove.Enabled = v;
-                btnUninstall.Enabled = v;
-                btnReinstall.Enabled = v;
-            });
+            _ = _presenter.OnRemovePackagesAsync();
+        }
+
+        private void btnUninstall_Click(object sender, EventArgs e)
+        {
+            _ = _presenter.OnUninstallPackagesAsync();
+        }
+
+        private void btnInstallReShade_Click(object sender, EventArgs e)
+        {
+            _ = _presenter.OnInstallReShadeAsync();
+        }
+
+        private void btnInstallGPosingway_Click(object sender, EventArgs e)
+        {
+            _ = _presenter.OnInstallGPosingwayAsync();
+        }
+
+        private void btnReinstall_Click(object sender, EventArgs e)
+        {
+            _ = _presenter.OnReinstallPackagesAsync();
+        }
+
+        private void btnFavPackage_Click(object sender, EventArgs e)
+        {
+            _ = _presenter.OnToggleFavoriteAsync();
+        }
+
+        private void btnLockPackage_Click(object sender, EventArgs e)
+        {
+            _ = _presenter.OnToggleLockedAsync();
         }
 
         private async Task PopulateGridAsync()
@@ -237,97 +241,14 @@ namespace Bundlingway
             });
         }
 
-        private void btnRemove_Click(object sender, EventArgs e)
-        {
-            SetPackageOpsAvailable(false);
-
-            var selectedPackages = dgvPackages.SelectedRows
-                .Cast<DataGridViewRow>()
-                .Select(row => row.Tag as ResourcePackage)
-                .Where(pkg => pkg != null)
-                .ToList();
-
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => _packageService.RemovePackageAsync(package!)))).ContinueWith(t =>
-            {
-                _ = ModernUI.Announce(Constants.MessageCategory.UninstallPackage.ToString());
-                _ = PopulateGridAsync();
-                SetPackageOpsAvailable(true);
-            });
-        }
-
-        private void btnUninstall_Click(object sender, EventArgs e)
-        {
-            SetPackageOpsAvailable(false);
-
-            var selectedPackages = dgvPackages.SelectedRows
-                .Cast<DataGridViewRow>()
-                .Select(row => row.Tag as ResourcePackage)
-                .Where(pkg => pkg != null)
-                .ToList();
-
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => _packageService.UninstallPackageAsync(package!)))).ContinueWith(t =>
-            {
-                Maintenance.RemoveTempDir();
-                _ = ModernUI.Announce(Constants.MessageCategory.UninstallPackage.ToString());
-                SetPackageOpsAvailable(true);
-                _ = PopulateGridAsync();
-            });
-        }
-
-        private void btnInstallReShade_Click(object sender, EventArgs e)
-        {
-            btnInstallReShade.Enabled = false;
-            _reShadeService.UpdateAsync().ContinueWith(a =>
-            {
-                Bootstrap.DetectSettings().ContinueWith(async b =>
-                {
-                    Maintenance.RemoveTempDir();
-                });
-            });
-        }
-
-        private void btnInstallGPosingway_Click(object sender, EventArgs e)
-        {
-
-            btnInstallGPosingway.Enabled = false;
-
-            GPosingway.Update().ContinueWith(a =>
-            {
-                Bootstrap.DetectSettings().ContinueWith(b =>
-                {
-                    Maintenance.RemoveTempDir();
-                    _ = PopulateGridAsync();
-                });
-            });
-        }
-
         private void btnPackagesFolder_Click(object sender, EventArgs e)
         {
-
-            string repositoryPath = Instances.PackageFolder;
-            if (Directory.Exists(repositoryPath))
-            {
-                System.Diagnostics.Process.Start("explorer.exe", repositoryPath);
-            }
-            else
-            {
-                MessageBox.Show("Package Folder not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            _presenter.OpenPackagesFolder();
         }
 
         private void btnGameFolder_Click(object sender, EventArgs e)
         {
-            // Open Game Folder in a new explorer window
-
-            string gamePath = Instances.LocalConfigProvider.Configuration.Game.InstallationFolder;
-            if (Directory.Exists(gamePath))
-            {
-                System.Diagnostics.Process.Start("explorer.exe", gamePath);
-            }
-            else
-            {
-                MessageBox.Show("Game Folder not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            _presenter.OpenGameFolder();
         }
 
         // Fix: Rename BringToFront to AvoidConflict
@@ -354,65 +275,72 @@ namespace Bundlingway
 
         private void btnDebug_Click(object sender, EventArgs e)
         {
-            var logDirectory = Instances.BundlingwayDataFolder;
-            var logFiles = Directory.GetFiles(logDirectory, Constants.Files.Log.Split('.')[0] + "*.txt");
-
-            if (logFiles.Length == 0)
-            {
-                return;
-            }
-
-            var latestLogFile = logFiles.OrderByDescending(f => new FileInfo(f).LastWriteTime).First();
-
-            if (File.Exists(latestLogFile))
-            {
-                System.Diagnostics.Process.Start("notepad.exe", latestLogFile);
-            }
+            _presenter.OpenLogFile();
         }
 
         private void btnEmporium_Click(object sender, EventArgs e)
         {
-            ProcessHelper.OpenUrlInBrowser("https://gposingway.github.io/bundlingways-emporium");
+            _presenter.OpenEmporium();
         }
 
         private void btnAbout_Click(object sender, EventArgs e)
         {
-            ProcessHelper.OpenUrlInBrowser("https://github.com/gposingway/bundlingway");
+            _presenter.OpenAbout();
+        }
+
+        private void btnBackup_Click(object sender, EventArgs e)
+        {
+            _presenter.BackupData();
+        }
+
+        private void btnTopMost_Click(object sender, EventArgs e)
+        {
+            _presenter.ToggleTopMost();
+        }
+
+        private async void btnCreateDesktopShortcut_Click(object sender, EventArgs e)
+        {
+            await _presenter.CreateDesktopShortcutAsync();
+        }
+
+        private async void btnSetDrowserIntegration_Click(object sender, EventArgs e)
+        {
+            await _presenter.SetBrowserIntegrationAsync();
         }
 
         private void btnEmporium_MouseEnter(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce("A Loporrit-approved selection of presets and shaders! Fluffy, fancy, and fantastic!");
+            _presenter.OpenEmporiumAnnouncement();
         }
 
         private void btnDebug_MouseEnter(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce("Oh dear, what have we here? A log full of secrets! (and probably some errors…)");
+            _presenter.OpenDebugAnnouncement();
         }
 
         private void btnAbout_MouseEnter(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce("About? About what? Oh! The project! Yes, yes, right this way!");
+            _presenter.OpenAboutAnnouncement();
         }
 
         private void btnPackagesFolder_MouseEnter(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce("Where all your precious presets and shaders live! Don’t worry, they’re well-fed.");
+            _presenter.OpenPackagesFolderAnnouncement();
         }
 
         private void btnGameFolder_MouseEnter(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce("Game files, game files everywhere! Tread carefully, adventurer!");
+            _presenter.OpenGameFolderAnnouncement();
         }
 
         private void btnFixIt_MouseEnter(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce("Duplicated shaders? green tint everywhere? No worries, 'Fix It' is here to save the day!");
+            _presenter.OpenFixItAnnouncement();
         }
 
         private void btnInstallReShade_MouseEnter(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce("You need to shut down the game client before you can update!");
+            _presenter.OpenInstallReShadeAnnouncement();
         }
 
         internal async Task UpdateElements()
@@ -478,7 +406,7 @@ namespace Bundlingway
 
             var reShadeBtnEnabled = true;
             var reShadeBtnVisible = true;
-            string? reShadeBtnText = null;
+            string reShadeBtnText = null;
 
 
             btnInstallReShade.Enabled = true;
@@ -529,7 +457,7 @@ namespace Bundlingway
 
             var gPosingwayBtnEnabled = true;
             var gPosingwayBtnVisible = true;
-            string? gPosingwayBtnText = null;
+            string gPosingwayBtnText = null;
 
             btnInstallGPosingway.Enabled = true;
             var GPosingwayText = c.GPosingway.Status switch
@@ -577,119 +505,10 @@ namespace Bundlingway
             _ = Utilities.Handler.Bundlingway.Update(btnUpdate);
         }
 
-        private void btnReinstall_Click(object sender, EventArgs e)
-        {
-            SetPackageOpsAvailable(false);
-            var selectedPackages = dgvPackages.SelectedRows
-                .Cast<DataGridViewRow>()
-                .Select(row => row.Tag as ResourcePackage)
-                .Where(pkg => pkg != null)
-                .ToList();
-
-            var count = selectedPackages.Count;
-            var pos = 0;
-
-            _ = StartProgress(count);
-
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() =>
-            {
-                _packageService.ReinstallPackageAsync(package!);
-                _ = SetProgress(++pos);
-            }))).ContinueWith(t =>
-            {
-                Maintenance.RemoveTempDir();
-                _ = ModernUI.Announce(Constants.MessageCategory.ReinstallPackage.ToString());
-                _ = PopulateGridAsync();
-                SetPackageOpsAvailable(true);
-                _ = StopProgress();
-            });
-        }
-
         private void btnShortcuts_Click(object sender, EventArgs e)
         {
             frmShortcuts shortcutsForm = new frmShortcuts();
             shortcutsForm.ShowDialog();
-        }
-
-        private void btnBackup_Click(object sender, EventArgs e)
-        {
-            var target = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Backup);
-            if (!Directory.Exists(target))
-            {
-                Directory.CreateDirectory(target);
-            }
-
-            _ = ModernUI.Announce("Backing up cache and packages...");
-
-            var source1 = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Cache);
-
-            //Copy all files from the cache folder to backup
-            foreach (var file in Directory.GetFiles(source1))
-            {
-                var destFile = Path.Combine(target, Path.GetFileName(file));
-                File.Copy(file, destFile, true);
-            }
-
-            var source2 = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Packages);
-
-            // for each folder in source2, copy the contents of its 'source' folder to the target folder
-            foreach (var folder in Directory.GetDirectories(source2))
-            {
-                var source = Path.Combine(folder, Constants.Folders.SourcePackage);
-
-                if (Path.GetFileName(folder).Equals(Constants.Folders.SinglePresets))
-                {
-
-                    foreach (var acceptableFile in Constants.AcceptableFilesInPresetFolder)
-                        foreach (var file in Directory.GetFiles(folder, acceptableFile))
-                        {
-                            var destFile = Path.Combine(target, Path.GetFileName(file));
-                            File.Copy(file, destFile, true);
-                        }
-
-                }
-                else
-                {
-                    foreach (var file in Directory.GetFiles(source))
-                    {
-                        var destFile = Path.Combine(target, Path.GetFileName(file));
-                        File.Copy(file, destFile, true);
-                    }
-                }
-            }
-
-            _ = ModernUI.Announce("Backup complete!");
-
-            //Open the backup folder
-            System.Diagnostics.Process.Start("explorer.exe", target);
-        }
-
-        private void btnFavPackage_Click(object sender, EventArgs e)
-        {
-            var selectedPackages = dgvPackages.SelectedRows
-                .Cast<DataGridViewRow>()
-                .Select(row => row.Tag as ResourcePackage)
-                .Where(pkg => pkg != null)
-                .ToList();
-
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => _packageService.ToggleFavoriteAsync(package!)))).ContinueWith(t =>
-            {
-                _ = PopulateGridAsync();
-            });
-        }
-
-        private void btnLockPackage_Click(object sender, EventArgs e)
-        {
-            var selectedPackages = dgvPackages.SelectedRows
-                .Cast<DataGridViewRow>()
-                .Select(row => row.Tag as ResourcePackage)
-                .Where(pkg => pkg != null)
-                .ToList();
-
-            Task.WhenAll(selectedPackages.Select(package => Task.Run(() => _packageService.ToggleLockedAsync(package!)))).ContinueWith(t =>
-            {
-                _ = PopulateGridAsync();
-            });
         }
 
         internal async Task StartProgress(long count)
@@ -770,28 +589,6 @@ namespace Bundlingway
                 pnlSettings.Enabled = true;
                 pnlPackages.Enabled = true;
             });
-        }
-
-        private void btnTopMost_Click(object sender, EventArgs e)
-        {
-            var c = Instances.LocalConfigProvider.Configuration;
-            c.UI ??= new BundlingwayConfig.UIData();
-            c.UI.TopMost = !c.UI.TopMost;
-            Instances.LocalConfigProvider.Save();
-            UpdateElements().Wait();
-        }
-
-        private async void btnCreateDesktopShortcut_Click(object sender, EventArgs e)
-        {
-            await ProcessHelper.PinToStartScreenAsync();
-            ProcessHelper.EnsureDesktopShortcut();
-            txtDesktopShortcut.DoAction(() => txtDesktopShortcut.Text = ProcessHelper.CheckDesktopShortcutStatus());
-        }
-
-        private async void btnSetDrowserIntegration_Click(object sender, EventArgs e)
-        {
-            await CustomProtocolHandler.RegisterCustomProtocolAsync(Constants.GPosingwayProtocolHandler, "A collection of GPosingway-compatible ReShade resources", true);
-            txtBrowserIntegration.DoAction(() => txtBrowserIntegration.Text = CustomProtocolHandler.IsCustomProtocolRegistered(Constants.GPosingwayProtocolHandler));
         }
 
         // Update context menu event handlers to use async
@@ -915,6 +712,119 @@ namespace Bundlingway
         {
             // Reuse functionality from btnRemove_Click
             btnRemove_Click(this, EventArgs.Empty);
+        }
+
+        public IEnumerable<ResourcePackage> GetSelectedPackages()
+        {
+            if (dgvPackages == null) yield break;
+            foreach (DataGridViewRow row in dgvPackages.SelectedRows)
+            {
+                if (row.Tag is ResourcePackage pkg)
+                    yield return pkg;
+            }
+        }
+
+        public async Task SetAnnouncementAsync(string message)
+        {
+            await Announce(message);
+        }
+
+        public async Task SetPackagesAsync(IEnumerable<ResourcePackage> packages)
+        {
+            if (dgvPackages == null) return;
+            dgvPackages.Rows.Clear();
+            foreach (var package in packages)
+            {
+                var rowObj = new DataGridViewRow();
+                var tagLine = "";
+                if (package.Favorite) tagLine += "★";
+                if (package.Locked) tagLine += "🔒";
+                rowObj.CreateCells(dgvPackages,
+                    tagLine,
+                    package.Type.GetDescription(),
+                    package.Label ?? package.Name,
+                    package.Status.GetDescription()
+                );
+                rowObj.Tag = package;
+                dgvPackages.Rows.Add(rowObj);
+            }
+            lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
+        }
+
+        public async Task SetPackageOpsAvailableAsync(bool available)
+        {
+            btnInstallPackage?.DoAction(() =>
+            {
+                btnInstallPackage.Enabled = available;
+                btnRemove.Enabled = available;
+                btnUninstall.Enabled = available;
+                btnReinstall.Enabled = available;
+            });
+        }
+
+        public async Task SetProgressAsync(long value, long max)
+        {
+            await SetProgress(value);
+        }
+
+        public async Task ShowProgressAsync(long max)
+        {
+            await StartProgress(max);
+        }
+
+        public async Task HideProgressAsync()
+        {
+            await StopProgress();
+        }
+
+        public async Task SetReShadeStatusAsync(string status, bool enabled, bool visible, string buttonText)
+        {
+            txtReShadeStatus.Text = status;
+            btnInstallReShade.Enabled = enabled;
+            btnInstallReShade.Visible = visible;
+            btnInstallReShade.Text = buttonText;
+        }
+
+        public async Task SetGPosingwayStatusAsync(string status, bool enabled, bool visible, string buttonText)
+        {
+            txtGPosingwayStatus.Text = status;
+            btnInstallGPosingway.Enabled = enabled;
+            btnInstallGPosingway.Visible = visible;
+            btnInstallGPosingway.Text = buttonText;
+        }
+
+        public async Task SetGamePathAsync(string path)
+        {
+            txtXivPath.Text = path;
+        }
+
+        public async Task SetGameElementsEnabledAsync(bool enabled)
+        {
+            btnFixIt.Enabled = enabled;
+            btnGameFolder.Enabled = enabled;
+            pnlPackages.Enabled = enabled;
+            btnPackagesFolder.Enabled = enabled;
+            btnBackup.Enabled = enabled;
+        }
+
+        public async Task SetUpdateButtonVisibleAsync(bool visible)
+        {
+            btnUpdate.Visible = visible;
+        }
+
+        public async Task SetUpdateButtonTextAsync(string text)
+        {
+            btnUpdate.Text = text;
+        }
+
+        public async Task SetDesktopShortcutStatusAsync(string status)
+        {
+            txtDesktopShortcut.Text = status;
+        }
+
+        public async Task SetBrowserIntegrationStatusAsync(string status)
+        {
+            txtBrowserIntegration.Text = status;
         }
     }
 }

@@ -10,7 +10,7 @@ namespace Bundlingway.Core.Services
     /// <summary>
     /// Service-based implementation for ReShade operations.
     /// </summary>
-    public class ReShadeService : IReShadeService
+    public class ReShadeService 
     {
         private readonly IConfigurationService _configService;
         private readonly IFileSystemService _fileSystem;
@@ -31,7 +31,7 @@ namespace Bundlingway.Core.Services
 
         public async Task GetRemoteInfoAsync()
         {
-            var c = _configService.Configuration.ReShade;
+            var c = Instances.LocalConfigProvider.Configuration.ReShade;
             Log.Information("ReShadeService.GetRemoteInfoAsync: Starting to get remote info.");
             var version = "N/A";
             var downloadLink = "N/A";
@@ -56,12 +56,12 @@ namespace Bundlingway.Core.Services
         private (string version, string downloadLink) ExtractVersionAndDownloadLink(string htmlContent)
         {
             // Pattern matches: <a href="/downloads/ReShade_Setup_...">Download ReShade ... with full
-            string pattern = "<a\\s+href=\"/(?<downloadLink>downloads/Reshade_Setup_[^\"]+)\".*>Download ReShade (?<version>.*) with full";
+            string pattern = "Download ReShade (?<version>.*) with full";
             Match match = Regex.Match(htmlContent, pattern);
             if (match.Success)
             {
                 string version = match.Groups["version"].Value.Trim();
-                string downloadLink = "https://reshade.me/" + match.Groups["downloadLink"].Value;
+                string downloadLink = "https://reshade.me/downloads/ReShade_Setup_" + match.Groups["version"].Value.Trim() + "_Addon.exe";
                 return (version, downloadLink);
             }
             else
@@ -73,7 +73,7 @@ namespace Bundlingway.Core.Services
         public async Task GetLocalInfoAsync()
         {
             Log.Information("ReShadeService.GetLocalInfoAsync: Starting to get local info.");
-            var c = _configService.Configuration;
+            var c = Instances.LocalConfigProvider.Configuration;
             if (!string.IsNullOrEmpty(c.Game.InstallationFolder))
             {
                 var reShadeProbe = Path.Combine(c.Game.InstallationFolder, Constants.Files.LocalReshadeBinary);
@@ -92,6 +92,7 @@ namespace Bundlingway.Core.Services
                 }
             }
             await _notifications.AnnounceAsync($"ReShade local info checked.");
+            // ...do not save config here...
         }
 
         public async Task UpdateAsync()

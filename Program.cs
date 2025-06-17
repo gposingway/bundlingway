@@ -65,11 +65,27 @@ namespace Bundlingway
                 ));
 
                 // Register ReShadeService for service-based ReShade management
-                ServiceLocator.Register<IReShadeService>(new ReShadeService(
+                ServiceLocator.Register(new ReShadeService(
                     configService,
                     ServiceLocator.TryGetService<IFileSystemService>()!,
                     new WinFormsNotificationService(null),
                     ServiceLocator.TryGetService<IHttpClientService>()!
+                ));
+
+                // Register GPosingwayService for service-based GPosingway management
+                ServiceLocator.Register(new GPosingwayService(
+                    ServiceLocator.TryGetService<IPackageService>()!,
+                    configService,
+                    new WinFormsNotificationService(null), // Will be replaced after mainForm is created
+                    ServiceLocator.TryGetService<IFileSystemService>()!,
+                    ServiceLocator.TryGetService<IHttpClientService>()!
+                ));
+
+                // Register CommandLineService for service-based command line management
+                ServiceLocator.Register<ICommandLineService>(new CommandLineService(
+                    ServiceLocator.TryGetService<IPackageService>()!,
+                    new WinFormsNotificationService(null),
+                    configService
                 ));
 
                 // Create main form instance

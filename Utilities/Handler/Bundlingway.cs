@@ -25,7 +25,7 @@ namespace Bundlingway.Utilities.Handler
             if (Directory.Exists(reshadeShadersFolder)) Directory.Delete(reshadeShadersFolder, true);
 
             // Update ReShade and GPosingway
-            await ServiceLocator.GetService<IReShadeService>().UpdateAsync();
+            await ServiceLocator.GetService<ReShadeService>().UpdateAsync();
             await GPosingway.Update(refreshCache);
 
             // Reinstall all installed Shader packages

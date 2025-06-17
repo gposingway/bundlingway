@@ -48,8 +48,10 @@ namespace Bundlingway.Core.Services
 
         public async Task<ResourcePackage?> GetPackageByNameAsync(string packageName)
         {
-            // TODO: Implement logic to retrieve a package by name
-            throw new System.NotImplementedException();
+            if (string.IsNullOrWhiteSpace(packageName))
+                return null;
+            // Search cached packages by Name (case-insensitive)
+            return _cachedPackages.FirstOrDefault(pkg => pkg.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase));
         }
 
         public async Task ScanPackagesAsync()
@@ -97,27 +99,46 @@ namespace Bundlingway.Core.Services
                 var targetFileName = Path.Combine(targetPath, newFileName);
                 if (!_fileSystem.DirectoryExists(targetPath)) _fileSystem.CreateDirectory(targetPath);
                 _fileSystem.CopyFile(filePath, targetFileName, true);
-                // TODO: Decouple and call post-processing pipeline if needed
+                // Call post-processing pipeline if needed (stub)
+                // PostProcessorExtensions.RunRawFilePipeline(...)
+                var pkg = new ResourcePackage { Name = newFileName, Type = ResourcePackage.EType.SinglePreset, LocalPresetFolder = targetPath };
                 if (autoInstall)
                 {
-                    // await InstallPackageAsync(...); // TODO: implement install logic
+                    await InstallPackageAsync(pkg);
                 }
-                return new ResourcePackage { Name = newFileName, Type = ResourcePackage.EType.SinglePreset };
+                return pkg;
             }
 
             // Archive onboarding (zip, rar, 7z)
             var archiveExtension = Path.GetExtension(filePath).ToLower();
             var tempFolderPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
-            var originalTempFolderPath = tempFolderPath;
             if (!_fileSystem.DirectoryExists(tempFolderPath)) _fileSystem.CreateDirectory(tempFolderPath);
             if (archiveExtension == ".zip")
             {
                 await Task.Run(() => System.IO.Compression.ZipFile.ExtractToDirectory(filePath, tempFolderPath, true));
             }
-            // TODO: Add support for .rar and .7z using SharpCompress if needed
+            else if (archiveExtension == ".rar" || archiveExtension == ".7z")
+            {
+                // Use SharpCompress for .rar/.7z
+                using var archive = SharpCompress.Archives.ArchiveFactory.Open(filePath);
+                foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
+                {
+                    if (string.IsNullOrEmpty(entry.Key)) continue;
+                    var destPath = Path.Combine(tempFolderPath, entry.Key);
+                    var destDir = Path.GetDirectoryName(destPath);
+                    if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir)) Directory.CreateDirectory(destDir);
+                    using (var entryStream = entry.OpenEntryStream())
+                    using (var fs = File.OpenWrite(destPath))
+                        entryStream.CopyTo(fs);
+                }
+            }
 
-            // Validate package structure (stubbed for now)
-            // TODO: Implement ValidatePackage(tempFolderPath) logic in service style
+            // Validate package structure
+            if (!ValidateExtractedPackage(tempFolderPath))
+            {
+                _fileSystem.DeleteDirectory(tempFolderPath, true);
+                throw new InvalidDataException("Invalid package structure.");
+            }
 
             // Prepare ResourcePackage
             var collectionName = Path.GetFileNameWithoutExtension(filePath);
@@ -152,73 +173,137 @@ namespace Bundlingway.Core.Services
             _fileSystem.CreateDirectory(shadersFolder);
             newCatalogEntry.LocalShaderFolder = shadersFolder;
 
-            // TODO: Copy files from tempFolderPath to respective folders (presets, textures, shaders) using _fileSystem
-            // TODO: Remove 'Previews' directories from texturesFolder
-            // TODO: Clean up temp folders
-            // TODO: Save catalog entry as JSON
+            // Copy files from tempFolderPath to respective folders
+            CopyExtractedFilesToPackage(tempFolderPath, presetsFolder, texturesFolder, shadersFolder);
+
+            // Remove 'Previews' directories from texturesFolder
+            RemovePreviewsDirectories(texturesFolder);
+
+            // Clean up temp folders
+            _fileSystem.DeleteDirectory(tempFolderPath, true);
+
+            // Save catalog entry as JSON
+            var catalogPath = Path.Combine(targetPackagePath, Bundlingway.Constants.Files.CatalogEntry);
+            System.IO.File.WriteAllText(catalogPath, newCatalogEntry.ToJson());
 
             // Return the onboarded ResourcePackage
             return newCatalogEntry;
         }
 
+        private bool ValidateExtractedPackage(string tempFolderPath)
+        {
+            // Validate if the directory exists
+            if (!Directory.Exists(tempFolderPath))
+                return false;
+            // Must have at least one .ini or .fx file
+            bool hasIni = Directory.GetFiles(tempFolderPath, "*.ini", SearchOption.AllDirectories).Length > 0;
+            bool hasFx = Directory.GetFiles(tempFolderPath, "*.fx", SearchOption.AllDirectories).Length > 0;
+            return hasIni || hasFx;
+        }
+
+        private void CopyExtractedFilesToPackage(string tempFolder, string presetsFolder, string texturesFolder, string shadersFolder)
+        {
+            foreach (var file in Directory.GetFiles(tempFolder, "*.*", SearchOption.AllDirectories))
+            {
+                var ext = Path.GetExtension(file).ToLowerInvariant();
+                var dest = ext switch
+                {
+                    ".ini" => Path.Combine(presetsFolder, Path.GetFileName(file)),
+                    ".png" or ".jpg" or ".jpeg" or ".dds" => Path.Combine(texturesFolder, Path.GetFileName(file)),
+                    ".fx" or ".h" => Path.Combine(shadersFolder, Path.GetFileName(file)),
+                    _ => null
+                };
+                if (dest != null)
+                    File.Copy(file, dest, true);
+            }
+        }
+
+        private void RemovePreviewsDirectories(string texturesFolder)
+        {
+            foreach (var dir in Directory.GetDirectories(texturesFolder, "Previews", SearchOption.AllDirectories))
+            {
+                Directory.Delete(dir, true);
+            }
+        }
+
         public async Task OnboardPackagesAsync(IEnumerable<string> filePaths)
         {
-            // TODO: Implement onboarding multiple packages
             await Task.WhenAll(filePaths.Select(f => OnboardPackageAsync(f)));
         }
 
         public async Task<ResourcePackage> InstallPackageAsync(ResourcePackage package)
         {
-            // Example: Mark as installed and update status
             package.Status = ResourcePackage.EStatus.Installed;
-            // TODO: Add actual install logic (file copy, config update, etc.)
+            // Example: update config (stub)
+            await _configService.SaveAsync();
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Installed {package.Name}" });
             return await Task.FromResult(package);
         }
 
         public async Task UninstallPackageAsync(ResourcePackage package)
         {
-            // Example: Mark as uninstalled and update status
             package.Status = ResourcePackage.EStatus.NotInstalled;
-            // TODO: Add actual uninstall logic (file delete, config update, etc.)
+            // Remove package files
+            if (!string.IsNullOrEmpty(package.LocalFolder) && Directory.Exists(package.LocalFolder))
+                Directory.Delete(package.LocalFolder, true);
+            await _configService.SaveAsync();
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Uninstalled {package.Name}" });
             await Task.CompletedTask;
         }
 
         public async Task ReinstallPackageAsync(ResourcePackage package)
         {
-            // TODO: Implement reinstall logic
-            await Task.CompletedTask;
+            await UninstallPackageAsync(package);
+            await InstallPackageAsync(package);
         }
 
         public async Task<string> DownloadAndInstallAsync(string url, string? packageName = null)
         {
-            // TODO: Implement download and install logic
-            return await Task.FromResult("");
+            // Download file
+            var tempFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString() + Path.GetExtension(url));
+            using (var stream = await _httpClient.GetStreamAsync(url))
+            using (var fs = File.OpenWrite(tempFile))
+                await stream.CopyToAsync(fs);
+            var pkg = await OnboardPackageAsync(tempFile, packageName, true);
+            return pkg.Name;
         }
 
         public async Task ToggleFavoriteAsync(ResourcePackage package)
         {
-            // TODO: Implement favorite toggle logic
+            package.Favorite = !package.Favorite;
+            await _configService.SaveAsync();
+            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Favorite toggled for {package.Name}" });
             await Task.CompletedTask;
         }
 
         public async Task ToggleLockedAsync(ResourcePackage package)
         {
-            // TODO: Implement locked toggle logic
+            package.Locked = !package.Locked;
+            await _configService.SaveAsync();
+            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Locked toggled for {package.Name}" });
             await Task.CompletedTask;
         }
 
-        public async Task<bool> ValidatePackageAsync(ResourcePackage package)
+        public Task<bool> ValidatePackageAsync(ResourcePackage package)
         {
-            // TODO: Implement validation logic
-            return await Task.FromResult(true);
+            // Validate that the package folders exist and have at least one preset or shader
+            bool valid = false;
+            if (!string.IsNullOrEmpty(package.LocalPresetFolder) && Directory.Exists(package.LocalPresetFolder))
+                valid |= Directory.GetFiles(package.LocalPresetFolder, "*.ini", SearchOption.AllDirectories).Length > 0;
+            if (!string.IsNullOrEmpty(package.LocalShaderFolder) && Directory.Exists(package.LocalShaderFolder))
+                valid |= Directory.GetFiles(package.LocalShaderFolder, "*.fx", SearchOption.AllDirectories).Length > 0;
+            return Task.FromResult(valid);
         }
 
-        public async Task RemovePackageAsync(ResourcePackage package)
+        public Task RemovePackageAsync(ResourcePackage package)
         {
-            // TODO: Move logic from Utilities/Handler/Package.Remove
-            throw new System.NotImplementedException();
+            // Remove all files and folders for the package
+            if (!string.IsNullOrEmpty(package.LocalFolder) && Directory.Exists(package.LocalFolder))
+                Directory.Delete(package.LocalFolder, true);
+            _cachedPackages.Remove(package);
+            _configService.SaveAsync().Wait();
+            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Removed {package.Name}" });
+            return Task.CompletedTask;
         }
     }
 }
