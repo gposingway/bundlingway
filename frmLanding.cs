@@ -26,12 +26,9 @@ namespace Bundlingway
             BindAllTaggedControls();
 
             _ = ModernUI.Announce(Constants.MessageCategory.ApplicationStart.ToString());
-            _ = Bootstrap.DetectSettings();
 
             txtDesktopShortcut.DoAction(() => txtDesktopShortcut.Text = ProcessHelper.CheckDesktopShortcutStatus());
             txtBrowserIntegration.DoAction(() => txtBrowserIntegration.Text = CustomProtocolHandler.IsCustomProtocolRegistered(Constants.GPosingwayProtocolHandler));
-
-            _ = PopulateGridAsync();
 
             ProcessHelper.NotificationReceived += ProcessHelper_NotificationReceived;
             _ = ProcessHelper.ListenForNotifications();
@@ -39,6 +36,19 @@ namespace Bundlingway
             _ = ModernUI.UpdateElements(); // If implemented, otherwise call the method directly
 
             _ = ModernUI.Announce(Constants.MessageCategory.Ready.ToString());
+        }
+
+        protected override async void OnShown(EventArgs e)
+        {
+            base.OnShown(e);
+            await InitializeAsync();
+        }
+
+        private async Task InitializeAsync()
+        {
+            await Bootstrap.DetectSettings();
+            await UpdateElements();
+            await PopulateGridAsync();
         }
 
         private void BindAllTaggedControls(Control parent = null)
@@ -66,7 +76,7 @@ namespace Bundlingway
 
         private void ProcessHelper_NotificationReceived(object? sender, IPCNotification e)
         {
-            switch(e.Topic)
+            switch (e.Topic)
             {
                 case Constants.Events.PackageInstalling:
                 case Constants.Events.PackageInstalled:
@@ -813,15 +823,15 @@ namespace Bundlingway
             }
 
             // Add common options for both single and multiple selection
-            ToolStripMenuItem installItem = new ("Install");
+            ToolStripMenuItem installItem = new("Install");
             installItem.Click += (s, args) => InstallSelectedPackages();
             dvgPackagesContextMenu.Items.Add(installItem);
 
-            ToolStripMenuItem uninstallItem = new ("Uninstall");
+            ToolStripMenuItem uninstallItem = new("Uninstall");
             uninstallItem.Click += (s, args) => UninstallSelectedPackages();
             dvgPackagesContextMenu.Items.Add(uninstallItem);
 
-            ToolStripMenuItem removeItem = new ("Remove");
+            ToolStripMenuItem removeItem = new("Remove");
             removeItem.Click += (s, args) => RemoveSelectedPackages();
             dvgPackagesContextMenu.Items.Add(removeItem);
         }
@@ -830,12 +840,12 @@ namespace Bundlingway
         private async Task OpenPackageFolder()
         {
             if (dgvPackages.SelectedRows.Count != 1) return;
-            
+
             var selectedRow = dgvPackages.SelectedRows[0];
             var package = selectedRow.Tag as ResourcePackage;
-            
+
             if (package == null) return;
-            
+
             try
             {
                 string packagePath = package.LocalFolder;
@@ -858,10 +868,10 @@ namespace Bundlingway
         private async Task RenamePackage()
         {
             if (dgvPackages.SelectedRows.Count != 1) return;
-            
+
             var selectedRow = dgvPackages.SelectedRows[0];
             var package = selectedRow.Tag as ResourcePackage;
-            
+
             if (package == null) return;
 
             string currentName = package.Label ?? package.Name;
@@ -869,7 +879,7 @@ namespace Bundlingway
                 "Enter new package name:",
                 "Rename Package",
                 currentName);
-            
+
             if (!string.IsNullOrWhiteSpace(newName) && newName != currentName)
             {
                 try
