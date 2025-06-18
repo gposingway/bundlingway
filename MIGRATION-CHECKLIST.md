@@ -174,15 +174,22 @@
 
 ---
 
-### **Milestone 4: Dependency Injection & Architecture** 📋 **PLANNED**
+### **Milestone 4: Dependency Injection & Architecture** 🚧 **IN PROGRESS**
 **Target**: Week 11-14  
-**Status**: 📋 Not Started
+**Status**: 🚧 In Progress
 
 #### **Phase 4.1: Proper DI Container**
-- [ ] Replace ServiceLocator with Microsoft.Extensions.DependencyInjection
+- [x] Add Microsoft.Extensions.DependencyInjection package
+- [x] Refactor Program.cs to use DI container
+- [x] Add DI constructor to frmLanding and remove ServiceLocator usage
+- [ ] Refactor remaining forms/services to use DI
+- [ ] Remove ServiceLocator from codebase
 - [ ] Configure service lifetimes (Singleton, Transient, Scoped)
 - [ ] Implement service registration in startup
 - [ ] Create service collection extensions
+  
+> **Notes:**
+> - DI container migration started June 17, 2025. ServiceLocator is being phased out in favor of Microsoft.Extensions.DependencyInjection. Program.cs and frmLanding are now DI-based.
 
 #### **Phase 4.2: Application Host Implementation**
 - [ ] Implement `ApplicationHost` class

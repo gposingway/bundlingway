@@ -18,25 +18,27 @@ namespace Bundlingway
         private readonly GPosingwayService _gPosingwayService;
         private readonly IConfigurationService _configService;
         private readonly IAppEnvironmentService _envService;
+        private readonly BundlingwayService _bundlingwayService;
         private LandingPresenter _presenter;
 
-        public frmLanding()
+        public frmLanding(IServiceProvider serviceProvider)
         {
             InitializeComponent();
 
-            // ServiceLocator is used for now; replace with DI when available
-            _envService = ServiceLocator.TryGetService<IAppEnvironmentService>();
-            if (_envService == null)
-                throw new InvalidOperationException("IAppEnvironmentService is not registered in ServiceLocator.");
-            _packageService = ServiceLocator.TryGetService<IPackageService>();
-            _reShadeService = ServiceLocator.TryGetService<ReShadeService>();
-            _gPosingwayService = ServiceLocator.TryGetService<GPosingwayService>();
-            _configService = ServiceLocator.TryGetService<IConfigurationService>();
+            _envService = serviceProvider.GetService(typeof(IAppEnvironmentService)) as IAppEnvironmentService
+                ?? throw new InvalidOperationException("IAppEnvironmentService is not registered in the DI container.");
+            _packageService = serviceProvider.GetService(typeof(IPackageService)) as IPackageService
+                ?? throw new InvalidOperationException("IPackageService is not registered in the DI container.");
+            _reShadeService = serviceProvider.GetService(typeof(ReShadeService)) as ReShadeService
+                ?? throw new InvalidOperationException("ReShadeService is not registered in the DI container.");
+            _gPosingwayService = serviceProvider.GetService(typeof(GPosingwayService)) as GPosingwayService
+                ?? throw new InvalidOperationException("GPosingwayService is not registered in the DI container.");
+            _configService = serviceProvider.GetService(typeof(IConfigurationService)) as IConfigurationService
+                ?? throw new InvalidOperationException("IConfigurationService is not registered in the DI container.");
+            _bundlingwayService = serviceProvider.GetService(typeof(BundlingwayService)) as BundlingwayService
+                ?? throw new InvalidOperationException("BundlingwayService is not registered in the DI container.");
 
-            if (_packageService == null || _reShadeService == null || _gPosingwayService == null || _configService == null)
-                throw new InvalidOperationException("One or more required services are not registered in ServiceLocator.");
-
-            _presenter = new LandingPresenter(this, _packageService, _reShadeService, _gPosingwayService, _configService, _envService);
+            _presenter = new LandingPresenter(this, _packageService, _reShadeService, _gPosingwayService, _configService, _envService, _bundlingwayService);
             Text = $"Bundlingway · v{_envService.AppVersion}";
 
             BindAllTaggedControls();
@@ -62,7 +64,7 @@ namespace Bundlingway
 
         private async Task InitializeAsync()
         {
-            await Bootstrap.DetectSettings(_envService);
+            await Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService);
             await UpdateElements();
             await PopulateGridAsync();
         }

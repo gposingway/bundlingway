@@ -8,35 +8,32 @@ namespace Bundlingway.Utilities
 {
     public static class Maintenance
     {
-        private static IConfigurationService ConfigService => ServiceLocator.GetService<IConfigurationService>();
-
         public static void RemoveTempDir(IAppEnvironmentService envService)
         {
             if (Directory.Exists(envService.TempFolder))
                 Directory.Delete(envService.TempFolder, true);
         }
 
-        internal static async Task EnsureConfiguration()
+        internal static async Task EnsureConfiguration(IConfigurationService configService)
         {
-
             var mustRefresh = false;
 
-            if (ConfigService.Configuration.Shortcuts == null)
+            if (configService.Configuration.Shortcuts == null)
             {
-                ConfigService.Configuration.Shortcuts = [];
+                configService.Configuration.Shortcuts = [];
                 mustRefresh = true;
             }
 
             foreach (var kvp in Constants.DefaultShortcuts)
             {
-                if (!ConfigService.Configuration.Shortcuts.ContainsKey(kvp.Key))
+                if (!configService.Configuration.Shortcuts.ContainsKey(kvp.Key))
                 {
-                    ConfigService.Configuration.Shortcuts.Add(kvp.Key, kvp.Value);
+                    configService.Configuration.Shortcuts.Add(kvp.Key, kvp.Value);
                     mustRefresh = true;
                 }
             }
 
-            if (mustRefresh) await ConfigService.SaveAsync();
+            if (mustRefresh) await configService.SaveAsync();
         }
 
         internal static async Task PrepareEnvironmentAsync(IAppEnvironmentService envService)

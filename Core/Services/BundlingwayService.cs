@@ -107,7 +107,11 @@ namespace Bundlingway.Core.Services
                 _fileSystem.CreateDirectory(storageFolder);
 
             // Get the file name from the remote link
-            string fileName = Path.GetFileName(new Uri(config.RemoteLink).LocalPath);
+            string fileName = string.Empty;
+            if (!string.IsNullOrEmpty(config.RemoteLink))
+            {
+                fileName = Path.GetFileName(new Uri(config.RemoteLink).LocalPath);
+            }
             string filePath = Path.Combine(storageFolder, fileName);
 
             // Create a temporary folder for extracting the package
@@ -118,11 +122,16 @@ namespace Bundlingway.Core.Services
             try
             {
                 // Download the file with progress reporting
-                await _httpClient.DownloadFileAsync(config.RemoteLink, filePath, _progressReporter);
-
-                Log.Information($"BundlingwayService.Update: Downloaded file to {filePath}.");
-
-                await _notifications.AnnounceAsync("Unzipping the new version...");
+                if (!string.IsNullOrEmpty(config.RemoteLink))
+                {
+                    await _httpClient.DownloadFileAsync(config.RemoteLink, filePath, _progressReporter);
+                    Log.Information($"BundlingwayService.Update: Downloaded file to {filePath}.");
+                    await _notifications.AnnounceAsync("Unzipping the new version...");
+                }
+                else
+                {
+                    Log.Warning("BundlingwayService.Update: RemoteLink is null or empty, skipping download.");
+                }
 
                 // Unzip the downloaded file to the temp folder
                 ZipFile.ExtractToDirectory(filePath, tempFolder, true);
@@ -145,22 +154,6 @@ namespace Bundlingway.Core.Services
                 await _notifications.ShowErrorAsync("Failed to update Bundlingway", ex);
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Creates a service instance using the service locator.
-        /// This is a convenience method for backward compatibility.
-        /// </summary>
-        public static BundlingwayService Create()
-        {
-            return new BundlingwayService(
-                ServiceLocator.GetService<IConfigurationService>(),
-                ServiceLocator.GetService<IHttpClientService>(),
-                ServiceLocator.GetService<IFileSystemService>(),
-                ServiceLocator.GetService<IProgressReporter>(),
-                ServiceLocator.GetService<IUserNotificationService>(),
-                ServiceLocator.GetService<IAppEnvironmentService>()
-            );
         }
     }
 }

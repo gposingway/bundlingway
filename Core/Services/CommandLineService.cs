@@ -91,7 +91,8 @@ namespace Bundlingway.Core.Services
 
                     if (File.Exists(targetFile))
                     {
-                        var currentExePath = Process.GetCurrentProcess().MainModule.FileName;
+                        var mainModule = Process.GetCurrentProcess().MainModule;
+                        var currentExePath = mainModule != null && mainModule.FileName != null ? mainModule.FileName : string.Empty;
                         Log.Information($"Copying current executable from {currentExePath} to {targetFile}");
 
                         // Ensure no other instances of the application are running

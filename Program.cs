@@ -2,6 +2,7 @@ using Bundlingway.Utilities;
 using Bundlingway.Core.Services;
 using Bundlingway.Core.Interfaces;
 using Bundlingway.UI.WinForms; // Assuming WinForms services are here
+using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
 using System.Windows.Forms;
@@ -27,81 +28,54 @@ namespace Bundlingway
                 // Initialize application configuration
                 ApplicationConfiguration.Initialize();
 
-                // Initialize core services BEFORE other initialization
-                ServiceLocator.InitializeCoreServices(envService.ConfigFilePath);
+                // Set up DI container
+                var services = new ServiceCollection();
+
+                // Register core services
+                services.AddSingleton<IAppEnvironmentService>(envService);
+                services.AddSingleton<IConfigurationService>(provider =>
+                {
+                    var configService = new ConfigurationService(Path.Combine(envService.BundlingwayDataFolder, Constants.Files.BundlingwayConfig));
+                    configService.LoadAsync().Wait();
+                    return configService;
+                });
+                services.AddSingleton<IFileSystemService, FileSystemService>();
+                services.AddSingleton<IHttpClientService, HttpClientService>();
+                services.AddSingleton<IPackageService, PackageService>();
+                services.AddSingleton<BundlingwayService>();
+                services.AddSingleton<ReShadeService>();
+                services.AddSingleton<GPosingwayService>();
+                services.AddSingleton<ICommandLineService, CommandLineService>();
+
+                // UI-specific services (will be replaced after mainForm is created)
+                services.AddSingleton<IUserNotificationService>(provider => new WinFormsNotificationService(null));
+                services.AddSingleton<IProgressReporter>(provider => new WinFormsProgressReporter(null));
+
+                // Build the service provider
+                var serviceProvider = services.BuildServiceProvider();
 
                 // Initialize the application (e.g., load settings)
                 Bootstrap.Initialize().Wait();
-                var configService = new ConfigurationService(Path.Combine(envService.BundlingwayDataFolder, Constants.Files.BundlingwayConfig));
-                configService.LoadAsync().Wait();
-                Maintenance.EnsureConfiguration().Wait();
+                var configService = serviceProvider.GetRequiredService<IConfigurationService>();
+                Maintenance.EnsureConfiguration(configService).Wait();
 
                 // Check for duplicate instances (UI mode)
                 if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
                 {
                     // Notify other instances and close the client
+                    var processHelper = serviceProvider.GetRequiredService<IFileSystemService>();
                     ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.DuplicatedInstances, Message = string.Empty });
                     Process.GetCurrentProcess().Kill();
                 }
 
-                // Core services
-                ServiceLocator.Register<IAppEnvironmentService>(envService);
-                ServiceLocator.Register<IConfigurationService>(configService);
-                ServiceLocator.Register<IFileSystemService>(new FileSystemService());
-                ServiceLocator.Register<IHttpClientService>(new HttpClientService());
-                // Register BundlingwayService (which depends on the above)
-                ServiceLocator.Register(new BundlingwayService(
-                    configService,
-                    ServiceLocator.TryGetService<IHttpClientService>()!,
-                    ServiceLocator.TryGetService<IFileSystemService>()!,
-                    new WinFormsProgressReporter(null), // Will be replaced after mainForm is created
-                    new WinFormsNotificationService(null), // Will be replaced after mainForm is created
-                    envService
-                ));
+                // Create main form instance, passing the service provider
+                frmLanding mainForm = new frmLanding(serviceProvider);
 
-                // Register PackageService for service-based package management
-                ServiceLocator.Register<IPackageService>(new PackageService(
-                    configService,
-                    ServiceLocator.TryGetService<IFileSystemService>()!,
-                    ServiceLocator.TryGetService<IHttpClientService>()!,
-                    new WinFormsProgressReporter(null), // Will be replaced after mainForm is created
-                    new WinFormsNotificationService(null) // Will be replaced after mainForm is created
-                ));
-
-                // Register ReShadeService for service-based ReShade management
-                ServiceLocator.Register(new ReShadeService(
-                    configService,
-                    ServiceLocator.TryGetService<IFileSystemService>()!,
-                    new WinFormsNotificationService(null),
-                    ServiceLocator.TryGetService<IHttpClientService>()!,
-                    envService
-                ));
-
-                // Register GPosingwayService for service-based GPosingway management
-                ServiceLocator.Register(new GPosingwayService(
-                    ServiceLocator.TryGetService<IPackageService>()!,
-                    configService,
-                    new WinFormsNotificationService(null), // Will be replaced after mainForm is created
-                    ServiceLocator.TryGetService<IFileSystemService>()!,
-                    ServiceLocator.TryGetService<IHttpClientService>()!,
-                    envService
-                ));
-
-                // Register CommandLineService for service-based command line management
-                ServiceLocator.Register<ICommandLineService>(new CommandLineService(
-                    ServiceLocator.TryGetService<IPackageService>()!,
-                    new WinFormsNotificationService(null),
-                    configService
-                ));
-
-                // Create main form instance
-                frmLanding mainForm = new frmLanding();
-
-                // UI-specific services that depend on the main form
+                // Replace UI-specific services with mainForm-aware implementations
                 var userNotificationService = new WinFormsNotificationService(mainForm);
                 var progressReporter = new WinFormsProgressReporter(mainForm);
-                ServiceLocator.Register<IUserNotificationService>(userNotificationService);
-                ServiceLocator.Register<IProgressReporter>(progressReporter);
+                services.AddSingleton<IUserNotificationService>(userNotificationService);
+                services.AddSingleton<IProgressReporter>(progressReporter);
 
                 // ModernUI bridge (static)
                 ModernUI.Initialize();

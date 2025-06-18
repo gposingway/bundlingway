@@ -17,8 +17,9 @@ namespace Bundlingway.UI
         private readonly GPosingwayService _gPosingwayService;
         private readonly IConfigurationService _configService;
         private readonly IAppEnvironmentService _envService;
+        private readonly BundlingwayService _bundlingwayService;
 
-        public LandingPresenter(ILandingView view, IPackageService packageService, ReShadeService reShadeService, GPosingwayService gPosingwayService, IConfigurationService configService, IAppEnvironmentService envService)
+        public LandingPresenter(ILandingView view, IPackageService packageService, ReShadeService reShadeService, GPosingwayService gPosingwayService, IConfigurationService configService, IAppEnvironmentService envService, BundlingwayService bundlingwayService)
         {
             _view = view;
             _packageService = packageService;
@@ -26,6 +27,7 @@ namespace Bundlingway.UI
             _gPosingwayService = gPosingwayService;
             _configService = configService;
             _envService = envService;
+            _bundlingwayService = bundlingwayService;
         }
 
         public async Task InitializeAsync()
@@ -46,7 +48,7 @@ namespace Bundlingway.UI
         public async Task OnDetectSettingsAsync()
         {
             // Perform real detection
-            await Bundlingway.Utilities.Bootstrap.DetectSettings(_envService);
+            await Bundlingway.Utilities.Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService);
             // After detection, fetch local/remote info if game path is present
             var c = _configService.Configuration;
             var gamePath = c.Game.InstallationFolder;
@@ -69,7 +71,7 @@ namespace Bundlingway.UI
             var gamePath = c.Game.InstallationFolder;
             var gameIsInstalled = !string.IsNullOrEmpty(gamePath);
             await _view.SetGameElementsEnabledAsync(gameIsInstalled);
-            await _view.SetGamePathAsync(gameIsInstalled ? gamePath : "Click [Detect] with the game running");
+            await _view.SetGamePathAsync(gameIsInstalled ? (gamePath ?? string.Empty) : "Click [Detect] with the game running");
 
             if (!gameIsInstalled)
             {
