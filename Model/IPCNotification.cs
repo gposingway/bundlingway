@@ -2,7 +2,7 @@
 {
     public class IPCNotification
     {
-        public string Topic { get; set; }
-        public string Message { get; set; }
+        public required string Topic { get; set; }
+        public required string Message { get; set; }
     }
 }

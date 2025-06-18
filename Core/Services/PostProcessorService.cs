@@ -52,8 +52,8 @@ namespace Bundlingway.Core.Services
                         Log.Warning("File not found while running pipeline: " + iniFile);
                         continue;
                     }
-                    IniParser.Model.IniData ini_filedata = null;
-                    Preset preset = null;
+                    IniParser.Model.IniData? ini_filedata = null;
+                    Preset? preset = null;
                     try
                     {
                         ini_filedata = iniParser.ReadFile(iniFile);
@@ -63,31 +63,37 @@ namespace Bundlingway.Core.Services
                     {
                         Log.Warning("Failure to load INI: " + e.Message);
                     }
-                    var techniqueList = string.Join(",", preset.Techniques.Select(i => i.Key).ToList());
-                    var techniques = techniqueList?
-                        .Split(',', StringSplitOptions.RemoveEmptyEntries)
-                        .Where(i => i.Contains('@', StringComparison.CurrentCulture))
-                        .Select(i => i.Split('@')[1])
-                        .Where(i => !i.Contains(".fx+", StringComparison.CurrentCulture))
-                        .ToList() ?? new List<string>();
-                    foreach (var item in techniques)
+                    if (preset?.Techniques != null)
                     {
-                        if (!techGraph.ContainsKey(item))
-                            techGraph[item] = 0;
-                        techGraph[item]++;
-                    }
-                    foreach (var tex in preset.TextureFiles)
-                    {
-                        if (!tex.Contains("/"))
+                        var techniqueList = string.Join(",", preset.Techniques.Select(i => i.Key).ToList());
+                        var techniques = techniqueList?
+                            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+                            .Where(i => i.Contains('@', StringComparison.CurrentCulture))
+                            .Select(i => i.Split('@')[1])
+                            .Where(i => !i.Contains(".fx+", StringComparison.CurrentCulture))
+                            .ToList() ?? new List<string>();
+                        foreach (var item in techniques)
                         {
-                            var textNotFound = !textureFiles.Any(i => i.EndsWith("\\" + tex, StringComparison.CurrentCulture));
-                            if (textNotFound)
+                            if (!techGraph.ContainsKey(item))
+                                techGraph[item] = 0;
+                            techGraph[item]++;
+                        }
+                        foreach (var tex in preset.TextureFiles)
+                        {
+                            if (!tex.Contains("/"))
                             {
-                                Log.Information("[Missing Textures] " + tex + " @ " + Path.GetFileName(iniFile));
+                                var textNotFound = !textureFiles.Any(i => i.EndsWith("\\" + tex, StringComparison.CurrentCulture));
+                                if (textNotFound)
+                                {
+                                    Log.Information("[Missing Textures] " + tex + " @ " + Path.GetFileName(iniFile));
+                                }
                             }
                         }
+                        if (ini_filedata != null)
+                        {
+                            preset.RunPostProcessorPipeline(package, ini_filedata, _logger, _envService);
+                        }
                     }
-                    preset.RunPostProcessorPipeline(package, ini_filedata, _logger, _envService);
                 }
                 _logger.WriteLogToConsole();
                 _logger.WriteLogToFile(Path.Combine(baseline, "installation-log.txt"));

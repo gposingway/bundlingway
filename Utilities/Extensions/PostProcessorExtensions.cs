@@ -75,7 +75,7 @@ namespace Bundlingway.Utilities.Extensions
 
             foreach (var process in envService.GetPresetProcessors())
             {
-                ITemplatePostProcess templateProcess = null;
+                ITemplatePostProcess? templateProcess = null;
 
                 if (process is ITemplatePostProcess tpp)
                     templateProcess = tpp;
@@ -86,8 +86,6 @@ namespace Bundlingway.Utilities.Extensions
                 {
                     if (templateProcess.PresetExclusionList?.Any(i =>
                     {
-
-                        // Check if the preset filename matches any of the exclusion patterns. It may include ? for single character and * for multiple characters. Matching is case-insensitive.
                         if (string.IsNullOrEmpty(i)) return false;
                         if (i.Contains('?') || i.Contains('*'))
                         {
@@ -95,18 +93,13 @@ namespace Bundlingway.Utilities.Extensions
                             var probe = Regex.IsMatch(Path.GetFileName(preset.Filename).ToLower(), regexPattern, RegexOptions.IgnoreCase);
                             return probe;
                         }
-
                         return preset.Filename.EndsWith(i, StringComparison.InvariantCultureIgnoreCase);
-
                     }) == true) continue;
 
-                    if (templateProcess?.Techniques?.StartWith?.Count != 0)
+                    if (templateProcess?.Techniques?.StartWith?.Count > 0)
                     {
-                        // There's a list of techniques we should start with. Let's invert and iterate.
-
                         var preList = templateProcess.Techniques.StartWith;
                         preList.Reverse();
-
                         foreach (var item in preList)
                         {
                             techniqueList.RemoveAll(i => i.Key == item);
@@ -114,11 +107,9 @@ namespace Bundlingway.Utilities.Extensions
                         }
                     }
 
-                    if (templateProcess?.Techniques?.EndWith?.Count != 0)
+                    if (templateProcess?.Techniques?.EndWith?.Count > 0)
                     {
-                        // There's a list of techniques we should end with.
-
-                        foreach (var item in templateProcess?.Techniques?.EndWith)
+                        foreach (var item in templateProcess.Techniques.EndWith ?? Enumerable.Empty<string>())
                         {
                             techniqueList.RemoveAll(i => i.Key == item);
                             techniqueList.Add(new KeyValuePair<string, bool>(item, true));
@@ -242,8 +233,10 @@ namespace Bundlingway.Utilities.Extensions
 
                 model.Techniques = techniqueList.ToDictionary(i => i.Key, i => i.Value);
 
-                model.OriginalTechniques = model.Techniques.ToJson().FromJson<Dictionary<string, bool>>();
-
+                var json = model.Techniques.ToJson();
+                model.OriginalTechniques = !string.IsNullOrEmpty(json)
+                    ? json.FromJson<Dictionary<string, bool>>()
+                    : new Dictionary<string, bool>();
             }
             catch (Exception)
             {

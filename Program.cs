@@ -40,7 +40,7 @@ namespace Bundlingway
                 if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
                 {
                     // Notify other instances and close the client
-                    ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.DuplicatedInstances });
+                    ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.DuplicatedInstances, Message = string.Empty });
                     Process.GetCurrentProcess().Kill();
                 }
 

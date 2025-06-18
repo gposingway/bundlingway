@@ -11,7 +11,7 @@ namespace Bundlingway.Utilities
 {
     public static class ProcessHelper
     {
-        public static event EventHandler<IPCNotification> NotificationReceived;
+        public static event EventHandler<IPCNotification>? NotificationReceived;
 
         public static void OpenUrlInBrowser(string url)
         {
@@ -24,7 +24,9 @@ namespace Bundlingway.Utilities
 
         public static string GetCurrentMethodName()
         {
-            return MethodBase.GetCurrentMethod().DeclaringType.Name + "." + MethodBase.GetCurrentMethod().Name;
+            var method = MethodBase.GetCurrentMethod();
+            var declaringType = method?.DeclaringType;
+            return (declaringType?.Name ?? "Unknown") + "." + (method?.Name ?? "Unknown");
         }
 
         public static bool IsProcessRunning(string processName)
@@ -43,14 +45,20 @@ namespace Bundlingway.Utilities
 
             if (processes.Length > 0)
             {
-                string path = processes[0].MainModule.FileName;
+                var mainModule = processes[0].MainModule;
+                if (mainModule == null || string.IsNullOrEmpty(mainModule.FileName))
+                {
+                    Log.Information($"MainModule or FileName is null for process {processName}.");
+                    return string.Empty;
+                }
+                string path = mainModule.FileName;
                 Log.Information($"Path for process {processName}: {path}");
                 return path;
             }
             else
             {
                 Log.Information($"Process {processName} is not running.");
-                return null; // Process is not running
+                return string.Empty; // Process is not running
             }
         }
 
@@ -78,8 +86,8 @@ namespace Bundlingway.Utilities
         public static async Task ListenForNotifications()
         {
             Log.Information("Listening for notifications - Recreating Pipe in Loop.");
-            NamedPipeServerStream pipeServer = null;
-            StreamReader reader = null; // Declare StreamReader outside using block
+            NamedPipeServerStream? pipeServer = null;
+            StreamReader? reader = null; // Declare StreamReader outside using block
 
             while (true)
             {
@@ -95,16 +103,18 @@ namespace Bundlingway.Utilities
                     Log.Information("Client connected.");
 
                     reader = new StreamReader(pipeServer, Encoding.UTF8); // Initialize StreamReader here
-                    string message;
-
-                    while ((message = await reader.ReadLineAsync()) != null)
+                    if (reader != null)
                     {
-                        var ipcNotification = message.FromJson<IPCNotification>();
-
-                        if (ipcNotification != null)
+                        string? message;
+                        while ((message = await reader.ReadLineAsync()) != null)
                         {
-                            Log.Information($"Notification received: {ipcNotification.Topic} / {ipcNotification.Message}");
-                            try { NotificationReceived?.Invoke(null, ipcNotification); } catch (Exception e) { Log.Error(e, "Error while handling notification."); }
+                            var ipcNotification = message.FromJson<IPCNotification>();
+
+                            if (ipcNotification != null)
+                            {
+                                Log.Information($"Notification received: {ipcNotification.Topic} / {ipcNotification.Message}");
+                                try { NotificationReceived?.Invoke(null, ipcNotification); } catch (Exception e) { Log.Error(e, "Error while handling notification."); }
+                            }
                         }
                     }
 
@@ -159,13 +169,20 @@ namespace Bundlingway.Utilities
         {
             Log.Information("Pinning application to start screen.");
 
-            string appPath = Process.GetCurrentProcess().MainModule.FileName;
+            var mainModule = Process.GetCurrentProcess().MainModule;
+            if (mainModule == null || string.IsNullOrEmpty(mainModule.FileName))
+            {
+                Log.Error("MainModule or FileName is null.");
+                return;
+            }
+            string appPath = mainModule.FileName;
             string appName = Path.GetFileNameWithoutExtension(appPath);
             string appUserModelId = Constants.AppUserModelId;
 
-            using (RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Classes\Applications\" + appName, true) ?? Registry.CurrentUser.CreateSubKey(@"Software\Classes\Applications\" + appName))
+            using (RegistryKey? key = Registry.CurrentUser.OpenSubKey(@"Software\Classes\Applications\" + appName, true) ?? Registry.CurrentUser.CreateSubKey(@"Software\Classes\Applications\" + appName))
             {
-                string registeredAppPath = key.GetValue("ApplicationPath") as string;
+                if (key == null) { Log.Error("Failed to open or create registry key."); return; }
+                string? registeredAppPath = key.GetValue("ApplicationPath") as string;
                 if (registeredAppPath != appPath)
                 {
                     key.SetValue("ApplicationName", appName);
@@ -177,8 +194,9 @@ namespace Bundlingway.Utilities
                 }
             }
 
-            using RegistryKey explorerKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartPage", true);
-            string pinnedApps = explorerKey.GetValue("PinnedApps") as string;
+            using RegistryKey? explorerKey = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Explorer\StartPage", true);
+            if (explorerKey == null) { Log.Error("Failed to open StartPage registry key."); return; }
+            string? pinnedApps = explorerKey.GetValue("PinnedApps") as string;
             if (pinnedApps != appPath)
             {
                 explorerKey.SetValue("PinnedApps", appPath, RegistryValueKind.String);
@@ -192,8 +210,14 @@ namespace Bundlingway.Utilities
 
         public static void EnsureDesktopShortcut()
         {
-            string appName = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule.FileName);
-            string appPath = Process.GetCurrentProcess().MainModule.FileName;
+            var mainModule = Process.GetCurrentProcess().MainModule;
+            if (mainModule == null || string.IsNullOrEmpty(mainModule.FileName))
+            {
+                Log.Error("MainModule or FileName is null.");
+                return;
+            }
+            string appName = Path.GetFileNameWithoutExtension(mainModule.FileName);
+            string appPath = mainModule.FileName;
             EnsureDesktopShortcut(appName, appPath);
         }
 
@@ -221,14 +245,14 @@ namespace Bundlingway.Utilities
             try
             {
                 // Create a new shortcut using COM objects
-                Type shellType = Type.GetTypeFromProgID("WScript.Shell");
+                Type? shellType = Type.GetTypeFromProgID("WScript.Shell");
                 if (shellType == null)
                 {
                     Log.Error("Failed to get WScript.Shell type.");
                     return;
                 }
 
-                dynamic shell = Activator.CreateInstance(shellType);
+                dynamic? shell = Activator.CreateInstance(shellType);
                 if (shell == null)
                 {
                     Log.Error("Failed to create WScript.Shell instance.");
@@ -258,8 +282,14 @@ namespace Bundlingway.Utilities
 
         public static string CheckDesktopShortcutStatus()
         {
-            string appName = Path.GetFileNameWithoutExtension(Process.GetCurrentProcess().MainModule.FileName);
-            string appPath = Process.GetCurrentProcess().MainModule.FileName;
+            var mainModule = Process.GetCurrentProcess().MainModule;
+            if (mainModule == null || string.IsNullOrEmpty(mainModule.FileName))
+            {
+                Log.Error("MainModule or FileName is null.");
+                return "Error";
+            }
+            string appName = Path.GetFileNameWithoutExtension(mainModule.FileName);
+            string appPath = mainModule.FileName;
             return CheckDesktopShortcutStatus(appName, appPath);
         }
 
@@ -275,14 +305,14 @@ namespace Bundlingway.Utilities
 
             try
             {
-                Type shellType = Type.GetTypeFromProgID("WScript.Shell");
+                Type? shellType = Type.GetTypeFromProgID("WScript.Shell");
                 if (shellType == null)
                 {
                     Log.Error("Failed to get WScript.Shell type.");
                     return "Error";
                 }
 
-                dynamic shell = Activator.CreateInstance(shellType);
+                dynamic? shell = Activator.CreateInstance(shellType);
                 if (shell == null)
                 {
                     Log.Error("Failed to create WScript.Shell instance.");
@@ -296,7 +326,7 @@ namespace Bundlingway.Utilities
                     return "Error";
                 }
 
-                string currentTargetPath = shortcut.TargetPath;
+                string? currentTargetPath = shortcut.TargetPath;
                 if (currentTargetPath != expectedTargetPath)
                 {
                     return "Outdated";

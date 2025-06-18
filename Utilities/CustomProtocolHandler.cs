@@ -16,16 +16,23 @@ namespace Bundlingway.Utilities
             var isExtensionRegistered = true;
             var isMainProtocolRegistered = true;
 
-            var appPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+            var process = System.Diagnostics.Process.GetCurrentProcess();
+            var mainModule = process.MainModule;
+            if (mainModule == null || string.IsNullOrEmpty(mainModule.FileName))
+            {
+                Log.Error("MainModule or FileName is null.");
+                return;
+            }
+            var appPath = mainModule.FileName;
 
             // Check if the protocol is already registered
-            using (RegistryKey existingKey = Registry.ClassesRoot.OpenSubKey(protocolName))
+            using (RegistryKey? existingKey = Registry.ClassesRoot.OpenSubKey(protocolName))
             {
                 isMainProtocolRegistered = (existingKey != null && !forceRegister);
 
-                if (isMainProtocolRegistered)
+                if (isMainProtocolRegistered && existingKey != null)
                 {
-                    string existingAppPath = existingKey.OpenSubKey("shell")?.OpenSubKey("open")?.OpenSubKey("command")?.GetValue("")?.ToString();
+                    string? existingAppPath = existingKey.GetValue("")?.ToString();
                     if (existingAppPath != null && existingAppPath.Contains(appPath))
                     {
                         Log.Information($"{protocolName} protocol handler is already registered.");
@@ -40,13 +47,14 @@ namespace Bundlingway.Utilities
             // If the protocol is not registered, create the registry keys
             if (!isMainProtocolRegistered)
             {
-                using (RegistryKey key = Registry.ClassesRoot.CreateSubKey(protocolName))
+                using (RegistryKey? key = Registry.ClassesRoot.CreateSubKey(protocolName))
                 {
+                    if (key == null) { Log.Error($"Failed to create registry key for {protocolName}."); return; }
                     key.SetValue("", $"URL: {protocolName} Protocol");
                     key.SetValue("URL Protocol", "");
                     key.SetValue("Description", description); // Set the optional description
-                    key.CreateSubKey("DefaultIcon").SetValue("", $"{appPath},1");
-                    key.CreateSubKey("shell").CreateSubKey("open").CreateSubKey("command").SetValue("", $"{appPath} \"%1\"");
+                    key.CreateSubKey("DefaultIcon")?.SetValue("", $"{appPath},1");
+                    key.CreateSubKey("shell")?.CreateSubKey("open")?.CreateSubKey("command")?.SetValue("", $"{appPath} \"%1\"");
                 }
 
                 Log.Information($"Registered {protocolName} protocol handler.");
@@ -55,13 +63,13 @@ namespace Bundlingway.Utilities
             var extensionName = "." + protocolName;
 
             // Check if the extension is already registered
-            using (RegistryKey existingKey = Registry.ClassesRoot.OpenSubKey(extensionName))
+            using (RegistryKey? existingKey = Registry.ClassesRoot.OpenSubKey(extensionName))
             {
                 isExtensionRegistered = (existingKey != null && !forceRegister);
 
                 if (isExtensionRegistered)
                 {
-                    string existingAppPath = existingKey.GetValue("")?.ToString();
+                    string? existingAppPath = existingKey.GetValue("")?.ToString();
                     if (existingAppPath != null && existingAppPath.Equals(protocolName))
                     {
                         Log.Information($".{protocolName} extension is already registered.");

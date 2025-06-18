@@ -17,7 +17,7 @@ namespace Bundlingway.Utilities.Extensions
         /// <param name="oldKey">The key to be replaced.</param>
         /// <param name="newKey">The new key to replace the old key.</param>
         /// <returns>The dictionary with the key replaced.</returns>
-        public static Dictionary<TKey, TValue> ReplaceKey<TKey, TValue>(this Dictionary<TKey, TValue> originalDictionary, TKey oldKey, TKey newKey)
+        public static Dictionary<TKey, TValue> ReplaceKey<TKey, TValue>(this Dictionary<TKey, TValue> originalDictionary, TKey oldKey, TKey newKey) where TKey : notnull
         {
             if (!originalDictionary.ContainsKey(oldKey))
                 return originalDictionary; // Key not found, return the original dictionary unchanged
@@ -58,13 +58,16 @@ namespace Bundlingway.Utilities.Extensions
 
             var comparisonMap = new Dictionary<string, string>();
 
-            foreach (var item in a.ShaderFiles)
+            var aShaderFiles = a?.ShaderFiles ?? new Dictionary<string, string>();
+            var bShaderFiles = b?.ShaderFiles ?? new Dictionary<string, string>();
+
+            foreach (var item in aShaderFiles)
             {
                 var result = "Same";
 
-                if (b.ShaderFiles.ContainsKey(item.Key))
+                if (bShaderFiles.ContainsKey(item.Key))
                 {
-                    if (b.ShaderFiles[item.Key] != item.Value)
+                    if (bShaderFiles[item.Key] != item.Value)
                     {
                         result = "Different version";
                     }
@@ -77,7 +80,7 @@ namespace Bundlingway.Utilities.Extensions
                 comparisonMap[item.Key] = result;
             }
 
-            foreach (var item in b.ShaderFiles.Where(i => !a.ShaderFiles.ContainsKey(i.Key)))
+            foreach (var item in bShaderFiles.Where(i => !aShaderFiles.ContainsKey(i.Key)))
             {
                 comparisonMap[item.Key] = PackageB + " only";
             }

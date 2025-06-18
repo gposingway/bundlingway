@@ -101,7 +101,18 @@ namespace Bundlingway.Core.Services
                 _fileSystem.CopyFile(filePath, targetFileName, true);
                 // Call post-processing pipeline if needed (stub)
                 // PostProcessorExtensions.RunRawFilePipeline(...)
-                var pkg = new ResourcePackage { Name = newFileName, Type = ResourcePackage.EType.SinglePreset, LocalPresetFolder = targetPath };
+                var pkg = new ResourcePackage {
+                    Name = newFileName,
+                    Label = newFileName,
+                    Version = "1.0.0",
+                    Source = filePath,
+                    Type = ResourcePackage.EType.SinglePreset,
+                    Status = ResourcePackage.EStatus.Installed,
+                    LocalPresetFolder = targetPath,
+                    LocalTextureFolder = string.Empty,
+                    LocalShaderFolder = string.Empty,
+                    LocalFolder = targetPath
+                };
                 if (autoInstall)
                 {
                     await InstallPackageAsync(pkg);
@@ -147,7 +158,13 @@ namespace Bundlingway.Core.Services
                 Type = ResourcePackage.EType.PresetCollection,
                 Source = filePath,
                 Name = packageName != null ? packageName.ToFileSystemSafeName() : collectionName,
-                Status = ResourcePackage.EStatus.Unpacking
+                Label = packageName != null ? packageName.ToFileSystemSafeName() : collectionName,
+                Version = "1.0.0",
+                Status = ResourcePackage.EStatus.Unpacking,
+                LocalPresetFolder = string.Empty,
+                LocalTextureFolder = string.Empty,
+                LocalShaderFolder = string.Empty,
+                LocalFolder = string.Empty
             };
 
             // Target package path

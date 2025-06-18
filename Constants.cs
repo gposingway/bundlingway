@@ -18,17 +18,24 @@ namespace Bundlingway
         {
             LocalPresetFolder = Path.Combine(envService.SinglePresetsFolder, Folders.PackagePresets),
             Name = "Single Presets",
+            Label = "Single Presets",
+            Version = "1.0.0",
             Source = "Local",
             Type = ResourcePackage.EType.SinglePreset,
             Status = ResourcePackage.EStatus.Installed,
             Default = true,
             Hidden = true,
+            LocalTextureFolder = string.Empty,
+            LocalShaderFolder = string.Empty,
+            LocalFolder = envService.SinglePresetsFolder
         };
 
         public static ResourcePackage GPosingwayDefaultPackage(IAppEnvironmentService envService) => new ResourcePackage()
         {
             LocalPresetFolder = Path.Combine(envService.SinglePresetsFolder, Folders.PackagePresets),
             Name = "GPosingway",
+            Label = "GPosingway",
+            Version = "1.0.0",
             Source = "Local",
             Type = ResourcePackage.EType.CorePackage,
             Status = ResourcePackage.EStatus.NotDownloaded,
@@ -36,6 +43,9 @@ namespace Bundlingway
             Default = true,
             Hidden = false,
             Locked = true,
+            LocalTextureFolder = string.Empty,
+            LocalShaderFolder = string.Empty,
+            LocalFolder = envService.SinglePresetsFolder
         };
 
         public static Dictionary<string, string> DefaultShortcuts = new()
