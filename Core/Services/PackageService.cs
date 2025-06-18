@@ -101,7 +101,8 @@ namespace Bundlingway.Core.Services
                 _fileSystem.CopyFile(filePath, targetFileName, true);
                 // Call post-processing pipeline if needed (stub)
                 // PostProcessorExtensions.RunRawFilePipeline(...)
-                var pkg = new ResourcePackage {
+                var pkg = new ResourcePackage
+                {
                     Name = newFileName,
                     Label = newFileName,
                     Version = "1.0.0",
@@ -114,9 +115,11 @@ namespace Bundlingway.Core.Services
                     LocalFolder = targetPath
                 };
                 if (autoInstall)
-                {
                     await InstallPackageAsync(pkg);
-                }
+
+                _cachedPackages.Add(pkg);
+                PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [pkg], Message = "Onboarded" });
+
                 return pkg;
             }
 
@@ -127,7 +130,8 @@ namespace Bundlingway.Core.Services
             if (archiveExtension == ".zip")
             {
                 // Secure extraction to prevent Zip-Slip
-                await Task.Run(() => {
+                await Task.Run(() =>
+                {
                     using (var archive = System.IO.Compression.ZipFile.OpenRead(filePath))
                     {
                         foreach (var entry in archive.Entries)
@@ -237,6 +241,9 @@ namespace Bundlingway.Core.Services
             // Save catalog entry as JSON
             var catalogPath = Path.Combine(targetPackagePath, Bundlingway.Constants.Files.CatalogEntry);
             System.IO.File.WriteAllText(catalogPath, newCatalogEntry.ToJson());
+
+            // Add the new package to the in-memory cache
+            _cachedPackages = _cachedPackages.Add(newCatalogEntry);
 
             // Return the onboarded ResourcePackage
             return newCatalogEntry;
@@ -371,7 +378,7 @@ namespace Bundlingway.Core.Services
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Removed {package.Name}" });
         }
     }
-
+}
     public class PackageEventArgs : EventArgs
     {
         public IEnumerable<ResourcePackage>? Packages { get; set; }
@@ -386,4 +393,4 @@ namespace Bundlingway.Core.Services
         public bool IsSuccess { get; set; }
         public Exception? Exception { get; set; }
     }
-}
+
