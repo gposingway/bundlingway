@@ -57,11 +57,11 @@ namespace Bundlingway
         private readonly IConfigurationService _configService;
 
 
-        public frmShortcuts()
+        public frmShortcuts(PackageService packageService, IConfigurationService configService)
         {
             InitializeComponent();
-            _packageService = Core.Services.ServiceLocator.TryGetService<PackageService>()!;
-            _configService = Core.Services.ServiceLocator.TryGetService<IConfigurationService>()!;
+            _packageService = packageService;
+            _configService = configService;
         }
 
         private void fromShortcuts_Load(object sender, EventArgs e)

@@ -17,10 +17,10 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Initializes the modern UI with services.
         /// </summary>
-        public static void Initialize()
+        public static void Initialize(IUserNotificationService notificationService, IProgressReporter progressReporter)
         {
-            _notificationService = ServiceLocator.TryGetService<IUserNotificationService>();
-            _progressReporter = ServiceLocator.TryGetService<IProgressReporter>();
+            _notificationService = notificationService;
+            _progressReporter = progressReporter;
         }
 
         /// <summary>

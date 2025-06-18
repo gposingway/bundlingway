@@ -9,6 +9,7 @@ using Bundlingway.Utilities.Extensions;
 using Serilog;
 using System.ComponentModel;
 using System.Diagnostics;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Bundlingway
 {
@@ -21,9 +22,11 @@ namespace Bundlingway
         private IAppEnvironmentService _envService;
         private BundlingwayService _bundlingwayService;
         private LandingPresenter _presenter;
+        private readonly IServiceProvider _serviceProvider;
 
-        public frmLanding()
+        public frmLanding(IServiceProvider serviceProvider)
         {
+            _serviceProvider = serviceProvider;
             InitializeComponent();
         }
 
@@ -544,7 +547,7 @@ namespace Bundlingway
 
         private void btnShortcuts_Click(object sender, EventArgs e)
         {
-            frmShortcuts shortcutsForm = new frmShortcuts();
+            var shortcutsForm = _serviceProvider.GetRequiredService<frmShortcuts>();
             shortcutsForm.ShowDialog();
         }
 

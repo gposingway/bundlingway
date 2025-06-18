@@ -2,6 +2,7 @@ using Bundlingway.Utilities;
 using Bundlingway.Core.Services;
 using Bundlingway.UI.WinForms; // Assuming WinForms services are here
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using System;
 using System.IO;
 using System.Windows.Forms;
@@ -16,7 +17,12 @@ namespace Bundlingway
         ///  The main entry point for the application.
         /// </summary>
         [STAThread]
-        static void Main()
+        static void Main(string[] args)
+        {
+            MainAsync(args).GetAwaiter().GetResult();
+        }
+
+        static async Task MainAsync(string[] args)
         {
             var envService = new AppEnvironmentService();
 
@@ -46,27 +52,58 @@ namespace Bundlingway
                 services.AddSingleton<ReShadeService>();
                 services.AddSingleton<GPosingwayService>();
                 services.AddSingleton<ICommandLineService, CommandLineService>();
+                services.AddSingleton<IApplicationHost, ApplicationHost>();
+                services.AddLogging(configure => configure.AddConsole());
+                services.AddSingleton<EnvironmentService>();
 
                 // Defer building the provider until after UI services are registered
 
-                // Create main form instance
-                frmLanding mainForm = new frmLanding();
+                // Register frmLanding as singleton
+                services.AddSingleton<frmLanding>();
+                // Register UI-specific services with the actual mainForm (resolved from provider)
+                services.AddSingleton<IUserNotificationService>(provider => new WinFormsNotificationService(provider.GetRequiredService<frmLanding>()));
+                services.AddSingleton<IProgressReporter>(provider => new WinFormsProgressReporter(provider.GetRequiredService<frmLanding>()));
+                // Register frmShortcuts for DI
+                services.AddTransient<frmShortcuts>(provider =>
+                    new frmShortcuts(
+                        provider.GetRequiredService<PackageService>(),
+                        provider.GetRequiredService<IConfigurationService>()
+                    )
+                );
 
-                // Register UI-specific services with the actual mainForm
-                services.AddSingleton<IUserNotificationService>(provider => new WinFormsNotificationService(mainForm));
-                services.AddSingleton<IProgressReporter>(provider => new WinFormsProgressReporter(mainForm));
+                // Headless mode registration
+                if (args != null && args.Length > 0 && args[0] == "--headless")
+                {
+                    services.AddSingleton<IUserNotificationService, ConsoleNotificationService>();
+                    services.AddSingleton<IProgressReporter, ConsoleProgressReporter>();
+                }
 
                 // Now build the final provider
                 var serviceProvider = services.BuildServiceProvider();
+
+                // Resolve main form from DI
+                frmLanding mainForm = serviceProvider.GetRequiredService<frmLanding>();
 
                 // Initialize services in the main form
                 mainForm.InitializeServices(serviceProvider);
 
                 // ModernUI bridge (static)
-                ModernUI.Initialize();
+                var notificationService = serviceProvider.GetRequiredService<IUserNotificationService>();
+                var progressReporter = serviceProvider.GetRequiredService<IProgressReporter>();
+                ModernUI.Initialize(notificationService, progressReporter);
 
                 // Run the application in UI mode
                 Application.Run(mainForm);
+
+                // Headless mode entry point
+                if (args != null && args.Length > 0 && args[0] == "--headless")
+                {
+                    var appHost = serviceProvider.GetRequiredService<IApplicationHost>();
+                    await appHost.InitializeAsync();
+                    await HeadlessScript.RunAsync(serviceProvider, args);
+                    await appHost.ShutdownAsync();
+                    return;
+                }
             }
             catch (Exception ex)
             {
