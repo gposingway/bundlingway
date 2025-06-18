@@ -295,7 +295,7 @@ namespace Bundlingway.Core.Services
         {
             package.Favorite = !package.Favorite;
             await _configService.SaveAsync();
-            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Favorite toggled for {package.Name}" });
+            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Favorite toggled for {package.Name}" });
             await Task.CompletedTask;
         }
 
@@ -303,7 +303,7 @@ namespace Bundlingway.Core.Services
         {
             package.Locked = !package.Locked;
             await _configService.SaveAsync();
-            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Locked toggled for {package.Name}" });
+            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Locked toggled for {package.Name}" });
             await Task.CompletedTask;
         }
 
@@ -318,15 +318,28 @@ namespace Bundlingway.Core.Services
             return Task.FromResult(valid);
         }
 
-        public Task RemovePackageAsync(ResourcePackage package)
+        public async Task RemovePackageAsync(ResourcePackage package)
         {
+            // Uninstall the package first if needed
+            await UninstallPackageAsync(package);
+
+            // Try to determine the package folder if LocalFolder is null or empty
+            string? folder = package.LocalFolder;
+            if (string.IsNullOrEmpty(folder))
+            {
+                var packageRoot = _fileSystem.GetPackageFolder();
+                var safeName = package.Name.ToFileSystemSafeName();
+                var candidate = Path.Combine(packageRoot, safeName);
+                if (_fileSystem.DirectoryExists(candidate))
+                    folder = candidate;
+            }
+
             // Remove all files and folders for the package
-            if (!string.IsNullOrEmpty(package.LocalFolder) && Directory.Exists(package.LocalFolder))
-                Directory.Delete(package.LocalFolder, true);
-            _cachedPackages = _cachedPackages.Remove(package);
-            _configService.SaveAsync().Wait();
-            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Removed {package.Name}" });
-            return Task.CompletedTask;
+            if (!string.IsNullOrEmpty(folder) && _fileSystem.DirectoryExists(folder))
+            {
+                _fileSystem.DeleteDirectory(folder, true);
+            }
+            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Removed {package.Name}" });
         }
     }
 
