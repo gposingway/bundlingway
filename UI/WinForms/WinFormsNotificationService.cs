@@ -92,7 +92,7 @@ namespace Bundlingway.UI.WinForms
             await AnnounceAsync(message); // Treat success as announcement for now
         }
 
-        public async Task<bool> ConfirmAsync(string message, string title = "Confirm")
+        public Task<bool> ConfirmAsync(string message, string title = "Confirm")
         {
             if (_mainForm != null)
             {
@@ -101,13 +101,13 @@ namespace Bundlingway.UI.WinForms
                 {
                     result = MessageBox.Show(message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 });
-                return result == DialogResult.Yes;
+                return Task.FromResult(result == DialogResult.Yes);
             }
             else
             {
                 // For headless mode, default to false for safety
                 Console.WriteLine($"[CONFIRM] {message} (defaulting to No in headless mode)");
-                return false;
+                return Task.FromResult(false);
             }
         }
     }

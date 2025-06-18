@@ -56,9 +56,14 @@ namespace Bundlingway
             _ = ModernUI.Announce(Constants.MessageCategory.Ready.ToString());
         }
 
-        protected override async void OnShown(EventArgs e)
+        protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
+            _ = OnShownAsync(e);
+        }
+
+        private async Task OnShownAsync(EventArgs e)
+        {
             await _presenter.InitializeAsync();
         }
 
@@ -518,11 +523,21 @@ namespace Bundlingway
 
         internal async Task StartProgress(long count)
         {
+            await StartProgress(count, null);
+        }
+
+        internal async Task StartProgress(long count, string description)
+        {
             prgCommon?.DoAction(() =>
             {
                 prgCommon.Value = 0;
                 prgCommon.Tag = count;
                 prgCommon.Visible = true;
+                // Set description for accessibility or tooltip if available
+                if (!string.IsNullOrWhiteSpace(description))
+                {
+                    prgCommon.AccessibleDescription = description;
+                }
             });
         }
 

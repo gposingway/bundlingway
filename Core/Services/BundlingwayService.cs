@@ -57,11 +57,11 @@ namespace Bundlingway.Core.Services
 
                 // Download the remote configuration
                 var jsonContent = await _httpClient.GetStringAsync(Constants.Urls.BundlingwayPackageLatestTag);
-                // TODO: Adjust deserialization to match the actual structure of the Bundlingway release/tag API response
-                // For now, set RemoteVersion and RemoteLink to placeholder values
+                // Deserialize the GitHub release/tag API response
+                var release = System.Text.Json.JsonSerializer.Deserialize<Bundlingway.Model.GitHubReleaseInfo>(jsonContent);
                 var config = _configService.Configuration;
-                config.Bundlingway.RemoteVersion = "latest"; // Replace with actual version from JSON
-                config.Bundlingway.RemoteLink = "https://github.com/gposingway/bundlingway/releases/latest/download/Bundlingway.exe"; // Replace with actual link from JSON
+                config.Bundlingway.RemoteVersion = release?.TagName ?? "unknown";
+                config.Bundlingway.RemoteLink = release?.Assets?.FirstOrDefault(a => a.Name != null && a.Name.EndsWith(".exe"))?.BrowserDownloadUrl ?? string.Empty;
 
                 // Determine status
                 if (string.IsNullOrEmpty(config.Bundlingway.LocalVersion))
@@ -97,7 +97,8 @@ namespace Bundlingway.Core.Services
             await _notifications.AnnounceAsync("Downloading a new Bundlingway version...");
 
             // Set the location of the current executable
-            config.Location = System.Diagnostics.Process.GetCurrentProcess().MainModule?.FileName ?? "";
+            var mainModule = System.Diagnostics.Process.GetCurrentProcess().MainModule;
+            config.Location = mainModule != null && mainModule.FileName != null ? mainModule.FileName : string.Empty;
             await _configService.SaveAsync();
 
             // Create the storage folder if it doesn't exist
@@ -131,6 +132,7 @@ namespace Bundlingway.Core.Services
                 else
                 {
                     Log.Warning("BundlingwayService.Update: RemoteLink is null or empty, skipping download.");
+                    return;
                 }
 
                 // Unzip the downloaded file to the temp folder

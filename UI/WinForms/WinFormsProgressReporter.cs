@@ -27,13 +27,15 @@ namespace Bundlingway.UI.WinForms
 
         public async Task StartProgressAsync(long total, string? description = null)
         {
+            if (total <= 0)
+                throw new ArgumentOutOfRangeException(nameof(total), "Total must be greater than zero.");
             _total = total;
             _current = 0;
             _isActive = true;
 
             if (_mainForm != null)
             {
-                await _mainForm.StartProgress(total);
+                await _mainForm.StartProgress(total, description);
             }
             else
             {

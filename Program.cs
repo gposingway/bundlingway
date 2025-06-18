@@ -31,7 +31,7 @@ namespace Bundlingway
                 // Set up DI container
                 var services = new ServiceCollection();
 
-                // Register core services
+                // Register core services (no UI dependencies)
                 services.AddSingleton<IAppEnvironmentService>(envService);
                 services.AddSingleton<IConfigurationService>(provider =>
                 {
@@ -47,35 +47,18 @@ namespace Bundlingway
                 services.AddSingleton<GPosingwayService>();
                 services.AddSingleton<ICommandLineService, CommandLineService>();
 
-                // UI-specific services (will be replaced after mainForm is created)
-                services.AddSingleton<IUserNotificationService>(provider => new WinFormsNotificationService(null));
-                services.AddSingleton<IProgressReporter>(provider => new WinFormsProgressReporter(null));
+                // Defer building the provider until after UI services are registered
 
-                // Build the service provider
+                // Create main form instance, passing a temporary provider if needed
+                var tempProvider = services.BuildServiceProvider();
+                frmLanding mainForm = new frmLanding(tempProvider);
+
+                // Register UI-specific services with the actual mainForm
+                services.AddSingleton<IUserNotificationService>(provider => new WinFormsNotificationService(mainForm));
+                services.AddSingleton<IProgressReporter>(provider => new WinFormsProgressReporter(mainForm));
+
+                // Now build the final provider
                 var serviceProvider = services.BuildServiceProvider();
-
-                // Initialize the application (e.g., load settings)
-                Bootstrap.Initialize().Wait();
-                var configService = serviceProvider.GetRequiredService<IConfigurationService>();
-                Maintenance.EnsureConfiguration(configService).Wait();
-
-                // Check for duplicate instances (UI mode)
-                if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
-                {
-                    // Notify other instances and close the client
-                    var processHelper = serviceProvider.GetRequiredService<IFileSystemService>();
-                    ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.DuplicatedInstances, Message = string.Empty });
-                    Process.GetCurrentProcess().Kill();
-                }
-
-                // Create main form instance, passing the service provider
-                frmLanding mainForm = new frmLanding(serviceProvider);
-
-                // Replace UI-specific services with mainForm-aware implementations
-                var userNotificationService = new WinFormsNotificationService(mainForm);
-                var progressReporter = new WinFormsProgressReporter(mainForm);
-                services.AddSingleton<IUserNotificationService>(userNotificationService);
-                services.AddSingleton<IProgressReporter>(progressReporter);
 
                 // ModernUI bridge (static)
                 ModernUI.Initialize();

@@ -38,13 +38,11 @@ namespace Bundlingway.Utilities
                 await CheckBundlingway(envService, bundlingwayService);
 
                 // Check for the game client and related components
-                await CheckGameClient(envService, configService).ContinueWith(async a =>
-                {
-                    await Task.WhenAll(
-                        CheckReShade(envService, reShadeService),
-                        CheckGPosingway(envService, gPosingwayService, configService)
-                        );
-                });
+                await CheckGameClient(envService, configService);
+                await Task.WhenAll(
+                    CheckReShade(envService, reShadeService),
+                    CheckGPosingway(envService, gPosingwayService, configService)
+                );
             }
             catch (Exception ex)
             {

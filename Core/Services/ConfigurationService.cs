@@ -29,9 +29,10 @@ namespace Bundlingway.Core.Services
         {
             try
             {
-                if (File.Exists(_configurationFilePath))
+                if (System.IO.File.Exists(_configurationFilePath))
                 {
-                    var loadedConfig = _configurationFilePath.FromJsonFile<BundlingwayConfig>();
+                    var json = await System.IO.File.ReadAllTextAsync(_configurationFilePath).ConfigureAwait(false);
+                    var loadedConfig = Newtonsoft.Json.JsonConvert.DeserializeObject<BundlingwayConfig>(json);
                     if (loadedConfig != null)
                     {
                         _configuration = loadedConfig;

@@ -93,16 +93,6 @@ namespace Bundlingway.Core.Interfaces
         /// Event fired when packages are updated.
         /// </summary>
         event EventHandler<PackageEventArgs>? PackagesUpdated;
-
-        /// <summary>
-        /// Event fired when a package operation starts.
-        /// </summary>
-        event EventHandler<PackageOperationEventArgs>? PackageOperationStarted;
-
-        /// <summary>
-        /// Event fired when a package operation completes.
-        /// </summary>
-        event EventHandler<PackageOperationEventArgs>? PackageOperationCompleted;
     }
 
     /// <summary>

@@ -77,7 +77,14 @@ namespace Bundlingway.Core.Services
                     Log.Information($"Parsed name: {name}, url: {url}");
 
                     await _notificationService.AnnounceAsync($"Installing package: {name ?? url}");
-                    var packageName = await _packageService.DownloadAndInstallAsync(package.Url!, package.Name);
+                    if (package.Url == null || package.Name == null)
+                    {
+                        Log.Warning("Package Url or Name is null. Aborting installation.");
+                        await _notificationService.AnnounceAsync("Package information is incomplete. Installation aborted.");
+                        return null;
+                    }
+
+                    var packageName = await _packageService.DownloadAndInstallAsync(package.Url, package.Name);
                     await _notificationService.AnnounceAsync($"Installation: {packageName}");
                     Log.Information(packageName);
                     return packageName;

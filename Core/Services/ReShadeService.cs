@@ -58,19 +58,8 @@ namespace Bundlingway.Core.Services
 
         private (string version, string downloadLink) ExtractVersionAndDownloadLink(string htmlContent)
         {
-            // Pattern matches: <a href="/downloads/ReShade_Setup_...">Download ReShade ... with full
-            string pattern = "Download ReShade (?<version>.*) with full";
-            Match match = Regex.Match(htmlContent, pattern);
-            if (match.Success)
-            {
-                string version = match.Groups["version"].Value.Trim();
-                string downloadLink = "https://reshade.me/downloads/ReShade_Setup_" + match.Groups["version"].Value.Trim() + "_Addon.exe";
-                return (version, downloadLink);
-            }
-            else
-            {
-                return (string.Empty, string.Empty);
-            }
+            var info = Bundlingway.Utilities.HtmlHelper.ParseReShadeDownloadInfo(htmlContent);
+            return (info.Version ?? string.Empty, info.AddonDownloadUrl ?? string.Empty);
         }
 
         public async Task GetLocalInfoAsync()

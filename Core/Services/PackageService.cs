@@ -3,6 +3,7 @@ using Bundlingway.Model;
 using Bundlingway.Utilities.Extensions;
 using Serilog;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,7 +13,7 @@ namespace Bundlingway.Core.Services
     /// <summary>
     /// Service-based implementation of package management logic, decoupled from UI.
     /// </summary>
-    public class PackageService : IPackageService
+    public partial class PackageService : IPackageService
     {
         private readonly IConfigurationService _configService;
         private readonly IFileSystemService _fileSystem;
@@ -20,7 +21,7 @@ namespace Bundlingway.Core.Services
         private readonly IProgressReporter _progressReporter;
         private readonly IUserNotificationService _notifications;
 
-        private List<ResourcePackage> _cachedPackages = new List<ResourcePackage>();
+        private ImmutableList<ResourcePackage> _cachedPackages = ImmutableList<ResourcePackage>.Empty;
 
         public PackageService(
             IConfigurationService configService,
@@ -37,21 +38,19 @@ namespace Bundlingway.Core.Services
         }
 
         public event EventHandler<PackageEventArgs>? PackagesUpdated;
-        public event EventHandler<PackageOperationEventArgs>? PackageOperationStarted;
-        public event EventHandler<PackageOperationEventArgs>? PackageOperationCompleted;
 
-        public async Task<IEnumerable<ResourcePackage>> GetAllPackagesAsync()
+        public Task<IEnumerable<ResourcePackage>> GetAllPackagesAsync()
         {
             // Return cached packages if available
-            return _cachedPackages;
+            return Task.FromResult<IEnumerable<ResourcePackage>>(_cachedPackages);
         }
 
-        public async Task<ResourcePackage?> GetPackageByNameAsync(string packageName)
+        public Task<ResourcePackage?> GetPackageByNameAsync(string packageName)
         {
             if (string.IsNullOrWhiteSpace(packageName))
-                return null;
+                return Task.FromResult<ResourcePackage?>(null);
             // Search cached packages by Name (case-insensitive)
-            return _cachedPackages.FirstOrDefault(pkg => pkg.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase));
+            return Task.FromResult(_cachedPackages.FirstOrDefault(pkg => pkg.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase)));
         }
 
         public async Task ScanPackagesAsync()
@@ -74,7 +73,7 @@ namespace Bundlingway.Core.Services
                     catch { /* Ignore invalid or missing catalog files */ }
                 }
             }
-            _cachedPackages = foundPackages;
+            _cachedPackages = foundPackages.ToImmutableList();
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = foundPackages, Message = "Scan complete" });
             await Task.CompletedTask.ConfigureAwait(false);
         }
@@ -136,10 +135,17 @@ namespace Bundlingway.Core.Services
                 {
                     if (string.IsNullOrEmpty(entry.Key)) continue;
                     var destPath = Path.Combine(tempFolderPath, entry.Key);
-                    var destDir = Path.GetDirectoryName(destPath);
+                    var fullDestPath = Path.GetFullPath(destPath);
+                    var fullBasePath = Path.GetFullPath(tempFolderPath);
+                    if (!fullDestPath.StartsWith(fullBasePath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        Log.Warning($"Archive entry '{entry.Key}' attempts path traversal. Skipping.");
+                        continue;
+                    }
+                    var destDir = Path.GetDirectoryName(fullDestPath);
                     if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir)) Directory.CreateDirectory(destDir);
                     using (var entryStream = entry.OpenEntryStream())
-                    using (var fs = File.OpenWrite(destPath))
+                    using (var fs = File.OpenWrite(fullDestPath))
                         entryStream.CopyTo(fs);
                 }
             }
@@ -317,7 +323,7 @@ namespace Bundlingway.Core.Services
             // Remove all files and folders for the package
             if (!string.IsNullOrEmpty(package.LocalFolder) && Directory.Exists(package.LocalFolder))
                 Directory.Delete(package.LocalFolder, true);
-            _cachedPackages.Remove(package);
+            _cachedPackages = _cachedPackages.Remove(package);
             _configService.SaveAsync().Wait();
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Removed {package.Name}" });
             return Task.CompletedTask;

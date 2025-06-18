@@ -12,8 +12,8 @@ namespace Bundlingway.Utilities.Extensions
         /// <returns>The value associated with the specified key, or the default value if the key is not found.</returns>
         public static TValue? Get<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key) where TKey : notnull
         {
-            if (dictionary == null) return default;
-            if (key == null) return default;
+            if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
+            if (key == null) throw new ArgumentNullException(nameof(key));
             if (dictionary.TryGetValue(key, out TValue? value))
             {
                 return value;

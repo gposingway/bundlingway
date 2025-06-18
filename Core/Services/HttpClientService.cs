@@ -23,28 +23,29 @@ namespace Bundlingway.Core.Services
 
         public async Task<Stream> GetStreamAsync(string url) => await _httpClient.GetStreamAsync(url);
 
-        public async Task DownloadFileAsync(string url, string localPath, IProgressReporter? progressReporter = null)
+        public async Task DownloadFileAsync(string url, string localPath, IProgressReporter? progressReporter = null, System.Threading.CancellationToken cancellationToken = default)
         {
-            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
             response.EnsureSuccessStatusCode();
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
-            
+            bool progressStarted = false;
             if (progressReporter != null && totalBytes > 0)
             {
                 await progressReporter.StartProgressAsync(totalBytes, $"Downloading {Path.GetFileName(localPath)}");
+                progressStarted = true;
             }
 
-            using var contentStream = await response.Content.ReadAsStreamAsync();
+            using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
             using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
 
             var buffer = new byte[8192];
             var totalRead = 0L;
             int bytesRead;
 
-            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
             {
-                await fileStream.WriteAsync(buffer, 0, bytesRead);
+                await fileStream.WriteAsync(buffer, 0, bytesRead, cancellationToken);
                 totalRead += bytesRead;
 
                 if (progressReporter != null && totalBytes > 0)
@@ -53,7 +54,7 @@ namespace Bundlingway.Core.Services
                 }
             }
 
-            if (progressReporter != null)
+            if (progressReporter != null && progressStarted)
             {
                 await progressReporter.StopProgressAsync();
             }

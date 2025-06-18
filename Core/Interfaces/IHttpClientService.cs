@@ -35,7 +35,8 @@ namespace Bundlingway.Core.Interfaces
         /// <param name="url">URL to download from</param>
         /// <param name="localPath">Local file path to save to</param>
         /// <param name="progressReporter">Optional progress reporter</param>
-        Task DownloadFileAsync(string url, string localPath, IProgressReporter? progressReporter = null);
+        /// <param name="cancellationToken">Cancellation token for the operation</param>
+        Task DownloadFileAsync(string url, string localPath, IProgressReporter? progressReporter = null, System.Threading.CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets an HTTP response message.
