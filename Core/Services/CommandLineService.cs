@@ -11,11 +11,11 @@ namespace Bundlingway.Core.Services
 {
     public class CommandLineService : ICommandLineService
     {
-        private readonly IPackageService _packageService;
+        private readonly PackageService _packageService;
         private readonly IUserNotificationService _notificationService;
         private readonly IConfigurationService _configService;
 
-        public CommandLineService(IPackageService packageService, IUserNotificationService notificationService, IConfigurationService configService)
+        public CommandLineService(PackageService packageService, IUserNotificationService notificationService, IConfigurationService configService)
         {
             _packageService = packageService;
             _notificationService = notificationService;

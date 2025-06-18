@@ -1,4 +1,5 @@
 ﻿using Bundlingway.Core.Interfaces;
+using Bundlingway.Core.Services;
 using Bundlingway.Utilities;
 
 namespace Bundlingway
@@ -52,14 +53,14 @@ namespace Bundlingway
             { "D0", "0" }
         };
 
-        private readonly IPackageService _packageService;
+        private readonly PackageService _packageService;
         private readonly IConfigurationService _configService;
 
 
         public frmShortcuts()
         {
             InitializeComponent();
-            _packageService = Core.Services.ServiceLocator.TryGetService<IPackageService>()!;
+            _packageService = Core.Services.ServiceLocator.TryGetService<PackageService>()!;
             _configService = Core.Services.ServiceLocator.TryGetService<IConfigurationService>()!;
         }
 

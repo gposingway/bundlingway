@@ -1,8 +1,9 @@
 ﻿#nullable disable
-using Bundlingway.Core.Interfaces;
 using Bundlingway.Core.Services;
+using Bundlingway.Core.Interfaces;
 using Bundlingway.Model;
 using Bundlingway.UI;
+using Bundlingway.UI.WinForms;
 using Bundlingway.Utilities;
 using Bundlingway.Utilities.Extensions;
 using Serilog;
@@ -13,22 +14,26 @@ namespace Bundlingway
 {
     public partial class frmLanding : Form, ILandingView
     {
-        private readonly IPackageService _packageService;
-        private readonly ReShadeService _reShadeService;
-        private readonly GPosingwayService _gPosingwayService;
-        private readonly IConfigurationService _configService;
-        private readonly IAppEnvironmentService _envService;
-        private readonly BundlingwayService _bundlingwayService;
+        private PackageService _packageService;
+        private ReShadeService _reShadeService;
+        private GPosingwayService _gPosingwayService;
+        private IConfigurationService _configService;
+        private IAppEnvironmentService _envService;
+        private BundlingwayService _bundlingwayService;
         private LandingPresenter _presenter;
 
-        public frmLanding(IServiceProvider serviceProvider)
+        public frmLanding()
         {
             InitializeComponent();
+        }
+
+        public void InitializeServices(IServiceProvider serviceProvider)
+        {
 
             _envService = serviceProvider.GetService(typeof(IAppEnvironmentService)) as IAppEnvironmentService
                 ?? throw new InvalidOperationException("IAppEnvironmentService is not registered in the DI container.");
-            _packageService = serviceProvider.GetService(typeof(IPackageService)) as IPackageService
-                ?? throw new InvalidOperationException("IPackageService is not registered in the DI container.");
+            _packageService = serviceProvider.GetService(typeof(PackageService)) as PackageService
+                ?? throw new InvalidOperationException("PackageService is not registered in the DI container.");
             _reShadeService = serviceProvider.GetService(typeof(ReShadeService)) as ReShadeService
                 ?? throw new InvalidOperationException("ReShadeService is not registered in the DI container.");
             _gPosingwayService = serviceProvider.GetService(typeof(GPosingwayService)) as GPosingwayService

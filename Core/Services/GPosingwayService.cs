@@ -7,7 +7,7 @@ namespace Bundlingway.Core.Services
 {
     public class GPosingwayService
     {
-        private readonly IPackageService _packageService;
+        private readonly PackageService _packageService;
         private readonly IConfigurationService _configService;
         private readonly IUserNotificationService _notificationService;
         private readonly IFileSystemService _fileSystemService;
@@ -15,7 +15,7 @@ namespace Bundlingway.Core.Services
         private readonly IAppEnvironmentService _envService;
 
         public GPosingwayService(
-            IPackageService packageService,
+            PackageService packageService,
             IConfigurationService configService,
             IUserNotificationService notificationService,
             IFileSystemService fileSystemService,

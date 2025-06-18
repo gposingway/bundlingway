@@ -13,7 +13,7 @@ namespace Bundlingway.Core.Services
     /// <summary>
     /// Service-based implementation of package management logic, decoupled from UI.
     /// </summary>
-    public partial class PackageService : IPackageService
+    public class PackageService
     {
         private readonly IConfigurationService _configService;
         private readonly IFileSystemService _fileSystem;
@@ -328,5 +328,20 @@ namespace Bundlingway.Core.Services
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Removed {package.Name}" });
             return Task.CompletedTask;
         }
+    }
+
+    public class PackageEventArgs : EventArgs
+    {
+        public IEnumerable<ResourcePackage>? Packages { get; set; }
+        public string? Message { get; set; }
+    }
+
+    public class PackageOperationEventArgs : EventArgs
+    {
+        public ResourcePackage? Package { get; set; }
+        public string? Operation { get; set; }
+        public string? Message { get; set; }
+        public bool IsSuccess { get; set; }
+        public Exception? Exception { get; set; }
     }
 }

@@ -12,14 +12,14 @@ namespace Bundlingway.UI
     public class LandingPresenter
     {
         private readonly ILandingView _view;
-        private readonly IPackageService _packageService;
+        private readonly PackageService _packageService;
         private readonly ReShadeService _reShadeService;
         private readonly GPosingwayService _gPosingwayService;
         private readonly IConfigurationService _configService;
         private readonly IAppEnvironmentService _envService;
         private readonly BundlingwayService _bundlingwayService;
 
-        public LandingPresenter(ILandingView view, IPackageService packageService, ReShadeService reShadeService, GPosingwayService gPosingwayService, IConfigurationService configService, IAppEnvironmentService envService, BundlingwayService bundlingwayService)
+        public LandingPresenter(ILandingView view, PackageService packageService, ReShadeService reShadeService, GPosingwayService gPosingwayService, IConfigurationService configService, IAppEnvironmentService envService, BundlingwayService bundlingwayService)
         {
             _view = view;
             _packageService = packageService;

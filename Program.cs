@@ -1,12 +1,12 @@
 using Bundlingway.Utilities;
 using Bundlingway.Core.Services;
-using Bundlingway.Core.Interfaces;
 using Bundlingway.UI.WinForms; // Assuming WinForms services are here
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.IO;
 using System.Windows.Forms;
 using System.Diagnostics;
+using Bundlingway.Core.Interfaces;
 
 namespace Bundlingway
 {
@@ -41,7 +41,7 @@ namespace Bundlingway
                 });
                 services.AddSingleton<IFileSystemService, FileSystemService>();
                 services.AddSingleton<IHttpClientService, HttpClientService>();
-                services.AddSingleton<IPackageService, PackageService>();
+                services.AddSingleton<PackageService>();
                 services.AddSingleton<BundlingwayService>();
                 services.AddSingleton<ReShadeService>();
                 services.AddSingleton<GPosingwayService>();
@@ -49,9 +49,8 @@ namespace Bundlingway
 
                 // Defer building the provider until after UI services are registered
 
-                // Create main form instance, passing a temporary provider if needed
-                var tempProvider = services.BuildServiceProvider();
-                frmLanding mainForm = new frmLanding(tempProvider);
+                // Create main form instance
+                frmLanding mainForm = new frmLanding();
 
                 // Register UI-specific services with the actual mainForm
                 services.AddSingleton<IUserNotificationService>(provider => new WinFormsNotificationService(mainForm));
@@ -59,6 +58,9 @@ namespace Bundlingway
 
                 // Now build the final provider
                 var serviceProvider = services.BuildServiceProvider();
+
+                // Initialize services in the main form
+                mainForm.InitializeServices(serviceProvider);
 
                 // ModernUI bridge (static)
                 ModernUI.Initialize();
