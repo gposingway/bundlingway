@@ -136,7 +136,33 @@ namespace Bundlingway.Core.Services
                 }
 
                 // Unzip the downloaded file to the temp folder
-                ZipFile.ExtractToDirectory(filePath, tempFolder, true);
+                using (var archive = ZipFile.OpenRead(filePath))
+                {
+                    foreach (var entry in archive.Entries)
+                    {
+                        // Sanitize the entry path
+                        var entryPath = entry.FullName.Replace("/", Path.DirectorySeparatorChar.ToString());
+                        if (string.IsNullOrWhiteSpace(entryPath) || entryPath.Contains(".."))
+                            continue; // Prevent path traversal
+                        var destinationPath = Path.GetFullPath(Path.Combine(tempFolder, entryPath));
+                        if (!destinationPath.StartsWith(Path.GetFullPath(tempFolder)))
+                            continue; // Prevent extraction outside tempFolder
+                        if (entry.Name == "")
+                        {
+                            // Directory
+                            if (!_fileSystem.DirectoryExists(destinationPath))
+                                _fileSystem.CreateDirectory(destinationPath);
+                        }
+                        else
+                        {
+                            // File
+                            var destDir = Path.GetDirectoryName(destinationPath);
+                            if (!string.IsNullOrEmpty(destDir) && !_fileSystem.DirectoryExists(destDir))
+                                _fileSystem.CreateDirectory(destDir);
+                            entry.ExtractToFile(destinationPath, true);
+                        }
+                    }
+                }
 
                 Log.Information($"BundlingwayService.Update: Extracted file to {tempFolder}.");
 

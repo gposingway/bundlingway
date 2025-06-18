@@ -13,7 +13,7 @@ namespace Bundlingway.Core.Services
     public class PostProcessorService
     {
         private static readonly object _lock = new object();
-        private static IniDataParser iniDataParser = new IniDataParser(new IniParser.Model.Configuration.IniParserConfiguration()
+        private static readonly IniDataParser iniDataParser = new IniDataParser(new IniParser.Model.Configuration.IniParserConfiguration()
         {
             AllowCreateSectionsOnFly = true,
             AllowDuplicateKeys = true,

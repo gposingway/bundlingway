@@ -31,6 +31,7 @@ namespace Bundlingway.Utilities.Extensions
         /// <param name="value">The value to associate with the specified key.</param>
         public static void Put<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, TValue value) where TKey : notnull
         {
+            if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
             dictionary[key] = value;
         }
     }

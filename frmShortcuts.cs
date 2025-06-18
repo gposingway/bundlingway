@@ -105,6 +105,12 @@ namespace Bundlingway
                 return shortcutKey;
             }
 
+            // Ensure Shortcuts dictionary is not null
+            if (_configService.Configuration.Shortcuts == null)
+            {
+                _configService.Configuration.Shortcuts = new Dictionary<string, string>();
+            }
+
             if (!string.IsNullOrEmpty(safeTextBoxName) && _configService.Configuration.Shortcuts.TryGetValue(safeTextBoxName, out var shortcutKey3) && shortcutKey3 != null)
             {
                 return shortcutKey3;

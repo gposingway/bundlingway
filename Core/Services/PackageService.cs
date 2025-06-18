@@ -5,6 +5,7 @@ using Serilog;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -125,7 +126,35 @@ namespace Bundlingway.Core.Services
             if (!_fileSystem.DirectoryExists(tempFolderPath)) _fileSystem.CreateDirectory(tempFolderPath);
             if (archiveExtension == ".zip")
             {
-                await Task.Run(() => System.IO.Compression.ZipFile.ExtractToDirectory(filePath, tempFolderPath, true));
+                // Secure extraction to prevent Zip-Slip
+                await Task.Run(() => {
+                    using (var archive = System.IO.Compression.ZipFile.OpenRead(filePath))
+                    {
+                        foreach (var entry in archive.Entries)
+                        {
+                            var entryPath = entry.FullName.Replace("/", Path.DirectorySeparatorChar.ToString());
+                            if (string.IsNullOrWhiteSpace(entryPath) || entryPath.Contains(".."))
+                                continue; // Prevent path traversal
+                            var destinationPath = Path.GetFullPath(Path.Combine(tempFolderPath, entryPath));
+                            if (!destinationPath.StartsWith(Path.GetFullPath(tempFolderPath)))
+                                continue; // Prevent extraction outside tempFolderPath
+                            if (entry.Name == "")
+                            {
+                                // Directory
+                                if (!_fileSystem.DirectoryExists(destinationPath))
+                                    _fileSystem.CreateDirectory(destinationPath);
+                            }
+                            else
+                            {
+                                // File
+                                var destDir = Path.GetDirectoryName(destinationPath);
+                                if (!string.IsNullOrEmpty(destDir) && !_fileSystem.DirectoryExists(destDir))
+                                    _fileSystem.CreateDirectory(destDir);
+                                entry.ExtractToFile(destinationPath, true);
+                            }
+                        }
+                    }
+                });
             }
             else if (archiveExtension == ".rar" || archiveExtension == ".7z")
             {

@@ -53,6 +53,7 @@ namespace Bundlingway.Core.Services
             Log.Information($"ReShadeService.GetRemoteInfoAsync: Remote info updated. Version: {version}, Download Link: {downloadLink}");
             if (!string.IsNullOrEmpty(c.LocalVersion) && !string.IsNullOrEmpty(c.RemoteVersion) && c.LocalVersion != c.RemoteVersion)
                 c.Status = EPackageStatus.Outdated;
+            await _configService.SaveAsync();
             await _notifications.AnnounceAsync($"ReShade remote version: {version}");
         }
 

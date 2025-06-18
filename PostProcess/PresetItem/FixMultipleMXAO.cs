@@ -49,9 +49,9 @@ namespace Bundlingway.PostProcess.PresetItem
                     }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Exception intentionally ignored; variable 'e' removed to avoid unused warning
+                Serilog.Log.Error(ex, "Exception in FixMultipleMXAO");
                 throw;
             }
             return update;

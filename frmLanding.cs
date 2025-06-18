@@ -64,7 +64,12 @@ namespace Bundlingway
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
-            _ = OnShownAsync(e);
+            _ = OnShownAsync(e).ContinueWith(t => {
+                if (t.Exception != null)
+                {
+                    Serilog.Log.Error(t.Exception, "Unhandled exception in OnShownAsync");
+                }
+            }, System.Threading.CancellationToken.None, System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted, System.Threading.Tasks.TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         private async Task OnShownAsync(EventArgs e)
@@ -804,18 +809,22 @@ namespace Bundlingway
 
         public async Task SetReShadeStatusAsync(string status, bool enabled, bool visible, string buttonText)
         {
-            txtReShadeStatus.Text = status;
-            btnInstallReShade.Enabled = enabled;
-            btnInstallReShade.Visible = visible;
-            btnInstallReShade.Text = buttonText;
+            this.DoAction(() => {
+                txtReShadeStatus.Text = status;
+                btnInstallReShade.Enabled = enabled;
+                btnInstallReShade.Visible = visible;
+                btnInstallReShade.Text = buttonText;
+            });
         }
 
         public async Task SetGPosingwayStatusAsync(string status, bool enabled, bool visible, string buttonText)
         {
-            txtGPosingwayStatus.Text = status;
-            btnInstallGPosingway.Enabled = enabled;
-            btnInstallGPosingway.Visible = visible;
-            btnInstallGPosingway.Text = buttonText;
+            this.DoAction(() => {
+                txtGPosingwayStatus.Text = status;
+                btnInstallGPosingway.Enabled = enabled;
+                btnInstallGPosingway.Visible = visible;
+                btnInstallGPosingway.Text = buttonText;
+            });
         }
 
         public async Task SetGamePathAsync(string path)
