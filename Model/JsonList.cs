@@ -32,7 +32,7 @@ namespace Bundlingway.Model
                         AddRange(deserialized);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     // Optionally log or handle the error, but do not clear existing data
                 }
