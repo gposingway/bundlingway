@@ -176,9 +176,9 @@ namespace Bundlingway.Core.Services
                         continue;
                     }
                     var destDir = Path.GetDirectoryName(fullDestPath);
-                    if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir)) Directory.CreateDirectory(destDir);
+                    if (!string.IsNullOrEmpty(destDir) && !_fileSystem.DirectoryExists(destDir)) _fileSystem.CreateDirectory(destDir);
                     using (var entryStream = entry.OpenEntryStream())
-                    using (var fs = File.OpenWrite(fullDestPath))
+                    using (var fs = _fileSystem.OpenWrite(fullDestPath))
                         entryStream.CopyTo(fs);
                 }
             }
@@ -252,17 +252,17 @@ namespace Bundlingway.Core.Services
         private bool ValidateExtractedPackage(string tempFolderPath)
         {
             // Validate if the directory exists
-            if (!Directory.Exists(tempFolderPath))
+            if (!_fileSystem.DirectoryExists(tempFolderPath))
                 return false;
             // Must have at least one .ini or .fx file
-            bool hasIni = Directory.GetFiles(tempFolderPath, "*.ini", SearchOption.AllDirectories).Length > 0;
-            bool hasFx = Directory.GetFiles(tempFolderPath, "*.fx", SearchOption.AllDirectories).Length > 0;
+            bool hasIni = _fileSystem.GetFiles(tempFolderPath, "*.ini", System.IO.SearchOption.AllDirectories).Any();
+            bool hasFx = _fileSystem.GetFiles(tempFolderPath, "*.fx", System.IO.SearchOption.AllDirectories).Any();
             return hasIni || hasFx;
         }
 
         private void CopyExtractedFilesToPackage(string tempFolder, string presetsFolder, string texturesFolder, string shadersFolder)
         {
-            foreach (var file in Directory.GetFiles(tempFolder, "*.*", SearchOption.AllDirectories))
+            foreach (var file in _fileSystem.GetFiles(tempFolder, "*.*", System.IO.SearchOption.AllDirectories))
             {
                 var ext = Path.GetExtension(file).ToLowerInvariant();
                 var dest = ext switch
@@ -279,9 +279,9 @@ namespace Bundlingway.Core.Services
 
         private void RemovePreviewsDirectories(string texturesFolder)
         {
-            foreach (var dir in Directory.GetDirectories(texturesFolder, "Previews", SearchOption.AllDirectories))
+            foreach (var dir in _fileSystem.GetDirectories(texturesFolder, "Previews", System.IO.SearchOption.AllDirectories))
             {
-                Directory.Delete(dir, true);
+                _fileSystem.DeleteDirectory(dir, true);
             }
         }
 
@@ -303,8 +303,8 @@ namespace Bundlingway.Core.Services
         {
             package.Status = ResourcePackage.EStatus.NotInstalled;
             // Remove package files
-            if (!string.IsNullOrEmpty(package.LocalFolder) && Directory.Exists(package.LocalFolder))
-                Directory.Delete(package.LocalFolder, true);
+            if (!string.IsNullOrEmpty(package.LocalFolder) && _fileSystem.DirectoryExists(package.LocalFolder))
+                _fileSystem.DeleteDirectory(package.LocalFolder, true);
             await _configService.SaveAsync();
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Uninstalled {package.Name}" });
             await Task.CompletedTask;
@@ -343,14 +343,14 @@ namespace Bundlingway.Core.Services
             await Task.CompletedTask;
         }
 
-        public Task<bool> ValidatePackageAsync(ResourcePackage package)
+ public Task<bool> ValidatePackageAsync(ResourcePackage package)
         {
             // Validate that the package folders exist and have at least one preset or shader
             bool valid = false;
-            if (!string.IsNullOrEmpty(package.LocalPresetFolder) && Directory.Exists(package.LocalPresetFolder))
-                valid |= Directory.GetFiles(package.LocalPresetFolder, "*.ini", SearchOption.AllDirectories).Length > 0;
-            if (!string.IsNullOrEmpty(package.LocalShaderFolder) && Directory.Exists(package.LocalShaderFolder))
-                valid |= Directory.GetFiles(package.LocalShaderFolder, "*.fx", SearchOption.AllDirectories).Length > 0;
+            if (!string.IsNullOrEmpty(package.LocalPresetFolder) && _fileSystem.DirectoryExists(package.LocalPresetFolder))
+                valid |= _fileSystem.GetFiles(package.LocalPresetFolder, "*.ini", System.IO.SearchOption.AllDirectories).Any();
+            if (!string.IsNullOrEmpty(package.LocalShaderFolder) && _fileSystem.DirectoryExists(package.LocalShaderFolder))
+                valid |= _fileSystem.GetFiles(package.LocalShaderFolder, "*.fx", System.IO.SearchOption.AllDirectories).Any();
             return Task.FromResult(valid);
         }
 
@@ -376,21 +376,7 @@ namespace Bundlingway.Core.Services
                 _fileSystem.DeleteDirectory(folder, true);
             }
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Removed {package.Name}" });
-        }
+        }        
     }
 }
-    public class PackageEventArgs : EventArgs
-    {
-        public IEnumerable<ResourcePackage>? Packages { get; set; }
-        public string? Message { get; set; }
-    }
-
-    public class PackageOperationEventArgs : EventArgs
-    {
-        public ResourcePackage? Package { get; set; }
-        public string? Operation { get; set; }
-        public string? Message { get; set; }
-        public bool IsSuccess { get; set; }
-        public Exception? Exception { get; set; }
-    }
 
