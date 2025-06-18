@@ -121,49 +121,66 @@ namespace Bundlingway
             }
         }
 
+        // Helper for safe async event handling
+        private void RunSafeAsync(Func<Task> asyncAction)
+        {
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await asyncAction();
+                }
+                catch (Exception ex)
+                {
+                    Serilog.Log.Error(ex, "Unhandled exception in async UI event handler.");
+                    MessageBox.Show(this, ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            });
+        }
+
         private void btnDetectSettings_Click(object sender, EventArgs e)
         {
-            _ = _presenter.OnDetectSettingsAsync();
+            RunSafeAsync(() => _presenter.OnDetectSettingsAsync());
         }
 
         private void btnInstallPackage_Click(object sender, EventArgs e)
         {
-            _ = _presenter.OnInstallPackageAsync();
+            RunSafeAsync(() => _presenter.OnInstallPackageAsync());
         }
 
         private void btnRemove_Click(object sender, EventArgs e)
         {
-            _ = _presenter.OnRemovePackagesAsync();
+            RunSafeAsync(() => _presenter.OnRemovePackagesAsync());
         }
 
         private void btnUninstall_Click(object sender, EventArgs e)
         {
-            _ = _presenter.OnUninstallPackagesAsync();
+            RunSafeAsync(() => _presenter.OnUninstallPackagesAsync());
         }
 
         private void btnInstallReShade_Click(object sender, EventArgs e)
         {
-            _ = _presenter.OnInstallReShadeAsync();
+            RunSafeAsync(() => _presenter.OnInstallReShadeAsync());
         }
 
         private void btnInstallGPosingway_Click(object sender, EventArgs e)
         {
-            _ = _presenter.OnInstallGPosingwayAsync();
+            RunSafeAsync(() => _presenter.OnInstallGPosingwayAsync());
         }
 
         private void btnReinstall_Click(object sender, EventArgs e)
         {
-            _ = _presenter.OnReinstallPackagesAsync();
+            RunSafeAsync(() => _presenter.OnReinstallPackagesAsync());
         }
 
         private void btnFavPackage_Click(object sender, EventArgs e)
         {
-            _ = _presenter.OnToggleFavoriteAsync();
+            RunSafeAsync(() => _presenter.OnToggleFavoriteAsync());
         }
 
         private void btnLockPackage_Click(object sender, EventArgs e)
         {
-            _ = _presenter.OnToggleLockedAsync();
+            RunSafeAsync(() => _presenter.OnToggleLockedAsync());
         }
 
         private async Task PopulateGridAsync()
