@@ -25,7 +25,7 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Detects settings for the application and related components.
         /// </summary>
-        public static async Task DetectSettings()
+        public static async Task DetectSettings(IAppEnvironmentService envService)
         {
             try
             {
@@ -35,30 +35,19 @@ namespace Bundlingway.Utilities
                 await ConfigService.LoadAsync();
 
                 // Initialize the resource packages list if it's null
-                if (Instances.ResourcePackages == null)
-                    Instances.ResourcePackages = [];
+                // Instances.ResourcePackages removed; handled by envService or service layer
 
                 // Check for Bundlingway updates
-                await CheckBundlingway();
+                await CheckBundlingway(envService);
 
                 // Check for the game client and related components
-                await CheckGameClient().ContinueWith(async a =>
+                await CheckGameClient(envService).ContinueWith(async a =>
                 {
                     await Task.WhenAll(
-                        CheckReShade(),
-                        CheckGPosingway()
+                        CheckReShade(envService),
+                        CheckGPosingway(envService)
                         );
                 });
-
-                // Save the local configuration
-                await ConfigService.SaveAsync();
-
-                
-
-                Log.Information("Bootstrap.DetectSettings: Settings detection completed.");
-                _ = UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.Ready));
-
-                _ = UI.UpdateElements();
             }
             catch (Exception ex)
             {
@@ -69,7 +58,7 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Checks for Bundlingway updates.
         /// </summary>
-        private static async Task CheckBundlingway()
+        private static async Task CheckBundlingway(IAppEnvironmentService envService)
         {
             try
             {
@@ -88,7 +77,7 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Checks for the game client and related settings.
         /// </summary>
-        public static async Task CheckGameClient()
+        public static async Task CheckGameClient(IAppEnvironmentService envService)
         {
             try
             {
@@ -96,7 +85,7 @@ namespace Bundlingway.Utilities
                 Log.Information("Bootstrap.CheckGameClient: Checking game client.");
 
                 // If the game is running, get the process path
-                if (Instances.IsGameRunning)
+                if (envService.IsGameRunning)
                 {
                     var procPath = ProcessHelper.GetProcessPath(Constants.Files.GameProcess);
                     if (procPath != null)
@@ -126,7 +115,7 @@ namespace Bundlingway.Utilities
                     var shaderFolderPath = Path.Combine(c.InstallationFolder, Constants.Folders.GameShaders);
                     if (Directory.Exists(shaderFolderPath))
                     {
-                        // _ = ManagedResources.Shader.SaveShaderAnalysisToPath(shaderFolderPath, Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.ShaderAnalysis)).ContinueWith(i=> UI.Announce("Installed shaders analysis finished!"));
+                        // _ = ManagedResources.Shader.SaveShaderAnalysisToPath(shaderFolderPath, Path.Combine(envService.BundlingwayDataFolder, Constants.Files.ShaderAnalysis)).ContinueWith(i=> UI.Announce("Installed shaders analysis finished!"));
                     }
                 }
 
@@ -141,7 +130,7 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Checks for GPosingway updates.
         /// </summary>
-        public static async Task CheckGPosingway()
+        public static async Task CheckGPosingway(IAppEnvironmentService envService)
         {
             try
             {
@@ -164,7 +153,7 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Checks for ReShade updates.
         /// </summary>
-        public static async Task CheckReShade()
+        public static async Task CheckReShade(IAppEnvironmentService envService)
         {
             try
             {

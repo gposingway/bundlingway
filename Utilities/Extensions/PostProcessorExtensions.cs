@@ -1,4 +1,5 @@
-﻿using Bundlingway.Model;
+﻿using Bundlingway.Core.Services;
+using Bundlingway.Model;
 using Bundlingway.PostProcess.PresetItem;
 using IniParser;
 using Serilog;
@@ -46,14 +47,14 @@ namespace Bundlingway.Utilities.Extensions
             }
         }
 
-        public static void RunRawFilePipeline(this ResourcePackage package, Logging _logger)
+        public static void RunRawFilePipeline(this ResourcePackage package, Logging _logger, IAppEnvironmentService envService)
         {
-            var baseline = Path.Combine(Instances.PackageFolder, package.Name);
+            var baseline = Path.Combine(envService.GetPackageFolder(), package.Name);
             var presetPath = Path.Combine(baseline, Constants.Folders.PackagePresets);
 
             List<string> textureFiles = Directory.GetFiles(presetPath, "*.*", SearchOption.AllDirectories).ToList();
 
-            foreach (var processor in Instances.RawFileProcessors)
+            foreach (var processor in envService.GetRawFileProcessors())
             {
                 var renameMap = processor.GetReplacementMap(package, textureFiles, baseline, _logger);
 
@@ -64,15 +65,15 @@ namespace Bundlingway.Utilities.Extensions
             }
         }
 
-        public static Preset RunPostProcessorPipeline(this Preset preset, ResourcePackage package, IniParser.Model.IniData iniData, Logging _logger)
+        public static Preset RunPostProcessorPipeline(this Preset preset, ResourcePackage package, IniParser.Model.IniData iniData, Logging _logger, IAppEnvironmentService envService)
         {
-            var baseline = Path.Combine(Instances.PackageFolder, package.Name);
+            var baseline = Path.Combine(envService.GetPackageFolder(), package.Name);
             var presetPath = Path.Combine(baseline, Constants.Folders.PackagePresets);
             List<string> textureFiles = [.. Directory.GetFiles(presetPath, "*.*", SearchOption.AllDirectories)];
             var parser = new FileIniDataParser();
             var mustUpdate = false;
 
-            foreach (var process in Instances.PresetProcessors)
+            foreach (var process in envService.GetPresetProcessors())
             {
                 ITemplatePostProcess templateProcess = null;
 

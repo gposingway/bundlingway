@@ -1,4 +1,5 @@
-﻿using Bundlingway.Utilities.Extensions;
+﻿using Bundlingway.Core.Services;
+using Bundlingway.Utilities.Extensions;
 using Serilog;
 using System.Reflection;
 
@@ -6,10 +7,13 @@ namespace Bundlingway.Model
 {
     public class ConfigProvider<T> where T : new()
     {
+        private readonly IAppEnvironmentService _envService;
+
         public T Configuration = new();
 
-        public ConfigProvider()
+        public ConfigProvider(IAppEnvironmentService envService)
         {
+            _envService = envService;
             Load();
         }
 
@@ -17,7 +21,7 @@ namespace Bundlingway.Model
         {
             try
             {
-                Configuration.ToJsonFile(Instances.ConfigFilePath);
+                Configuration.ToJsonFile(_envService.ConfigFilePath);
             }
             catch (Exception ex)
             {
@@ -27,11 +31,11 @@ namespace Bundlingway.Model
 
         public void Load()
         {
-            if (File.Exists(Instances.ConfigFilePath))
+            if (File.Exists(_envService.ConfigFilePath))
             {
                 try
                 {
-                    Configuration = SerializationExtensions.FromJsonFile<T>(Instances.ConfigFilePath);
+                    Configuration = SerializationExtensions.FromJsonFile<T>(_envService.ConfigFilePath);
                 }
                 catch (Exception ex)
                 {

@@ -17,20 +17,22 @@ namespace Bundlingway
         [STAThread]
         static void Main()
         {
+            var envService = new AppEnvironmentService();
+
             try
             {
                 // Prepare the environment (e.g., create necessary directories)
-                Maintenance.PrepareEnvironmentAsync().Wait();
+                Maintenance.PrepareEnvironmentAsync(envService).Wait();
 
                 // Initialize application configuration
                 ApplicationConfiguration.Initialize();
 
                 // Initialize core services BEFORE other initialization
-                ServiceLocator.InitializeCoreServices(Instances.ConfigFilePath);
+                ServiceLocator.InitializeCoreServices(envService.ConfigFilePath);
 
                 // Initialize the application (e.g., load settings)
                 Bootstrap.Initialize().Wait();
-                var configService = new ConfigurationService(Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.BundlingwayConfig));
+                var configService = new ConfigurationService(Path.Combine(envService.BundlingwayDataFolder, Constants.Files.BundlingwayConfig));
                 configService.LoadAsync().Wait();
                 Maintenance.EnsureConfiguration().Wait();
 
@@ -43,6 +45,7 @@ namespace Bundlingway
                 }
 
                 // Core services
+                ServiceLocator.Register<IAppEnvironmentService>(envService);
                 ServiceLocator.Register<IConfigurationService>(configService);
                 ServiceLocator.Register<IFileSystemService>(new FileSystemService());
                 ServiceLocator.Register<IHttpClientService>(new HttpClientService());
@@ -52,7 +55,8 @@ namespace Bundlingway
                     ServiceLocator.TryGetService<IHttpClientService>()!,
                     ServiceLocator.TryGetService<IFileSystemService>()!,
                     new WinFormsProgressReporter(null), // Will be replaced after mainForm is created
-                    new WinFormsNotificationService(null) // Will be replaced after mainForm is created
+                    new WinFormsNotificationService(null), // Will be replaced after mainForm is created
+                    envService
                 ));
 
                 // Register PackageService for service-based package management
@@ -69,7 +73,8 @@ namespace Bundlingway
                     configService,
                     ServiceLocator.TryGetService<IFileSystemService>()!,
                     new WinFormsNotificationService(null),
-                    ServiceLocator.TryGetService<IHttpClientService>()!
+                    ServiceLocator.TryGetService<IHttpClientService>()!,
+                    envService
                 ));
 
                 // Register GPosingwayService for service-based GPosingway management
@@ -78,7 +83,8 @@ namespace Bundlingway
                     configService,
                     new WinFormsNotificationService(null), // Will be replaced after mainForm is created
                     ServiceLocator.TryGetService<IFileSystemService>()!,
-                    ServiceLocator.TryGetService<IHttpClientService>()!
+                    ServiceLocator.TryGetService<IHttpClientService>()!,
+                    envService
                 ));
 
                 // Register CommandLineService for service-based command line management

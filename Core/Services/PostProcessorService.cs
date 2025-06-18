@@ -23,12 +23,19 @@ namespace Bundlingway.Core.Services
             SkipInvalidLines = true,
         });
 
+        private readonly IAppEnvironmentService _envService;
+
+        public PostProcessorService(IAppEnvironmentService envService)
+        {
+            _envService = envService;
+        }
+
         public void RunPipeline(ResourcePackage package)
         {
             lock (_lock)
             {
                 Logging _logger = new();
-                var baseline = Path.Combine(Instances.PackageFolder, package.Name);
+                var baseline = Path.Combine(_envService.PackageFolder, package.Name);
                 var presetPath = Path.Combine(baseline, Constants.Folders.PackagePresets);
                 if (!Directory.Exists(presetPath)) return;
                 var texturePath = Path.Combine(baseline, Constants.Folders.PackageShaders);
@@ -37,7 +44,7 @@ namespace Bundlingway.Core.Services
                 var iniFiles = Directory.GetFiles(presetPath, "*.ini", SearchOption.AllDirectories)
                     .Where(i => !i.EndsWith(@"\Off.ini")).ToList();
                 var techGraph = new Dictionary<string, int>();
-                package.RunRawFilePipeline(_logger);
+                package.RunRawFilePipeline(_logger, _envService);
                 foreach (string iniFile in iniFiles)
                 {
                     if (!File.Exists(iniFile))
@@ -80,7 +87,7 @@ namespace Bundlingway.Core.Services
                             }
                         }
                     }
-                    preset.RunPostProcessorPipeline(package, ini_filedata, _logger);
+                    preset.RunPostProcessorPipeline(package, ini_filedata, _logger, _envService);
                 }
                 _logger.WriteLogToConsole();
                 _logger.WriteLogToFile(Path.Combine(baseline, "installation-log.txt"));

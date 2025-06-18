@@ -16,17 +16,20 @@ namespace Bundlingway.Core.Services
         private readonly IFileSystemService _fileSystem;
         private readonly IUserNotificationService _notifications;
         private readonly IHttpClientService _httpClient;
+        private readonly IAppEnvironmentService _envService;
 
         public ReShadeService(
             IConfigurationService configService,
             IFileSystemService fileSystem,
             IUserNotificationService notifications,
-            IHttpClientService httpClient)
+            IHttpClientService httpClient,
+            IAppEnvironmentService envService)
         {
             _configService = configService;
             _fileSystem = fileSystem;
             _notifications = notifications;
             _httpClient = httpClient;
+            _envService = envService;
         }
 
         public async Task GetRemoteInfoAsync()
@@ -101,9 +104,9 @@ namespace Bundlingway.Core.Services
             await _notifications.AnnounceAsync("Updating ReShade...");
             Log.Information("ReShadeService.UpdateAsync: Starting update process.");
             // Use Instances.IsGameRunning if available, else skip check
-            if (Instances.IsGameRunning && c.Status != EPackageStatus.NotInstalled) return;
+            if (_envService.IsGameRunning && c.Status != EPackageStatus.NotInstalled) return;
             var remoteLink = c.RemoteLink;
-            var tempFolder = Path.Combine(Instances.TempFolder, "ReShade");
+            var tempFolder = Path.Combine(_envService.TempFolder, "ReShade");
             var gameFolder = _configService.Configuration.Game.InstallationFolder;
             if (string.IsNullOrEmpty(remoteLink) || string.IsNullOrEmpty(tempFolder) || string.IsNullOrEmpty(gameFolder))
             {

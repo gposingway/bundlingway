@@ -10,10 +10,10 @@ namespace Bundlingway.Utilities
     {
         private static IConfigurationService ConfigService => ServiceLocator.GetService<IConfigurationService>();
 
-        public static void RemoveTempDir()
+        public static void RemoveTempDir(IAppEnvironmentService envService)
         {
-            if (Directory.Exists(Instances.TempFolder))
-                Directory.Delete(Instances.TempFolder, true);
+            if (Directory.Exists(envService.TempFolder))
+                Directory.Delete(envService.TempFolder, true);
         }
 
         internal static async Task EnsureConfiguration()
@@ -39,7 +39,7 @@ namespace Bundlingway.Utilities
             if (mustRefresh) await ConfigService.SaveAsync();
         }
 
-        internal static async Task PrepareEnvironmentAsync()
+        internal static async Task PrepareEnvironmentAsync(IAppEnvironmentService envService)
         {
             var settings = new JsonSerializerSettings
             {
@@ -50,19 +50,19 @@ namespace Bundlingway.Utilities
 
             JsonConvert.DefaultSettings = () => settings;
 
-            if (!Directory.Exists(Instances.BundlingwayDataFolder))
-                Directory.CreateDirectory(Instances.BundlingwayDataFolder);
+            if (!Directory.Exists(envService.BundlingwayDataFolder))
+                Directory.CreateDirectory(envService.BundlingwayDataFolder);
 
-            if (!Directory.Exists(Instances.SinglePresetsFolder))
-                Directory.CreateDirectory(Instances.SinglePresetsFolder);
+            if (!Directory.Exists(envService.SinglePresetsFolder))
+                Directory.CreateDirectory(envService.SinglePresetsFolder);
 
-            string localCatalogFilePath = Path.Combine(Instances.SinglePresetsFolder, Constants.Files.CatalogEntry);
+            string localCatalogFilePath = Path.Combine(envService.SinglePresetsFolder, Constants.Files.CatalogEntry);
 
-            if (!File.Exists(localCatalogFilePath)) Constants.SingleFileCatalog.ToJsonFile(localCatalogFilePath);
+            if (!File.Exists(localCatalogFilePath)) Constants.SingleFileCatalog(envService).ToJsonFile(localCatalogFilePath);
 
             Log.Logger = new LoggerConfiguration()
                       .WriteTo.File(
-                        Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.Log),
+                        Path.Combine(envService.BundlingwayDataFolder, Constants.Files.Log),
                         fileSizeLimitBytes: 1 * 1024 * 1024 * 1024, // 1 GB
                         retainedFileCountLimit: 10,
                         rollingInterval: RollingInterval.Day,

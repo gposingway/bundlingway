@@ -17,6 +17,7 @@ namespace Bundlingway
         private readonly ReShadeService _reShadeService;
         private readonly GPosingwayService _gPosingwayService;
         private readonly IConfigurationService _configService;
+        private readonly IAppEnvironmentService _envService;
         private LandingPresenter _presenter;
 
         public frmLanding()
@@ -24,13 +25,19 @@ namespace Bundlingway
             InitializeComponent();
 
             // ServiceLocator is used for now; replace with DI when available
-            _packageService = ServiceLocator.TryGetService<IPackageService>()!;
-            _reShadeService = ServiceLocator.TryGetService<ReShadeService>()!;
-            _gPosingwayService = ServiceLocator.TryGetService<GPosingwayService>()!;
-            _configService = ServiceLocator.TryGetService<IConfigurationService>()!;
+            _envService = ServiceLocator.TryGetService<IAppEnvironmentService>();
+            if (_envService == null)
+                throw new InvalidOperationException("IAppEnvironmentService is not registered in ServiceLocator.");
+            _packageService = ServiceLocator.TryGetService<IPackageService>();
+            _reShadeService = ServiceLocator.TryGetService<ReShadeService>();
+            _gPosingwayService = ServiceLocator.TryGetService<GPosingwayService>();
+            _configService = ServiceLocator.TryGetService<IConfigurationService>();
 
-            _presenter = new LandingPresenter(this, _packageService, _reShadeService, _gPosingwayService, _configService);
-            Text = $"Bundlingway · v{Instances.AppVersion}";
+            if (_packageService == null || _reShadeService == null || _gPosingwayService == null || _configService == null)
+                throw new InvalidOperationException("One or more required services are not registered in ServiceLocator.");
+
+            _presenter = new LandingPresenter(this, _packageService, _reShadeService, _gPosingwayService, _configService, _envService);
+            Text = $"Bundlingway · v{_envService.AppVersion}";
 
             BindAllTaggedControls();
 
@@ -55,7 +62,7 @@ namespace Bundlingway
 
         private async Task InitializeAsync()
         {
-            await Bootstrap.DetectSettings();
+            await Bootstrap.DetectSettings(_envService);
             await UpdateElements();
             await PopulateGridAsync();
         }
@@ -438,7 +445,7 @@ namespace Bundlingway
             {
                 if (c.ReShade.Status != EPackageStatus.NotInstalled)
                 {
-                    reShadeBtnEnabled = !Instances.IsGameRunning;
+                    reShadeBtnEnabled = !_envService.IsGameRunning;
                     _ = ModernUI.Announce("If you want to update ReShade, shut down the game first!");
                 }
             }

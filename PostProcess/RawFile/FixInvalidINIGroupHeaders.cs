@@ -1,4 +1,5 @@
-﻿using Bundlingway.Model;
+﻿using Bundlingway.Core.Services;
+using Bundlingway.Model;
 using Bundlingway.Utilities;
 using Serilog;
 using System.Text.RegularExpressions;
@@ -7,9 +8,16 @@ namespace Bundlingway.PostProcess.RawFile
 {
     public class FixInvalidINIGroupHeaders : IRawFileProcess
     {
+        private readonly IAppEnvironmentService _envService;
+
         public bool ApplyToPresets { get; set; } = true;
         public bool ApplyToShaders { get; set; } = false;
         public int Order { get; set; } = 5;
+
+        public FixInvalidINIGroupHeaders(IAppEnvironmentService envService)
+        {
+            _envService = envService;
+        }
 
         public bool PostProcess(Preset preset)
         {
@@ -20,7 +28,7 @@ namespace Bundlingway.PostProcess.RawFile
         {
             var result = new Dictionary<string, string>();
 
-            var baseline = Path.Combine(Instances.PackageFolder, package.Name);
+            var baseline = Path.Combine(_envService.PackageFolder, package.Name);
 
             var presetPath = Path.Combine(baseline, "Presets");
 

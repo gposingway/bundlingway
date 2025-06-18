@@ -16,14 +16,16 @@ namespace Bundlingway.UI
         private readonly ReShadeService _reShadeService;
         private readonly GPosingwayService _gPosingwayService;
         private readonly IConfigurationService _configService;
+        private readonly IAppEnvironmentService _envService;
 
-        public LandingPresenter(ILandingView view, IPackageService packageService, ReShadeService reShadeService, GPosingwayService gPosingwayService, IConfigurationService configService)
+        public LandingPresenter(ILandingView view, IPackageService packageService, ReShadeService reShadeService, GPosingwayService gPosingwayService, IConfigurationService configService, IAppEnvironmentService envService)
         {
             _view = view;
             _packageService = packageService;
             _reShadeService = reShadeService;
             _gPosingwayService = gPosingwayService;
             _configService = configService;
+            _envService = envService;
         }
 
         public async Task InitializeAsync()
@@ -44,7 +46,7 @@ namespace Bundlingway.UI
         public async Task OnDetectSettingsAsync()
         {
             // Perform real detection
-            await Bundlingway.Utilities.Bootstrap.DetectSettings();
+            await Bundlingway.Utilities.Bootstrap.DetectSettings(_envService);
             // After detection, fetch local/remote info if game path is present
             var c = _configService.Configuration;
             var gamePath = c.Game.InstallationFolder;
@@ -86,7 +88,7 @@ namespace Bundlingway.UI
                 _ => "Unknown"
             };
             bool reShadeBtnVisible = c.ReShade.Status == EPackageStatus.NotInstalled || c.ReShade.Status == EPackageStatus.Outdated;
-            bool reShadeBtnEnabled = c.ReShade.Status != EPackageStatus.NotInstalled ? !Instances.IsGameRunning : true;
+            bool reShadeBtnEnabled = c.ReShade.Status != EPackageStatus.NotInstalled ? !_envService.IsGameRunning : true;
             string reShadeBtnText = c.ReShade.Status == EPackageStatus.NotInstalled ? "Install" : c.ReShade.Status == EPackageStatus.Outdated ? "Update" : "";
             await _view.SetReShadeStatusAsync(reShadeText, reShadeBtnEnabled, reShadeBtnVisible, reShadeBtnText);
             // GPosingway status
@@ -193,7 +195,7 @@ namespace Bundlingway.UI
 
         public void OpenPackagesFolder()
         {
-            string repositoryPath = Instances.PackageFolder;
+            string repositoryPath = _envService.PackageFolder;
             if (string.IsNullOrEmpty(repositoryPath) || !System.IO.Directory.Exists(repositoryPath))
             {
                 System.Windows.Forms.MessageBox.Show("Package Folder not found or path is empty.", "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
@@ -216,7 +218,7 @@ namespace Bundlingway.UI
 
         public void OpenLogFile()
         {
-            var logDirectory = Instances.BundlingwayDataFolder;
+            var logDirectory = _envService.BundlingwayDataFolder;
             if (string.IsNullOrEmpty(logDirectory) || !System.IO.Directory.Exists(logDirectory))
                 return;
             var logFiles = System.IO.Directory.GetFiles(logDirectory, Bundlingway.Constants.Files.Log.Split('.')[0] + "*.txt");
@@ -240,7 +242,7 @@ namespace Bundlingway.UI
 
         public void BackupData()
         {
-            var target = System.IO.Path.Combine(Instances.BundlingwayDataFolder, Bundlingway.Constants.Folders.Backup);
+            var target = System.IO.Path.Combine(_envService.BundlingwayDataFolder, Bundlingway.Constants.Folders.Backup);
             if (string.IsNullOrEmpty(target))
             {
                 ModernUI.Announce("Backup path is invalid.");
@@ -250,7 +252,7 @@ namespace Bundlingway.UI
             {
                 System.IO.Directory.CreateDirectory(target);
             }
-            var source1 = System.IO.Path.Combine(Instances.BundlingwayDataFolder, Bundlingway.Constants.Folders.Cache);
+            var source1 = System.IO.Path.Combine(_envService.BundlingwayDataFolder, Bundlingway.Constants.Folders.Cache);
             if (System.IO.Directory.Exists(source1))
             {
                 foreach (var file in System.IO.Directory.GetFiles(source1))
@@ -259,7 +261,7 @@ namespace Bundlingway.UI
                     System.IO.File.Copy(file, destFile, true);
                 }
             }
-            var source2 = System.IO.Path.Combine(Instances.BundlingwayDataFolder, Bundlingway.Constants.Folders.Packages);
+            var source2 = System.IO.Path.Combine(_envService.BundlingwayDataFolder, Bundlingway.Constants.Folders.Packages);
             if (System.IO.Directory.Exists(source2))
             {
                 foreach (var folder in System.IO.Directory.GetDirectories(source2))

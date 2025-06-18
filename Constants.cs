@@ -1,4 +1,5 @@
 ﻿using Bundlingway.Model;
+using Bundlingway.Core.Services;
 
 namespace Bundlingway
 {
@@ -13,9 +14,9 @@ namespace Bundlingway
         public static string GPosingwayProtocolHandler = "gwpackage";
 
 
-        public static ResourcePackage SingleFileCatalog = new()
+        public static ResourcePackage SingleFileCatalog(IAppEnvironmentService envService) => new()
         {
-            LocalPresetFolder = Path.Combine(Instances.SinglePresetsFolder, Folders.PackagePresets),
+            LocalPresetFolder = Path.Combine(envService.SinglePresetsFolder, Folders.PackagePresets),
             Name = "Single Presets",
             Source = "Local",
             Type = ResourcePackage.EType.SinglePreset,
@@ -24,9 +25,9 @@ namespace Bundlingway
             Hidden = true,
         };
 
-        public static ResourcePackage GPosingwayDefaultPackage = new ResourcePackage()
+        public static ResourcePackage GPosingwayDefaultPackage(IAppEnvironmentService envService) => new ResourcePackage()
         {
-            LocalPresetFolder = Path.Combine(Instances.SinglePresetsFolder, Folders.PackagePresets),
+            LocalPresetFolder = Path.Combine(envService.SinglePresetsFolder, Folders.PackagePresets),
             Name = "GPosingway",
             Source = "Local",
             Type = ResourcePackage.EType.CorePackage,

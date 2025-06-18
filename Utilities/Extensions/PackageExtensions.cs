@@ -1,4 +1,5 @@
 ﻿using System.Security.Cryptography;
+using Bundlingway.Core.Services;
 
 namespace Bundlingway.Utilities.Extensions
 {
@@ -48,11 +49,12 @@ namespace Bundlingway.Utilities.Extensions
         /// </summary>
         /// <param name="PackageA">The name of the first package.</param>
         /// <param name="PackageB">The name of the second package.</param>
+        /// <param name="envService">The environment service instance.</param>
         /// <returns>A dictionary where the key is the shader file name and the value is the comparison result.</returns>
-        public static Dictionary<string, string> ComparePackages(string PackageA, string PackageB)
+        public static Dictionary<string, string> ComparePackages(string PackageA, string PackageB, IAppEnvironmentService envService)
         {
-            var a = Instances.Packages.Get(PackageA);
-            var b = Instances.Packages.Get(PackageB);
+            var a = envService.Packages.Get(PackageA);
+            var b = envService.Packages.Get(PackageB);
 
             var comparisonMap = new Dictionary<string, string>();
 

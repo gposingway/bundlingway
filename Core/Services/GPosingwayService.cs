@@ -12,19 +12,22 @@ namespace Bundlingway.Core.Services
         private readonly IUserNotificationService _notificationService;
         private readonly IFileSystemService _fileSystemService;
         private readonly IHttpClientService _httpClientService;
+        private readonly IAppEnvironmentService _envService;
 
         public GPosingwayService(
             IPackageService packageService,
             IConfigurationService configService,
             IUserNotificationService notificationService,
             IFileSystemService fileSystemService,
-            IHttpClientService httpClientService)
+            IHttpClientService httpClientService,
+            IAppEnvironmentService envService)
         {
             _packageService = packageService;
             _configService = configService;
             _notificationService = notificationService;
             _fileSystemService = fileSystemService;
             _httpClientService = httpClientService;
+            _envService = envService;
         }
 
         public async Task<(bool success, string version)> GetRemoteInfoAsync()
@@ -74,7 +77,7 @@ namespace Bundlingway.Core.Services
         {
             string methodName = nameof(GetLocalInfoAsync);
             var c = _configService.Configuration.GPosingway;
-            var gposingwayPackage = await _packageService.GetPackageByNameAsync(Bundlingway.Constants.GPosingwayDefaultPackage.Name);
+            var gposingwayPackage = await _packageService.GetPackageByNameAsync(Bundlingway.Constants.GPosingwayDefaultPackage(_envService).Name);
 
             if (gposingwayPackage == null)
             {
@@ -99,8 +102,8 @@ namespace Bundlingway.Core.Services
             var downloadUrl = Bundlingway.Constants.Urls.GPosingwayConfigFileUrl;
 
             // Prepare or get the package using the service
-            var gposingwayPackage = await _packageService.GetPackageByNameAsync(Bundlingway.Constants.GPosingwayDefaultPackage.Name)
-                ?? await _packageService.OnboardPackageAsync(Bundlingway.Constants.GPosingwayDefaultPackage.Name);
+            var gposingwayPackage = await _packageService.GetPackageByNameAsync(Bundlingway.Constants.GPosingwayDefaultPackage(_envService).Name)
+                ?? await _packageService.OnboardPackageAsync(Bundlingway.Constants.GPosingwayDefaultPackage(_envService).Name);
 
             var destinationPath = Path.Combine(gposingwayPackage.LocalFolder, Bundlingway.Constants.Files.GPosingwayConfig);
 

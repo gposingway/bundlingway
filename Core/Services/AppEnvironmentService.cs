@@ -51,8 +51,34 @@ namespace Bundlingway.Core.Services
             CacheFolder = Path.Combine(BundlingwayDataFolder, Constants.Folders.Cache);
             PackageFolder = Path.Combine(BundlingwayDataFolder, Constants.Folders.Packages);
             SinglePresetsFolder = Path.Combine(PackageFolder, Constants.Folders.SinglePresets);
-            RawFileProcessors = IoC.GetClassesByInterface<IRawFileProcess>().CreateInstances<IRawFileProcess>().OrderBy(i => i.Order).ToList();
-            PresetProcessors = IoC.GetClassesByInterface<IPresetProcess>().CreateInstances<IPresetProcess>().OrderBy(i => i.Order).ToList();
+
+            // Explicitly register all RawFileProcessors
+            RawFileProcessors = new List<IRawFileProcess>
+            {
+                new PostProcess.RawFile.FixInvalidINIGroupHeaders(this),
+                new PostProcess.RawFile.FixTexturePaths(this),
+                new PostProcess.RawFile.FixGaussianFXPasses(),
+                // Add other IRawFileProcess implementations here as needed
+            }.OrderBy(i => i.Order).ToList();
+
+            // Explicitly register all PresetProcessors
+            PresetProcessors = new List<IPresetProcess>
+            {
+                new PostProcess.PresetItem.FixPreprocessor(),
+                new PostProcess.PresetItem.FixMultipleMXAO(),
+                new PostProcess.PresetItem.UI(),
+                new PostProcess.PresetItem.VerticalPreviewer(),
+                new PostProcess.PresetItem.SocialMediaComposition(),
+                new PostProcess.PresetItem.KeepUI(),
+                // Add other IPresetProcess implementations here as needed
+            }.OrderBy(i => i.Order).ToList();
         }
+    }
+
+    public static class AppEnvironmentServiceExtensions
+    {
+        public static string GetPackageFolder(this IAppEnvironmentService envService) => envService.PackageFolder;
+        public static List<IRawFileProcess> GetRawFileProcessors(this IAppEnvironmentService envService) => envService.RawFileProcessors;
+        public static List<IPresetProcess> GetPresetProcessors(this IAppEnvironmentService envService) => envService.PresetProcessors;
     }
 }

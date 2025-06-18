@@ -18,19 +18,22 @@ namespace Bundlingway.Core.Services
         private readonly IFileSystemService _fileSystem;
         private readonly IProgressReporter _progressReporter;
         private readonly IUserNotificationService _notifications;
+        private readonly IAppEnvironmentService _envService;
 
         public BundlingwayService(
             IConfigurationService configService,
             IHttpClientService httpClient,
             IFileSystemService fileSystem,
             IProgressReporter progressReporter,
-            IUserNotificationService notifications)
+            IUserNotificationService notifications,
+            IAppEnvironmentService envService)
         {
             _configService = configService;
             _httpClient = httpClient;
             _fileSystem = fileSystem;
             _progressReporter = progressReporter;
             _notifications = notifications;
+            _envService = envService;
         }
 
         /// <summary>
@@ -39,7 +42,7 @@ namespace Bundlingway.Core.Services
         public async Task GetLocalInfoAsync()
         {
             // Set the local version to the current application version
-            _configService.Configuration.Bundlingway.LocalVersion = Instances.AppVersion;
+            _configService.Configuration.Bundlingway.LocalVersion = _envService.AppVersion;
             await _configService.SaveAsync();
         }
 
@@ -98,7 +101,7 @@ namespace Bundlingway.Core.Services
             await _configService.SaveAsync();
 
             // Create the storage folder if it doesn't exist
-            var storageFolder = Path.Combine(Instances.BundlingwayDataFolder, Constants.Folders.Core, Constants.Folders.BundlingwayPackage);
+            var storageFolder = Path.Combine(_envService.BundlingwayDataFolder, Constants.Folders.Core, Constants.Folders.BundlingwayPackage);
 
             if (!_fileSystem.DirectoryExists(storageFolder))
                 _fileSystem.CreateDirectory(storageFolder);
@@ -108,7 +111,7 @@ namespace Bundlingway.Core.Services
             string filePath = Path.Combine(storageFolder, fileName);
 
             // Create a temporary folder for extracting the package
-            var tempFolder = Path.Combine(Instances.TempFolder, Constants.Folders.BundlingwayPackage);
+            var tempFolder = Path.Combine(_envService.TempFolder, Constants.Folders.BundlingwayPackage);
             if (!_fileSystem.DirectoryExists(tempFolder))
                 _fileSystem.CreateDirectory(tempFolder);
 
@@ -155,7 +158,8 @@ namespace Bundlingway.Core.Services
                 ServiceLocator.GetService<IHttpClientService>(),
                 ServiceLocator.GetService<IFileSystemService>(),
                 ServiceLocator.GetService<IProgressReporter>(),
-                ServiceLocator.GetService<IUserNotificationService>()
+                ServiceLocator.GetService<IUserNotificationService>(),
+                ServiceLocator.GetService<IAppEnvironmentService>()
             );
         }
     }
