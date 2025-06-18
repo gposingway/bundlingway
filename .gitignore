@@ -1,7 +1,6 @@
 /.vs
-/bin
-/Client/obj
-/obj
+bin
+obj
 /Client/bin
 /Client/.vs
 /Client/Properties
