@@ -69,8 +69,8 @@ namespace Bundlingway.Utilities
 
                 if (isExtensionRegistered)
                 {
-                    string? existingAppPath = existingKey.GetValue("")?.ToString();
-                    if (existingAppPath != null && existingAppPath.Equals(protocolName))
+                    string? existingAppPath = existingKey?.GetValue("")?.ToString();
+                    if (!string.IsNullOrEmpty(existingAppPath) && existingAppPath.Equals(protocolName))
                     {
                         Log.Information($".{protocolName} extension is already registered.");
                     }
@@ -100,15 +100,21 @@ namespace Bundlingway.Utilities
         /// <returns>The status of the protocol registration.</returns>
         public static string IsCustomProtocolRegistered(string protocolName)
         {
-            var appPath = System.Diagnostics.Process.GetCurrentProcess().MainModule.FileName;
+            var mainModule = System.Diagnostics.Process.GetCurrentProcess().MainModule;
+            if (mainModule == null || string.IsNullOrEmpty(mainModule.FileName))
+            {
+                Log.Error("MainModule or FileName is null.");
+                return "Not Set";
+            }
+            var appPath = mainModule.FileName;
             string status = "Not Set";
 
-            using (RegistryKey existingKey = Registry.ClassesRoot.OpenSubKey(protocolName))
+            using (RegistryKey? existingKey = Registry.ClassesRoot.OpenSubKey(protocolName))
             {
                 if (existingKey != null)
                 {
-                    string existingAppPath = existingKey.OpenSubKey("shell")?.OpenSubKey("open")?.OpenSubKey("command")?.GetValue("")?.ToString();
-                    if (existingAppPath != null)
+                    string? existingAppPath = existingKey.OpenSubKey("shell")?.OpenSubKey("open")?.OpenSubKey("command")?.GetValue("")?.ToString();
+                    if (!string.IsNullOrEmpty(existingAppPath))
                     {
                         if (existingAppPath.Contains(appPath))
                         {

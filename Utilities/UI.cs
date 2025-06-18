@@ -4,9 +4,6 @@ namespace Bundlingway.Utilities
 {
     public static class UI
     {
-        private static System.Threading.Timer? _idleTimer;
-        private static string? _currentMessage;
-
         static UI()
         {
             // Don't start the timer in static constructor - causes deadlock

@@ -49,8 +49,9 @@ namespace Bundlingway.PostProcess.PresetItem
                     }
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
+                // Exception intentionally ignored; variable 'e' removed to avoid unused warning
                 throw;
             }
             return update;

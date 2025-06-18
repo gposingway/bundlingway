@@ -24,7 +24,11 @@ namespace Bundlingway.Model
             {
                 var json = File.ReadAllText(fileName);
                 Clear();
-                AddRange(JsonSerializer.Deserialize<List<T>>(json));
+                var deserialized = JsonSerializer.Deserialize<List<T>>(json);
+                if (deserialized != null)
+                {
+                    AddRange(deserialized);
+                }
             }
         }
     }
