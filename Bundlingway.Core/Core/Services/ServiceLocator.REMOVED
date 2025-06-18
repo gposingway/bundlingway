@@ -1,0 +1,2 @@
+# ServiceLocator.cs has been removed as part of the DI migration.
+# All usages have been replaced with Microsoft.Extensions.DependencyInjection.

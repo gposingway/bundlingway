@@ -4,6 +4,12 @@
     <_LastSelectedProfileId>F:\Files\repo\github\bundlingway\Properties\PublishProfiles\FolderProfile.pubxml</_LastSelectedProfileId>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Update="Bundlingway.UI.WinForms\frmLanding.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Update="Bundlingway.UI.WinForms\frmShortcuts.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Update="frmLanding.cs">
       <SubType>Form</SubType>
     </Compile>

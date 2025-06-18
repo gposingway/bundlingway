@@ -31,7 +31,7 @@ namespace Bundlingway.PostProcess.RawFile
                 throw new NotImplementedException();
             }
 
-            public Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, Logging _logger)
+            public Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, Bundlingway.Core.Utilities.Logging _logger)
             {
                 return WellKnownFileReplacements;
             }
