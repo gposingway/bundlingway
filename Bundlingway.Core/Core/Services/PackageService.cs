@@ -343,6 +343,15 @@ namespace Bundlingway.Core.Services
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Locked toggled for {package.Name}" });
             await Task.CompletedTask;
         }
+
+        public async Task RemovePackageAsync(ResourcePackage package)
+        {
+            // TODO: Implement actual removal logic (delete files, update cache, etc.)
+            // For now, just remove from cache for demonstration
+            _cachedPackages = _cachedPackages.Remove(package);
+            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = _cachedPackages.ToList(), Message = $"Removed {package.Name}" });
+            await Task.CompletedTask;
+        }
     }
 }
 

@@ -21,6 +21,10 @@
     <Compile Include="UI\ILandingView.cs" />
     <Compile Include="UI\LandingPresenter.cs" />
     <Compile Include="Bundlingway.Shared.Project\**\*.cs" />
+    <Compile Include="Interfaces\IBackupService.cs" />
+    <Compile Include="Services\BackupService.cs" />
+    <Compile Include="Interfaces\ISystemService.cs" />
+    <Compile Include="Services\SystemService.cs" />
   </ItemGroup>
 
   <ItemGroup>

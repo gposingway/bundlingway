@@ -20,6 +20,8 @@ namespace Bundlingway.Core.UI
         private readonly IAppEnvironmentService _envService;
         private readonly BundlingwayService _bundlingwayService;
         private readonly IUserNotificationService _notificationService;
+        private readonly IBackupService _backupService;
+        private readonly ISystemService _systemService;
 
         public LandingPresenter(
             ILandingView view,
@@ -29,7 +31,9 @@ namespace Bundlingway.Core.UI
             IConfigurationService configService,
             IAppEnvironmentService envService,
             BundlingwayService bundlingwayService,
-            IUserNotificationService notificationService
+            IUserNotificationService notificationService,
+            IBackupService backupService,
+            ISystemService systemService
         )
         {
             _view = view;
@@ -40,6 +44,8 @@ namespace Bundlingway.Core.UI
             _envService = envService;
             _bundlingwayService = bundlingwayService;
             _notificationService = notificationService;
+            _backupService = backupService;
+            _systemService = systemService;
         }
 
         public async Task InitializeAsync()
@@ -60,7 +66,7 @@ namespace Bundlingway.Core.UI
         public async Task OnDetectSettingsAsync()
         {
             // Perform real detection
-            await Bundlingway.Utilities.Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService);
+            await Bundlingway.Utilities.Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService, _notificationService);
             // After detection, fetch local/remote info if game path is present
             var c = _configService.Configuration;
             var gamePath = c.Game.InstallationFolder;
@@ -146,8 +152,19 @@ namespace Bundlingway.Core.UI
 
         public async Task OnRemovePackagesAsync()
         {
-            // Not implemented: PackageService does not have RemovePackage or RemovePackageAsync
-            throw new System.NotImplementedException("RemovePackages is not implemented in PackageService.");
+            var selectedPackages = _view.GetSelectedPackages();
+            foreach (var pkg in selectedPackages)
+            {
+                try
+                {
+                    await _packageService.RemovePackageAsync(pkg);
+                }
+                catch (Exception ex)
+                {
+                    await _notificationService.AnnounceAsync($"Failed to remove package {pkg.Name}: {ex.Message}");
+                }
+            }
+            await PopulateGridAsync();
         }
 
         public async Task OnUninstallPackagesAsync()
@@ -195,27 +212,27 @@ namespace Bundlingway.Core.UI
             await PopulateGridAsync();
         }
 
-        public void OpenPackagesFolder(string repositoryPath)
+        public async Task OpenPackagesFolder(string repositoryPath)
         {
             if (string.IsNullOrEmpty(repositoryPath) || !Directory.Exists(repositoryPath))
             {
                 // UI should handle error notification
                 return;
             }
-            System.Diagnostics.Process.Start("explorer.exe", repositoryPath);
+            await _systemService.OpenInExplorerAsync(repositoryPath);
         }
 
-        public void OpenGameFolder(string gamePath)
+        public async Task OpenGameFolder(string gamePath)
         {
             if (string.IsNullOrEmpty(gamePath) || !Directory.Exists(gamePath))
             {
                 // UI should handle error notification
                 return;
             }
-            System.Diagnostics.Process.Start("explorer.exe", gamePath);
+            await _systemService.OpenInExplorerAsync(gamePath);
         }
 
-        public void OpenLogFile()
+        public async Task OpenLogFile()
         {
             var logDirectory = _envService.BundlingwayDataFolder;
             if (string.IsNullOrEmpty(logDirectory) || !Directory.Exists(logDirectory))
@@ -225,7 +242,7 @@ namespace Bundlingway.Core.UI
             var latestLogFile = logFiles.OrderByDescending(f => new FileInfo(f).LastWriteTime).First();
             if (File.Exists(latestLogFile))
             {
-                System.Diagnostics.Process.Start("notepad.exe", latestLogFile);
+                await _systemService.OpenInNotepadAsync(latestLogFile);
             }
         }
 
@@ -241,52 +258,7 @@ namespace Bundlingway.Core.UI
 
         public async Task BackupData()
         {
-            var target = Path.Combine(_envService.BundlingwayDataFolder, Folders.Backup);
-            if (string.IsNullOrEmpty(target))
-            {
-                await Bundlingway.Core.Utilities.UI.Announce("Backup path is invalid.");
-                return;
-            }
-            if (!Directory.Exists(target))
-            {
-                Directory.CreateDirectory(target);
-            }
-            var source1 = Path.Combine(_envService.BundlingwayDataFolder, Folders.Cache);
-            if (Directory.Exists(source1))
-            {
-                foreach (var file in Directory.GetFiles(source1))
-                {
-                    var destFile = Path.Combine(target, Path.GetFileName(file));
-                    File.Copy(file, destFile, true);
-                }
-            }
-            var source2 = Path.Combine(_envService.BundlingwayDataFolder, Folders.Packages);
-            if (Directory.Exists(source2))
-            {
-                foreach (var folder in Directory.GetDirectories(source2))
-                {
-                    var source = Path.Combine(folder, Folders.SourcePackage);
-                    if (Path.GetFileName(folder).Equals(Folders.SinglePresets))
-                    {
-                        foreach (var acceptableFile in AcceptableFilesInPresetFolder)
-                            foreach (var file in Directory.GetFiles(folder, acceptableFile))
-                            {
-                                var destFile = Path.Combine(target, Path.GetFileName(file));
-                                File.Copy(file, destFile, true);
-                            }
-                    }
-                    else if (Directory.Exists(source))
-                    {
-                        foreach (var file in Directory.GetFiles(source))
-                        {
-                            var destFile = Path.Combine(target, Path.GetFileName(file));
-                            File.Copy(file, destFile, true);
-                        }
-                    }
-                }
-            }
-            await Bundlingway.Core.Utilities.UI.Announce("Backup complete!");
-            System.Diagnostics.Process.Start("explorer.exe", target);
+            await _backupService.BackupDataAsync();
         }
 
         public async Task ToggleTopMostAsync()
@@ -313,31 +285,31 @@ namespace Bundlingway.Core.UI
 
         public async Task OpenEmporiumAnnouncement()
         {
-            await Bundlingway.Core.Utilities.UI.Announce("A Loporrit-approved selection of presets and shaders! Fluffy, fancy, and fantastic!");
+            await _notificationService.AnnounceAsync("A Loporrit-approved selection of presets and shaders! Fluffy, fancy, and fantastic!");
         }
         public async Task OpenDebugAnnouncement()
         {
-            await Bundlingway.Core.Utilities.UI.Announce("Oh dear, what have we here? A log full of secrets! (and probably some errors…)");
+            await _notificationService.AnnounceAsync("Oh dear, what have we here? A log full of secrets! (and probably some errors…)");
         }
         public async Task OpenAboutAnnouncement()
         {
-            await Bundlingway.Core.Utilities.UI.Announce("About? About what? Oh! The project! Yes, yes, right this way!");
+            await _notificationService.AnnounceAsync("About? About what? Oh! The project! Yes, yes, right this way!");
         }
         public async Task OpenPackagesFolderAnnouncement()
         {
-            await Bundlingway.Core.Utilities.UI.Announce("Where all your precious presets and shaders live! Don’t worry, they’re well-fed.");
+            await _notificationService.AnnounceAsync("Where all your precious presets and shaders live! Don’t worry, they’re well-fed.");
         }
         public async Task OpenGameFolderAnnouncement()
         {
-            await Bundlingway.Core.Utilities.UI.Announce("Game files, game files everywhere! Tread carefully, adventurer!");
+            await _notificationService.AnnounceAsync("Game files, game files everywhere! Tread carefully, adventurer!");
         }
         public async Task OpenFixItAnnouncement()
         {
-            await Bundlingway.Core.Utilities.UI.Announce("Duplicated shaders? green tint everywhere? No worries, 'Fix It' is here to save the day!");
+            await _notificationService.AnnounceAsync("Duplicated shaders? green tint everywhere? No worries, 'Fix It' is here to save the day!");
         }
         public async Task OpenInstallReShadeAnnouncement()
         {
-            await Bundlingway.Core.Utilities.UI.Announce("You need to shut down the game client before you can update!");
+            await _notificationService.AnnounceAsync("You need to shut down the game client before you can update!");
         }
 
         // ... Add more methods for all business logic previously in frmLanding

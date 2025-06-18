@@ -11,6 +11,13 @@ namespace Bundlingway.Core.Services
     /// </summary>
     public class FileSystemService : IFileSystemService
     {
+        private readonly IConfigurationService _configService;
+
+        public FileSystemService(IConfigurationService configService)
+        {
+            _configService = configService;
+        }
+
         public bool FileExists(string path) => File.Exists(path);
 
         public bool DirectoryExists(string path) => Directory.Exists(path);
@@ -53,9 +60,13 @@ namespace Bundlingway.Core.Services
 
         public string GetPackageFolder()
         {
-            // Use the same logic as Instances.PackageFolder
-            // This should be configurable or derived from configuration
-            // For now, fallback to AppData/Bundlingway/Packages
+            // Use configuration to determine the package folder path
+            var configPath = _configService?.Configuration?.Bundlingway?.Location;
+            if (!string.IsNullOrEmpty(configPath))
+            {
+                return Path.Combine(configPath, Constants.Folders.Packages);
+            }
+            // Fallback to AppData/Bundlingway/Packages
             var appName = System.Reflection.Assembly.GetExecutingAssembly().GetName().Name ?? "Bundlingway";
             var appData = System.Environment.GetFolderPath(System.Environment.SpecialFolder.CommonApplicationData);
             var dataFolder = Path.Combine(appData, appName);

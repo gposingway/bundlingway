@@ -1,17 +1,12 @@
-using Bundlingway.Utilities;
 using Bundlingway.Core.Services;
-using Bundlingway.UI.WinForms; // Assuming WinForms services are here
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using System.IO;
-using System.Windows.Forms;
-using System.Diagnostics;
 using Bundlingway.Core.Interfaces;
 using static Bundlingway.Core.Constants;
 using Bundlingway.Core.Utilities;
+using Bundlingway.UI.WinForms.UI;
 
-namespace Bundlingway
+namespace Bundlingway.UI.WinForms
 {
     internal static class Program
     {
@@ -47,7 +42,9 @@ namespace Bundlingway
                     configService.LoadAsync().Wait();
                     return configService;
                 });
-                services.AddSingleton<IFileSystemService, FileSystemService>();
+                services.AddSingleton<IFileSystemService>(provider =>
+                    new FileSystemService(provider.GetRequiredService<IConfigurationService>())
+                );
                 services.AddSingleton<IHttpClientService, HttpClientService>();
                 services.AddSingleton<PackageService>();
                 services.AddSingleton<BundlingwayService>();
@@ -57,14 +54,16 @@ namespace Bundlingway
                 services.AddSingleton<IApplicationHost, ApplicationHost>();
                 services.AddLogging(configure => configure.AddConsole());
                 services.AddSingleton<EnvironmentService>();
+                services.AddSingleton<IBackupService, BackupService>();
+                services.AddSingleton<ISystemService, SystemService>();
 
                 // Defer building the provider until after UI services are registered
 
                 // Register frmLanding as singleton
                 services.AddSingleton<frmLanding>();
                 // Register frmShortcuts for DI
-                services.AddTransient<frmShortcuts>(provider =>
-                    new Bundlingway.UI.WinForms.frmShortcuts(
+                services.AddTransient(provider =>
+                    new frmShortcuts(
                         provider.GetRequiredService<PackageService>(),
                         provider.GetRequiredService<IConfigurationService>()
                     )

@@ -34,6 +34,7 @@ namespace Bundlingway.UI.WinForms
         private BundlingwayService _bundlingwayService;
         private LandingPresenter _presenter;
         private readonly IServiceProvider _serviceProvider;
+        private IUserNotificationService _notificationService;
 
         public frmLanding(IServiceProvider serviceProvider)
         {
@@ -56,10 +57,14 @@ namespace Bundlingway.UI.WinForms
                 ?? throw new InvalidOperationException("IConfigurationService is not registered in the DI container.");
             _bundlingwayService = serviceProvider.GetService(typeof(BundlingwayService)) as BundlingwayService
                 ?? throw new InvalidOperationException("BundlingwayService is not registered in the DI container.");
-            var notificationService = serviceProvider.GetService(typeof(IUserNotificationService)) as IUserNotificationService
+            _notificationService = serviceProvider.GetService(typeof(IUserNotificationService)) as IUserNotificationService
                 ?? throw new InvalidOperationException("IUserNotificationService is not registered in the DI container.");
+            var backupService = serviceProvider.GetService(typeof(IBackupService)) as IBackupService
+                ?? throw new InvalidOperationException("IBackupService is not registered in the DI container.");
+            var systemService = serviceProvider.GetService(typeof(ISystemService)) as ISystemService
+                ?? throw new InvalidOperationException("ISystemService is not registered in the DI container.");
 
-            _presenter = new LandingPresenter(this, _packageService, _reShadeService, _gPosingwayService, _configService, _envService, _bundlingwayService, notificationService);
+            _presenter = new LandingPresenter(this, _packageService, _reShadeService, _gPosingwayService, _configService, _envService, _bundlingwayService, _notificationService, backupService, systemService);
             Text = $"Bundlingway · v{_envService.AppVersion}";
 
             BindAllTaggedControls();
@@ -97,7 +102,7 @@ namespace Bundlingway.UI.WinForms
 
         private async Task InitializeAsync()
         {
-            await Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService);
+            await Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService, _notificationService);
             await UpdateElements();
             await PopulateGridAsync();
         }
@@ -611,7 +616,17 @@ namespace Bundlingway.UI.WinForms
         {
             // Fix: Null check before unboxing prgCommon.Tag
             var tagValue = prgCommon.Tag;
-            var percentage = tagValue is long tagLong && tagLong > 0 ? (int)Math.Round((double)value / tagLong * 100) : 0;
+            int percentage = 0;
+            if (tagValue is long tagLong && tagLong > 0)
+            {
+                // Use double for calculation to avoid integer overflow, and validate input
+                double safeValue = Convert.ToDouble(value);
+                double safeTagLong = Convert.ToDouble(tagLong);
+                double percent = (safeValue / safeTagLong) * 100.0;
+                if (percent > int.MaxValue) percentage = int.MaxValue;
+                else if (percent < int.MinValue) percentage = int.MinValue;
+                else percentage = (int)Math.Round(percent);
+            }
 
             prgCommon?.Invoke((Action)(() =>
             {

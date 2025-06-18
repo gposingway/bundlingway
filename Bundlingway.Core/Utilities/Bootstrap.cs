@@ -27,11 +27,11 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Detects settings for the application and related components.
         /// </summary>
-        public static async Task DetectSettings(IAppEnvironmentService envService, IConfigurationService configService, BundlingwayService bundlingwayService, GPosingwayService gPosingwayService, ReShadeService reShadeService)
+        public static async Task DetectSettings(IAppEnvironmentService envService, IConfigurationService configService, BundlingwayService bundlingwayService, GPosingwayService gPosingwayService, ReShadeService reShadeService, IUserNotificationService notificationService)
         {
             try
             {
-                _ = Bundlingway.Core.Utilities.UI.Announce(Bundlingway.Core.Constants.Bundlingway.GetMessage(Bundlingway.Core.Constants.MessageCategory.DetectingSettings));
+                await notificationService.AnnounceAsync(Bundlingway.Core.Constants.Bundlingway.GetMessage(Bundlingway.Core.Constants.MessageCategory.DetectingSettings));
                 Log.Information("Bootstrap.DetectSettings: Starting settings detection.");
                 // Load the local configuration
                 await configService.LoadAsync();
