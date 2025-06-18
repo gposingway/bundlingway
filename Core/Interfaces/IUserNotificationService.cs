@@ -13,7 +13,8 @@ namespace Bundlingway.Core.Interfaces
         /// Displays a general announcement to the user.
         /// </summary>
         /// <param name="message">The message to announce</param>
-        Task AnnounceAsync(string message);        /// <summary>
+        Task AnnounceAsync(string message);
+        /// <summary>
         /// Displays an error message to the user.
         /// </summary>
         /// <param name="message">The error message</param>

@@ -53,10 +53,5 @@ namespace Bundlingway.Model
         public bool Favorite { get; set; }
         public bool Locked { get; set; }
         public required string LocalFolder { get; set; }
-
-        internal async Task Install()
-        {
-            // await Utilities.Handler.Package.Install(Name); // Handler removed, use IPackageService instead
-        }
     }
 }

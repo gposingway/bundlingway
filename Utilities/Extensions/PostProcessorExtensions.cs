@@ -49,18 +49,30 @@ namespace Bundlingway.Utilities.Extensions
 
         public static void RunRawFilePipeline(this ResourcePackage package, Logging _logger, IAppEnvironmentService envService)
         {
-            var baseline = Path.Combine(envService.GetPackageFolder(), package.Name);
+            var packageFolder = envService.GetPackageFolder();
+            if (string.IsNullOrEmpty(packageFolder))
+            {
+                Log.Warning("RunRawFilePipeline: Package folder is null or empty. Aborting.");
+                return;
+            }
+            var baseline = Path.Combine(packageFolder, package.Name);
+            if (!Directory.Exists(baseline))
+            {
+                Log.Warning($"RunRawFilePipeline: Baseline directory '{baseline}' does not exist. Aborting.");
+                return;
+            }
             var presetPath = Path.Combine(baseline, Constants.Folders.PackagePresets);
-
+            if (!Directory.Exists(presetPath))
+            {
+                Log.Warning($"RunRawFilePipeline: Preset path '{presetPath}' does not exist. Aborting.");
+                return;
+            }
             List<string> textureFiles = Directory.GetFiles(presetPath, "*.*", SearchOption.AllDirectories).ToList();
-
             foreach (var processor in envService.GetRawFileProcessors())
             {
                 var renameMap = processor.GetReplacementMap(package, textureFiles, baseline, _logger);
-
                 if (renameMap == null) continue;
                 if (renameMap.Count == 0) continue;
-
                 if (processor.ApplyToPresets) ReplaceValues(presetPath, renameMap);
             }
         }
