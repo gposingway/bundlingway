@@ -85,7 +85,7 @@ namespace Bundlingway.Core.Services
         public async Task<ResourcePackage> OnboardPackageAsync(string filePath, string? packageName = null, bool autoInstall = true)
         {
             var ext = Path.GetExtension(filePath).ToLowerInvariant();
-            if (ext == ".ini" || (ext == ".txt" && (await _fileSystem.ReadAllTextAsync(filePath)).Contains("Techniques=", System.StringComparison.InvariantCultureIgnoreCase)))
+            if (ext == ".ini" || (ext == ".txt" && (await _fileSystem.ReadAllTextAsync(filePath)).Contains("Techniques=", StringComparison.InvariantCultureIgnoreCase)))
             {
                 // Handle single preset files (.ini/.txt)
                 string fileName = Path.GetFileNameWithoutExtension(filePath);
@@ -215,22 +215,22 @@ namespace Bundlingway.Core.Services
             newCatalogEntry.LocalFolder = targetPackagePath;
 
             if (!_fileSystem.DirectoryExists(targetPackagePath)) _fileSystem.CreateDirectory(targetPackagePath);
-            _fileSystem.CreateDirectory(Path.Combine(targetPackagePath, Bundlingway.Constants.Folders.SourcePackage));
-            var target = Path.Combine(targetPackagePath, Bundlingway.Constants.Folders.SourcePackage, Path.GetFileName(filePath));
+            _fileSystem.CreateDirectory(Path.Combine(targetPackagePath, Constants.Folders.SourcePackage));
+            var target = Path.Combine(targetPackagePath, Constants.Folders.SourcePackage, Path.GetFileName(filePath));
             _fileSystem.CopyFile(filePath, target, true);
 
             // Presets folder
-            var presetsFolder = Path.Combine(targetPackagePath, Bundlingway.Constants.Folders.PackagePresets);
+            var presetsFolder = Path.Combine(targetPackagePath, Constants.Folders.PackagePresets);
             if (!_fileSystem.DirectoryExists(presetsFolder)) _fileSystem.CreateDirectory(presetsFolder);
             newCatalogEntry.LocalPresetFolder = presetsFolder;
 
             // Textures folder
-            var texturesFolder = Path.Combine(targetPackagePath, Bundlingway.Constants.Folders.PackageTextures);
+            var texturesFolder = Path.Combine(targetPackagePath, Constants.Folders.PackageTextures);
             if (!_fileSystem.DirectoryExists(texturesFolder)) _fileSystem.CreateDirectory(texturesFolder);
             newCatalogEntry.LocalTextureFolder = texturesFolder;
 
             // Shaders folder
-            var shadersFolder = Path.Combine(targetPackagePath, Bundlingway.Constants.Folders.PackageShaders);
+            var shadersFolder = Path.Combine(targetPackagePath, Constants.Folders.PackageShaders);
             if (_fileSystem.DirectoryExists(shadersFolder)) _fileSystem.DeleteDirectory(shadersFolder, true);
             _fileSystem.CreateDirectory(shadersFolder);
             newCatalogEntry.LocalShaderFolder = shadersFolder;
@@ -261,21 +261,21 @@ namespace Bundlingway.Core.Services
             if (!_fileSystem.DirectoryExists(tempFolderPath))
                 return false;
             // Must have at least one .ini or .fx file
-            bool hasIni = _fileSystem.GetFiles(tempFolderPath, "*.ini", System.IO.SearchOption.AllDirectories).Any();
-            bool hasFx = _fileSystem.GetFiles(tempFolderPath, "*.fx", System.IO.SearchOption.AllDirectories).Any();
+            bool hasIni = _fileSystem.GetFiles(tempFolderPath, "*.ini", SearchOption.AllDirectories).Any();
+            bool hasFx = _fileSystem.GetFiles(tempFolderPath, "*.fx", SearchOption.AllDirectories).Any();
             return hasIni || hasFx;
         }
 
         private void CopyExtractedFilesToPackage(string tempFolder, string presetsFolder, string texturesFolder, string shadersFolder)
         {
-            foreach (var file in _fileSystem.GetFiles(tempFolder, "*.*", System.IO.SearchOption.AllDirectories))
+            foreach (var file in _fileSystem.GetFiles(tempFolder, "*.*", SearchOption.AllDirectories))
             {
                 var ext = Path.GetExtension(file).ToLowerInvariant();
                 var dest = ext switch
                 {
                     ".ini" => Path.Combine(presetsFolder, Path.GetFileName(file)),
                     ".png" or ".jpg" or ".jpeg" or ".dds" => Path.Combine(texturesFolder, Path.GetFileName(file)),
-                    ".fx" or ".h" => Path.Combine(shadersFolder, Path.GetFileName(file)),
+                    ".fx" or ".fxh" or ".h" => Path.Combine(shadersFolder, Path.GetFileName(file)),
                     _ => null
                 };
                 if (dest != null)
@@ -285,7 +285,7 @@ namespace Bundlingway.Core.Services
 
         private void RemovePreviewsDirectories(string texturesFolder)
         {
-            foreach (var dir in _fileSystem.GetDirectories(texturesFolder, "Previews", System.IO.SearchOption.AllDirectories))
+            foreach (var dir in _fileSystem.GetDirectories(texturesFolder, "Previews", SearchOption.AllDirectories))
             {
                 _fileSystem.DeleteDirectory(dir, true);
             }
@@ -393,9 +393,7 @@ namespace Bundlingway.Core.Services
                     if (catalogEntry.Bundle)
                     {
                         foreach (var folder in _fileSystem.GetDirectories(gamePresetsFolder))
-                        {
                             PostProcessorExtensions.ReplaceValues(folder, replacements);
-                        }
 
                         PostProcessorExtensions.ReplaceValues(gamePresetsFolder, replacements, false);
                     }

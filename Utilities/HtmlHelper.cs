@@ -16,18 +16,15 @@ namespace Bundlingway.Utilities
             // Find the download section
             var downloadSection = doc.DocumentNode.SelectSingleNode("//h1[contains(text(),'Download')]/following-sibling::*");
             if (downloadSection == null)
-                return info;
-
-            // Find the version (look for 'Version X.Y.Z was released ...')
-            var versionNode = downloadSection.SelectSingleNode(".//text()[contains(.,'Version') and contains(.,'released')]");
+                return info;            // Find the version (look for 'Version X.Y.Z' in strong tags)
+            var versionNode = downloadSection.SelectSingleNode(".//strong[contains(text(),'Version')]");
             if (versionNode != null)
             {
                 var text = versionNode.InnerText;
                 var versionStart = text.IndexOf("Version ") + 8;
-                var versionEnd = text.IndexOf(" was released");
-                if (versionStart >= 0 && versionEnd > versionStart)
+                if (versionStart >= 8)
                 {
-                    info.Version = text.Substring(versionStart, versionEnd - versionStart).Trim();
+                    info.Version = text.Substring(versionStart).Trim();
                 }
             }
 
