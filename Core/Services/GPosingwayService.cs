@@ -134,5 +134,18 @@ namespace Bundlingway.Core.Services
             // ...existing code for extracting, copying, and installing package would be migrated here, using injected services...
             // For brevity, this is a partial migration. Full migration would continue with extraction, progress, and install logic.
         }
+
+        public async Task CheckStatusAsync()
+        {
+            Log.Information("GPosingwayService.CheckStatusAsync: Starting combined local and remote info check.");
+            
+            // Check local info first
+            await GetLocalInfoAsync();
+            
+            // Then check remote info
+            await GetRemoteInfoAsync();
+            
+            Log.Information("GPosingwayService.CheckStatusAsync: Combined check completed.");
+        }
     }
 }

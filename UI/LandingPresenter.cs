@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Bundlingway.Core.Interfaces;
 using Bundlingway.Core.Services;
 using Bundlingway.Model;
@@ -30,34 +26,29 @@ namespace Bundlingway.UI
             _bundlingwayService = bundlingwayService;
         }
 
-        public async Task InitializeAsync()
-        {
-            var c = _configService.Configuration;
+        public async Task InitializeAsync()        {            var c = _configService.Configuration;
             var gamePath = c.Game.InstallationFolder;
             if (!string.IsNullOrEmpty(gamePath))
             {
-                await _reShadeService.GetLocalInfoAsync();
-                await _reShadeService.GetRemoteInfoAsync();
-                await _gPosingwayService.GetLocalInfoAsync();
-                await _gPosingwayService.GetRemoteInfoAsync();
+                await _reShadeService.CheckStatusAsync();
+                await _gPosingwayService.CheckStatusAsync();
             }
             await UpdateElementsAsync();
             await PopulateGridAsync();
         }
 
         public async Task OnDetectSettingsAsync()
-        {
+        {   
             // Perform real detection
-            await Bundlingway.Utilities.Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService);
+            await Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService);
+
             // After detection, fetch local/remote info if game path is present
             var c = _configService.Configuration;
             var gamePath = c.Game.InstallationFolder;
             if (!string.IsNullOrEmpty(gamePath))
             {
-                await _reShadeService.GetLocalInfoAsync();
-                await _reShadeService.GetRemoteInfoAsync();
-                await _gPosingwayService.GetLocalInfoAsync();
-                await _gPosingwayService.GetRemoteInfoAsync();
+                await _reShadeService.CheckStatusAsync();
+                await _gPosingwayService.CheckStatusAsync();
             }
             // Persist any newly detected values
             await _configService.SaveAsync();

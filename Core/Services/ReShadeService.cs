@@ -1,5 +1,7 @@
 using Bundlingway.Core.Interfaces;
 using Bundlingway.Model;
+using Bundlingway.Properties;
+using ICSharpCode.SharpZipLib.Zip;
 using Serilog;
 using System.Diagnostics;
 using System.Text;
@@ -10,7 +12,7 @@ namespace Bundlingway.Core.Services
     /// <summary>
     /// Service-based implementation for ReShade operations.
     /// </summary>
-    public class ReShadeService 
+    public class ReShadeService
     {
         private readonly IConfigurationService _configService;
         private readonly IFileSystemService _fileSystem;
@@ -85,7 +87,6 @@ namespace Bundlingway.Core.Services
                 }
             }
             await _notifications.AnnounceAsync($"ReShade local info checked.");
-            // ...do not save config here...
         }
 
         public async Task UpdateAsync()
@@ -93,44 +94,102 @@ namespace Bundlingway.Core.Services
             var c = _configService.Configuration.ReShade;
             await _notifications.AnnounceAsync("Updating ReShade...");
             Log.Information("ReShadeService.UpdateAsync: Starting update process.");
+
             // Use Instances.IsGameRunning if available, else skip check
             if (_envService.IsGameRunning && c.Status != EPackageStatus.NotInstalled) return;
+
             var remoteLink = c.RemoteLink;
             var tempFolder = Path.Combine(_envService.TempFolder, "ReShade");
             var gameFolder = _configService.Configuration.Game.InstallationFolder;
+
             if (string.IsNullOrEmpty(remoteLink) || string.IsNullOrEmpty(tempFolder) || string.IsNullOrEmpty(gameFolder))
             {
                 Log.Information("ReShadeService.UpdateAsync: Invalid configuration settings.");
                 return;
             }
+
             try
             {
                 _fileSystem.CreateDirectory(tempFolder);
                 var fileName = Path.Combine(tempFolder, "temp.zip");
-                await _httpClient.DownloadFileAsync(remoteLink, fileName);
+                // Download the file with proper streaming
+                using (var stream = await _httpClient.GetStreamAsync(remoteLink))
+                using (var fs = _fileSystem.OpenWrite(fileName))
+                {
+                    await stream.CopyToAsync(fs);
+                    Log.Information("ReShadeService.UpdateAsync: Successfully downloaded the file.");
+                }
+
                 var extractPath = Path.Combine(tempFolder, "Extracted");
                 if (_fileSystem.DirectoryExists(extractPath))
                     _fileSystem.DeleteDirectory(extractPath, true);
                 _fileSystem.CreateDirectory(extractPath);
-                // Extraction logic would go here (omitted for brevity)
+
+                // Extract ZIP file using SharpZipLib
+                using (var fs = _fileSystem.OpenRead(fileName))
+                using (var zf = new ZipFile(fs))
+                {
+                    foreach (ZipEntry entry in zf)
+                    {
+                        if (!entry.IsFile) continue;
+
+                        var entryFileName = entry.Name;
+                        var fullZipToPath = Path.Combine(extractPath, entryFileName);
+                        var directoryName = Path.GetDirectoryName(fullZipToPath);
+
+                        if (!string.IsNullOrEmpty(directoryName))
+                            _fileSystem.CreateDirectory(directoryName);
+
+                        using var zipStream = zf.GetInputStream(entry);
+                        using var streamWriter = _fileSystem.OpenWrite(fullZipToPath);
+                        await zipStream.CopyToAsync(streamWriter);
+                    }
+                    Log.Information("ReShadeService.UpdateAsync: Successfully extracted the file.");
+                }
+
                 var sourceDll = Path.Combine(extractPath, "ReShade64.dll");
                 var destinationDll = Path.Combine(gameFolder, Constants.Files.LocalReshadeBinary);
                 if (_fileSystem.FileExists(sourceDll))
                 {
                     _fileSystem.CopyFile(sourceDll, destinationDll, true);
+                    Log.Information("ReShadeService.UpdateAsync: Successfully copied the DLL.");
                 }
+
                 var destinationIni = Path.Combine(gameFolder, Constants.Files.LocalReshadeConfig);
                 if (!_fileSystem.FileExists(destinationIni))
                 {
-                    // Write placeholder INI (omitted for brevity)
+                    // Write placeholder INI content
+                    var placeholderContent = GetDefaultReshadeIniContent();
+                    await _fileSystem.WriteAllTextAsync(destinationIni, placeholderContent);
+                    Log.Information("ReShadeService.UpdateAsync: Successfully created the INI file.");
                 }
+
                 await _notifications.AnnounceAsync("ReShade successfully updated!");
+                await CheckStatusAsync();
             }
             catch (Exception ex)
             {
                 Log.Warning($"ReShadeService.UpdateAsync: Error during update: {ex.Message}");
                 await _notifications.AnnounceAsync("Error during ReShade update; check logs for details.");
             }
+        }
+
+        private string GetDefaultReshadeIniContent()
+        {
+            return Encoding.UTF8.GetString(Resources.ReShade_ini);
+        }
+
+        public async Task CheckStatusAsync()
+        {
+            Log.Information("ReShadeService.CheckStatusAsync: Starting combined local and remote info check.");
+            
+            // Check local info first
+            await GetLocalInfoAsync();
+            
+            // Then check remote info
+            await GetRemoteInfoAsync();
+            
+            Log.Information("ReShadeService.CheckStatusAsync: Combined check completed.");
         }
     }
 }

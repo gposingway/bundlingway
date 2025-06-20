@@ -124,15 +124,13 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Checks for GPosingway updates.
         /// </summary>
-        public static async Task CheckGPosingway(IAppEnvironmentService envService, GPosingwayService gPosingwayService, IConfigurationService configService)
-        {
+        public static async Task CheckGPosingway(IAppEnvironmentService envService, GPosingwayService gPosingwayService, IConfigurationService configService)        {
             try
             {
                 Log.Information("Bootstrap.CheckGPosingway: Checking GPosingway.");
                 if (gPosingwayService != null)
                 {
-                    await gPosingwayService.GetLocalInfoAsync();
-                    await gPosingwayService.GetRemoteInfoAsync();
+                    await gPosingwayService.CheckStatusAsync();
                 }
                 await configService.SaveAsync();
                 Log.Information("Bootstrap.CheckGPosingway: GPosingway check completed.");
@@ -146,13 +144,11 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Checks for ReShade updates.
         /// </summary>
-        public static async Task CheckReShade(IAppEnvironmentService envService, ReShadeService reShadeService)
-        {
+        public static async Task CheckReShade(IAppEnvironmentService envService, ReShadeService reShadeService)        {
             try
             {
                 Log.Information("Bootstrap.CheckReShade: Checking ReShade.");
-                await reShadeService.GetLocalInfoAsync();
-                await reShadeService.GetRemoteInfoAsync();
+                await reShadeService.CheckStatusAsync();
                 Log.Information("Bootstrap.CheckReShade: ReShade check completed.");
             }
             catch (Exception ex)
