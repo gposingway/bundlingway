@@ -6,5 +6,5 @@ public interface IRawFileProcess : IPostProcess
     bool ApplyToPresets { get; set; }
     bool ApplyToShaders { get; set; }
 
-    Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, Bundlingway.Core.Utilities.Logging _logger);
+    Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, Bundlingway.Utilities.Logging _logger);
 }

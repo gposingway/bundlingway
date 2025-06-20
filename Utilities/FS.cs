@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bundlingway.Core.Utilities
+namespace Bundlingway.Utilities
 {
     public static class FS
     {

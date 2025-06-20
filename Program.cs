@@ -60,16 +60,17 @@ namespace Bundlingway
 
                 // Register frmLanding as singleton
                 services.AddSingleton<frmLanding>();
+                // Register UI-specific services with the actual mainForm (resolved from provider)
+                services.AddSingleton<IUserNotificationService>(provider => new WinFormsNotificationService(provider.GetRequiredService<frmLanding>()));
+                services.AddSingleton<IProgressReporter>(provider => new WinFormsProgressReporter(provider.GetRequiredService<frmLanding>()));
                 // Register frmShortcuts for DI
                 services.AddTransient<frmShortcuts>(provider =>
-                    new Bundlingway.UI.WinForms.frmShortcuts(
+                    new frmShortcuts(
                         provider.GetRequiredService<PackageService>(),
                         provider.GetRequiredService<IConfigurationService>()
                     )
                 );
-                // Register UI-specific services with the actual mainForm (resolved from provider)
-                services.AddSingleton<IUserNotificationService>(provider => new WinFormsNotificationService(provider.GetRequiredService<frmLanding>()));
-                services.AddSingleton<IProgressReporter>(provider => new WinFormsProgressReporter(provider.GetRequiredService<frmLanding>()));
+
                 // Headless mode registration
                 if (args != null && args.Length > 0 && args[0] == "--headless")
                 {
@@ -81,10 +82,15 @@ namespace Bundlingway
                 var serviceProvider = services.BuildServiceProvider();
 
                 // Resolve main form from DI
-                var mainForm = serviceProvider.GetRequiredService<frmLanding>();
+                frmLanding mainForm = serviceProvider.GetRequiredService<frmLanding>();
 
                 // Initialize services in the main form
                 mainForm.InitializeServices(serviceProvider);
+
+                // ModernUI bridge (static)
+                var notificationService = serviceProvider.GetRequiredService<IUserNotificationService>();
+                var progressReporter = serviceProvider.GetRequiredService<IProgressReporter>();
+                ModernUI.Initialize(notificationService, progressReporter);
 
                 // Run the application in UI mode
                 Application.Run(mainForm);

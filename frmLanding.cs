@@ -10,8 +10,6 @@ using Serilog;
 using System.ComponentModel;
 using System.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
-using Bundlingway.Core;
-using Bundlingway.Core.Utilities;
 
 namespace Bundlingway
 {
