@@ -1,5 +1,6 @@
 using Bundlingway.Core.Interfaces;
 using Bundlingway.Model;
+using Bundlingway.Utilities;
 using Bundlingway.Utilities.Extensions;
 using Bundlingway.Utilities.ManagedResources;
 using Serilog;
@@ -21,8 +22,7 @@ namespace Bundlingway.Core.Services
         private readonly IHttpClientService _httpClient;
         private readonly IProgressReporter _progressReporter;
         private readonly IUserNotificationService _notifications;
-        private readonly IAppEnvironmentService _envService;
-
+        private readonly IAppEnvironmentService _appEnvironment;
         private ImmutableList<ResourcePackage> _cachedPackages = ImmutableList<ResourcePackage>.Empty;
 
         public PackageService(
@@ -31,14 +31,14 @@ namespace Bundlingway.Core.Services
             IHttpClientService httpClient,
             IProgressReporter progressReporter,
             IUserNotificationService notifications,
-            IAppEnvironmentService envService)
+            IAppEnvironmentService appEnvironment)
         {
             _configService = configService;
             _fileSystem = fileSystem;
             _httpClient = httpClient;
             _progressReporter = progressReporter;
             _notifications = notifications;
-            _envService = envService;
+            _appEnvironment = appEnvironment;
         }
 
         public event EventHandler<PackageEventArgs>? PackagesUpdated;
@@ -100,10 +100,9 @@ namespace Bundlingway.Core.Services
                 }
                 var targetPath = Path.Combine(_fileSystem.GetSinglePresetsFolder(), Bundlingway.Constants.Folders.PackagePresets);
                 var targetFileName = Path.Combine(targetPath, newFileName);
+
                 if (!_fileSystem.DirectoryExists(targetPath)) _fileSystem.CreateDirectory(targetPath);
                 _fileSystem.CopyFile(filePath, targetFileName, true);
-                // Call post-processing pipeline if needed (stub)
-                // PostProcessorExtensions.RunRawFilePipeline(...)
                 var pkg = new ResourcePackage
                 {
                     Name = newFileName,
@@ -117,6 +116,8 @@ namespace Bundlingway.Core.Services
                     LocalShaderFolder = string.Empty,
                     LocalFolder = targetPath
                 };
+
+                new PostProcessorService(_appEnvironment).RunPipeline(pkg);
 
                 if (autoInstall) await InstallPackageAsync(pkg);
 
@@ -247,7 +248,9 @@ namespace Bundlingway.Core.Services
             var catalogPath = Path.Combine(targetPackagePath, Bundlingway.Constants.Files.CatalogEntry);
             System.IO.File.WriteAllText(catalogPath, newCatalogEntry.ToJson());
 
-            await InstallPackageAsync(newCatalogEntry);
+            new PostProcessorService(_appEnvironment).RunPipeline(newCatalogEntry);
+
+            if (autoInstall) await InstallPackageAsync(newCatalogEntry);
             // Return the onboarded ResourcePackage
             return newCatalogEntry;
         }
@@ -308,7 +311,7 @@ namespace Bundlingway.Core.Services
 
             ResourcePackage catalogEntry = SerializationExtensions.FromJsonFile<ResourcePackage>(localCatalogFilePath);
             var config = _configService.Configuration;
-            string installationShaderAnalysisFilePath = Path.Combine(_envService.BundlingwayDataFolder, Constants.Files.ShaderAnalysis);
+            string installationShaderAnalysisFilePath = Path.Combine(_appEnvironment.BundlingwayDataFolder, Constants.Files.ShaderAnalysis);
             string localShaderAnalysisFilePath = Path.Combine(sourcePackagePath, Constants.Files.ShaderAnalysis);
 
             var installationShaderAnalysis = _fileSystem.FileExists(installationShaderAnalysisFilePath)
@@ -436,7 +439,7 @@ namespace Bundlingway.Core.Services
                     {
                         _fileSystem.CreateDirectory(gameShaderFolder);
 
-                        var referenceFolder = Path.Combine(_envService.PackageFolder, catalogEntry.Name, Constants.Folders.PackageShaders);
+                        var referenceFolder = Path.Combine(_appEnvironment.PackageFolder, catalogEntry.Name, Constants.Folders.PackageShaders);
 
                         foreach (var file in _fileSystem.GetFiles(sourceShadersFolder, "*.*", SearchOption.AllDirectories))
                         {
@@ -473,6 +476,11 @@ namespace Bundlingway.Core.Services
             }
 
             return catalogEntry;
+            package.Status = ResourcePackage.EStatus.Installed;
+            // Example: update config (stub)
+            await _configService.SaveAsync();
+            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Installed {package.Name}" });
+            return await Task.FromResult(package);
         }
 
         public async Task UninstallPackageAsync(ResourcePackage package)
