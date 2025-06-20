@@ -122,23 +122,18 @@ namespace Bundlingway
                     _ = ModernUI.BringToFront(); // If implemented, otherwise call the method directly
                     break;
             }
-        }
-
-        // Helper for safe async event handling
-        private void RunSafeAsync(Func<Task> asyncAction)
+        }        // Helper for safe async event handling
+        private async void RunSafeAsync(Func<Task> asyncAction)
         {
-            _ = Task.Run(async () =>
+            try
             {
-                try
-                {
-                    await asyncAction();
-                }
-                catch (Exception ex)
-                {
-                    Serilog.Log.Error(ex, "Unhandled exception in async UI event handler.");
-                    MessageBox.Show(this, ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            });
+                await asyncAction();
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex, "Unhandled exception in async UI event handler.");
+                MessageBox.Show(this, ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnDetectSettings_Click(object sender, EventArgs e)

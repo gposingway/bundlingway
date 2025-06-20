@@ -1,6 +1,7 @@
 using Bundlingway.Core.Interfaces;
 using Bundlingway.Model;
 using Bundlingway.Utilities.Extensions;
+using Bundlingway.Utilities.ManagedResources;
 using Serilog;
 using System.Collections.Generic;
 using System.Collections.Immutable;
@@ -10,10 +11,9 @@ using System.Linq;
 using System.Threading.Tasks;
 
 namespace Bundlingway.Core.Services
-{
-    /// <summary>
-    /// Service-based implementation of package management logic, decoupled from UI.
-    /// </summary>
+{    /// <summary>
+     /// Service-based implementation of package management logic, decoupled from UI.
+     /// </summary>
     public class PackageService
     {
         private readonly IConfigurationService _configService;
@@ -21,6 +21,7 @@ namespace Bundlingway.Core.Services
         private readonly IHttpClientService _httpClient;
         private readonly IProgressReporter _progressReporter;
         private readonly IUserNotificationService _notifications;
+        private readonly IAppEnvironmentService _envService;
 
         private ImmutableList<ResourcePackage> _cachedPackages = ImmutableList<ResourcePackage>.Empty;
 
@@ -29,13 +30,15 @@ namespace Bundlingway.Core.Services
             IFileSystemService fileSystem,
             IHttpClientService httpClient,
             IProgressReporter progressReporter,
-            IUserNotificationService notifications)
+            IUserNotificationService notifications,
+            IAppEnvironmentService envService)
         {
             _configService = configService;
             _fileSystem = fileSystem;
             _httpClient = httpClient;
             _progressReporter = progressReporter;
             _notifications = notifications;
+            _envService = envService;
         }
 
         public event EventHandler<PackageEventArgs>? PackagesUpdated;
@@ -114,8 +117,8 @@ namespace Bundlingway.Core.Services
                     LocalShaderFolder = string.Empty,
                     LocalFolder = targetPath
                 };
-                if (autoInstall)
-                    await InstallPackageAsync(pkg);
+
+                if (autoInstall) await InstallPackageAsync(pkg);
 
                 _cachedPackages.Add(pkg);
                 PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [pkg], Message = "Onboarded" });
@@ -208,6 +211,8 @@ namespace Bundlingway.Core.Services
 
             // Target package path
             var targetPackagePath = Path.Combine(_fileSystem.GetPackageFolder(), newCatalogEntry.Name.ToFileSystemSafeName());
+            newCatalogEntry.LocalFolder = targetPackagePath;
+
             if (!_fileSystem.DirectoryExists(targetPackagePath)) _fileSystem.CreateDirectory(targetPackagePath);
             _fileSystem.CreateDirectory(Path.Combine(targetPackagePath, Bundlingway.Constants.Folders.SourcePackage));
             var target = Path.Combine(targetPackagePath, Bundlingway.Constants.Folders.SourcePackage, Path.GetFileName(filePath));
@@ -242,9 +247,7 @@ namespace Bundlingway.Core.Services
             var catalogPath = Path.Combine(targetPackagePath, Bundlingway.Constants.Files.CatalogEntry);
             System.IO.File.WriteAllText(catalogPath, newCatalogEntry.ToJson());
 
-            // Add the new package to the in-memory cache
-            _cachedPackages = _cachedPackages.Add(newCatalogEntry);
-
+            await InstallPackageAsync(newCatalogEntry);
             // Return the onboarded ResourcePackage
             return newCatalogEntry;
         }
@@ -292,11 +295,184 @@ namespace Bundlingway.Core.Services
 
         public async Task<ResourcePackage> InstallPackageAsync(ResourcePackage package)
         {
-            package.Status = ResourcePackage.EStatus.Installed;
-            // Example: update config (stub)
-            await _configService.SaveAsync();
-            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Installed {package.Name}" });
-            return await Task.FromResult(package);
+            Log.Information($"PackageService.InstallPackageAsync: Installing package: {package.Name}");
+
+            string sourcePackagePath = package.LocalFolder;
+            string localCatalogFilePath = Path.Combine(sourcePackagePath, Constants.Files.CatalogEntry);
+
+            if (!_fileSystem.FileExists(localCatalogFilePath))
+            {
+                Log.Information("PackageService.InstallPackageAsync: catalog-entry.json not found. Exiting.");
+                return null;
+            }
+
+            ResourcePackage catalogEntry = SerializationExtensions.FromJsonFile<ResourcePackage>(localCatalogFilePath);
+            var config = _configService.Configuration;
+            string installationShaderAnalysisFilePath = Path.Combine(_envService.BundlingwayDataFolder, Constants.Files.ShaderAnalysis);
+            string localShaderAnalysisFilePath = Path.Combine(sourcePackagePath, Constants.Files.ShaderAnalysis);
+
+            var installationShaderAnalysis = _fileSystem.FileExists(installationShaderAnalysisFilePath)
+                ? SerializationExtensions.FromJsonFile<Dictionary<string, ShaderSignature>>(installationShaderAnalysisFilePath)
+                : new Dictionary<string, ShaderSignature>();
+            var localShaderAnalysis = _fileSystem.FileExists(localShaderAnalysisFilePath)
+                ? SerializationExtensions.FromJsonFile<Dictionary<string, ShaderSignature>>(localShaderAnalysisFilePath)
+                : new Dictionary<string, ShaderSignature>();
+
+            Log.Information("PackageService.InstallPackageAsync: Loaded catalog entry from file.");
+            Log.Information($"PackageService.InstallPackageAsync: catalogEntry.Name: {catalogEntry.Name}");
+
+            var collectionName = catalogEntry.Name;
+            var sourcePresetsFolder = Path.Combine(sourcePackagePath, Constants.Folders.PackagePresets);
+            var sourceTexturesFolder = Path.Combine(sourcePackagePath, Constants.Folders.PackageTextures);
+            var sourceShadersFolder = Path.Combine(sourcePackagePath, Constants.Folders.PackageShaders);
+
+            if (string.IsNullOrEmpty(config.Game.InstallationFolder))
+            {
+                Log.Error("PackageService.InstallPackageAsync: Game installation folder is not configured.");
+                catalogEntry.Status = ResourcePackage.EStatus.Error;
+                catalogEntry.ToJsonFile(localCatalogFilePath);
+                return catalogEntry;
+            }
+
+            string gamePresetsFolder = Path.Combine(config.Game.InstallationFolder, Constants.Folders.GamePresets);
+            string? gameTexturesFolder = null;
+            string gameShaderFolder = Path.Combine(config.Game.InstallationFolder, Constants.Folders.GameShaders);
+
+            if (!catalogEntry.Bundle)
+            {
+                gamePresetsFolder = Path.Combine(gamePresetsFolder, collectionName);
+                gameTexturesFolder = Path.Combine(config.Game.InstallationFolder, Constants.Folders.GameShaders, Constants.Folders.PackageTextures, collectionName);
+                gameShaderFolder = Path.Combine(gameShaderFolder, Constants.Folders.PackageShaders, collectionName);
+            }
+
+            try
+            {
+                catalogEntry.LocalPresetFolder = gamePresetsFolder;
+                catalogEntry.LocalTextureFolder = gameTexturesFolder;
+                catalogEntry.LocalShaderFolder = gameShaderFolder;
+
+                // Presets:
+                if (_fileSystem.DirectoryExists(sourcePresetsFolder))
+                {
+                    if (catalogEntry.Bundle)
+                    {
+                        foreach (var folder in _fileSystem.GetDirectories(sourcePresetsFolder))
+                        {
+                            var relativePath = Path.GetRelativePath(sourcePresetsFolder, folder);
+                            var targetFolder = Path.Combine(gamePresetsFolder, relativePath);
+
+                            if (_fileSystem.DirectoryExists(targetFolder))
+                                _fileSystem.DeleteDirectory(targetFolder, true);
+
+                            _fileSystem.CreateDirectory(targetFolder);
+                        }
+                    }
+
+                    _fileSystem.CreateDirectory(gamePresetsFolder);
+                    Log.Information($"PackageService.InstallPackageAsync: Created game presets folder at: {gamePresetsFolder}");
+
+                    foreach (var acceptableFile in Constants.AcceptableFilesInPresetFolder)
+                    {
+                        foreach (var file in _fileSystem.GetFiles(sourcePresetsFolder, acceptableFile, SearchOption.AllDirectories))
+                        {
+                            var relativePath = Path.GetRelativePath(sourcePresetsFolder, file);
+                            var targetPath = Path.Combine(gamePresetsFolder, relativePath);
+                            var targetDir = Path.GetDirectoryName(targetPath);
+                            if (!string.IsNullOrEmpty(targetDir))
+                                _fileSystem.CreateDirectory(targetDir);
+                            _fileSystem.CopyFile(file, targetPath, true);
+                            Log.Information($"PackageService.InstallPackageAsync: Copied preset file {file} to {targetPath}");
+                        }
+                    }
+
+                    var replacements = config.Shortcuts.ToDictionary(k => "%" + k.Key + "%", v => v.Value);
+
+                    if (catalogEntry.Bundle)
+                    {
+                        foreach (var folder in _fileSystem.GetDirectories(gamePresetsFolder))
+                        {
+                            PostProcessorExtensions.ReplaceValues(folder, replacements);
+                        }
+
+                        PostProcessorExtensions.ReplaceValues(gamePresetsFolder, replacements, false);
+                    }
+                    else
+                    {
+                        PostProcessorExtensions.ReplaceValues(gamePresetsFolder, replacements);
+                    }
+                }
+
+                // Textures:
+                if (!string.IsNullOrEmpty(catalogEntry.LocalTextureFolder))
+                {
+                    if (_fileSystem.DirectoryExists(sourceTexturesFolder))
+                    {
+                        if (_fileSystem.GetFiles(sourceTexturesFolder, "*.*", SearchOption.AllDirectories).Any() ||
+                            _fileSystem.GetDirectories(sourceTexturesFolder).Any())
+                        {
+                            if (!string.IsNullOrEmpty(gameTexturesFolder))
+                                _fileSystem.CreateDirectory(gameTexturesFolder);
+                            Log.Information($"PackageService.InstallPackageAsync: Created game textures folder at: {gameTexturesFolder}"); foreach (var file in _fileSystem.GetFiles(sourceTexturesFolder, "*.*", SearchOption.AllDirectories))
+                            {
+                                if (!string.IsNullOrEmpty(gameTexturesFolder))
+                                {
+                                    var relativePath = Path.GetRelativePath(sourceTexturesFolder, file);
+                                    var targetPath = Path.Combine(gameTexturesFolder, relativePath);
+                                    var targetDir = Path.GetDirectoryName(targetPath);
+                                    if (!string.IsNullOrEmpty(targetDir))
+                                        _fileSystem.CreateDirectory(targetDir);
+                                    _fileSystem.CopyFile(file, targetPath, true);
+                                    Log.Information($"PackageService.InstallPackageAsync: Copied texture file {file} to {targetPath}");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Shaders:
+                if (catalogEntry.Type == ResourcePackage.EType.ShaderCollection || catalogEntry.Type == ResourcePackage.EType.CorePackage)
+                {
+                    if (_fileSystem.DirectoryExists(sourceShadersFolder))
+                    {
+                        _fileSystem.CreateDirectory(gameShaderFolder);
+
+                        var referenceFolder = Path.Combine(_envService.PackageFolder, catalogEntry.Name, Constants.Folders.PackageShaders);
+
+                        foreach (var file in _fileSystem.GetFiles(sourceShadersFolder, "*.*", SearchOption.AllDirectories))
+                        {
+                            var shaderFileExtension = Path.GetExtension(file).ToLower();
+
+                            if (!catalogEntry.Bundle && !Constants.ShaderExtensions.Contains(shaderFileExtension))
+                                continue; var relativePath = Path.GetRelativePath(referenceFolder, file);
+                            var targetPath = Path.Combine(gameShaderFolder, relativePath);
+                            var targetDir = Path.GetDirectoryName(targetPath);
+                            if (!string.IsNullOrEmpty(targetDir))
+                                _fileSystem.CreateDirectory(targetDir);
+                            _fileSystem.CopyFile(file, targetPath, true);
+                            Log.Information($"PackageService.InstallPackageAsync: Copied shader file {file} to {targetPath}");
+                        }
+                    }
+                }
+
+                catalogEntry.Status = ResourcePackage.EStatus.Installed;
+                Log.Information("PackageService.InstallPackageAsync: Updated catalog entry status to Installed.");
+
+                catalogEntry.ToJsonFile(localCatalogFilePath);
+                Log.Information("PackageService.InstallPackageAsync: Saved updated catalog entry to file.");
+                Log.Information("PackageService.InstallPackageAsync: Package installed successfully.");
+
+                await _configService.SaveAsync();
+                PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { catalogEntry }, Message = $"Installed {catalogEntry.Name}" });
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "PackageService.InstallPackageAsync: Error installing package");
+                catalogEntry.Status = ResourcePackage.EStatus.Error;
+                catalogEntry.ToJsonFile(localCatalogFilePath);
+                throw;
+            }
+
+            return catalogEntry;
         }
 
         public async Task UninstallPackageAsync(ResourcePackage package)
@@ -343,7 +519,7 @@ namespace Bundlingway.Core.Services
             await Task.CompletedTask;
         }
 
- public Task<bool> ValidatePackageAsync(ResourcePackage package)
+        public Task<bool> ValidatePackageAsync(ResourcePackage package)
         {
             // Validate that the package folders exist and have at least one preset or shader
             bool valid = false;
@@ -376,7 +552,7 @@ namespace Bundlingway.Core.Services
                 _fileSystem.DeleteDirectory(folder, true);
             }
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Removed {package.Name}" });
-        }        
+        }
     }
 }
 

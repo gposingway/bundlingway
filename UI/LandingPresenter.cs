@@ -125,20 +125,29 @@ namespace Bundlingway.UI
 
         public async Task OnInstallPackageAsync()
         {
-            // Show file dialog and onboard selected packages
-            var validExtensions = Bundlingway.Constants.InstallableExtensions;
-            var filter = string.Join(";", validExtensions.Select(ext => $"*{ext}"));
-            var ofd = new System.Windows.Forms.OpenFileDialog
+
+            try
             {
-                Filter = $"Archive files ({filter})|{filter}",
-                Title = "Select a Package File",
-                Multiselect = true
-            };
-            if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-            {
-                await _packageService.OnboardPackagesAsync(ofd.FileNames);
-                await PopulateGridAsync();
+                // Show file dialog and onboard selected packages
+                var validExtensions = Bundlingway.Constants.InstallableExtensions;
+                var filter = string.Join(";", validExtensions.Select(ext => $"*{ext}"));
+                var ofd = new System.Windows.Forms.OpenFileDialog
+                {
+                    Filter = $"Archive files ({filter})|{filter}",
+                    Title = "Select a Package File",
+                    Multiselect = true
+                };
+                if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    await _packageService.OnboardPackagesAsync(ofd.FileNames);
+                    await PopulateGridAsync();
+                }
             }
+            catch (Exception e)
+            {
+                throw;
+            }
+
         }
 
         public async Task OnRemovePackagesAsync()
