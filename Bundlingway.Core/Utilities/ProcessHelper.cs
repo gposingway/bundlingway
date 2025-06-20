@@ -86,34 +86,41 @@ namespace Bundlingway.Core.Utilities
         public static async Task ListenForNotifications()
         {
             Log.Information("Listening for notifications - Recreating Pipe in Loop.");
+            NamedPipeServerStream? pipeServer = null;
+            StreamReader? reader = null; // Declare StreamReader outside using block
+
             while (true)
             {
                 try
                 {
-                    using (var pipeServer = new NamedPipeServerStream("BundlingwayEventNotification", PipeDirection.In))
-                    {
-                        Log.Information("Before WaitForConnectionAsync - Pipe Server IsConnected: {IsConnected}, IsHandleInvalid: {IsHandleInvalid}", pipeServer.IsConnected, pipeServer.SafePipeHandle.IsInvalid);
-                        await pipeServer.WaitForConnectionAsync();
-                        Log.Information("After WaitForConnectionAsync - Client connected. Pipe Server IsConnected: {IsConnected}, IsHandleInvalid: {IsHandleInvalid}", pipeServer.IsConnected, pipeServer.SafePipeHandle.IsInvalid);
-                        Log.Information("Client connected.");
+                    pipeServer = new NamedPipeServerStream("BundlingwayEventNotification", PipeDirection.In);
 
-                        using (var reader = new StreamReader(pipeServer, Encoding.UTF8))
+                    Log.Information("Before WaitForConnectionAsync - Pipe Server IsConnected: {IsConnected}, IsHandleInvalid: {IsHandleInvalid}", pipeServer.IsConnected, pipeServer.SafePipeHandle.IsInvalid);
+
+                    await pipeServer.WaitForConnectionAsync();
+
+                    Log.Information("After WaitForConnectionAsync - Client connected. Pipe Server IsConnected: {IsConnected}, IsHandleInvalid: {IsHandleInvalid}", pipeServer.IsConnected, pipeServer.SafePipeHandle.IsInvalid);
+                    Log.Information("Client connected.");
+
+                    reader = new StreamReader(pipeServer, Encoding.UTF8); // Initialize StreamReader here
+                    if (reader != null)
+                    {
+                        string? message;
+                        while ((message = await reader.ReadLineAsync()) != null)
                         {
-                            string? message;
-                            while ((message = await reader.ReadLineAsync()) != null)
+                            var ipcNotification = message.FromJson<IPCNotification>();
+
+                            if (ipcNotification != null)
                             {
-                                var ipcNotification = message.FromJson<IPCNotification>();
-                                if (ipcNotification != null)
-                                {
-                                    Log.Information($"Notification received: {ipcNotification.Topic} / {ipcNotification.Message}");
-                                    try { NotificationReceived?.Invoke(null, ipcNotification); } catch (Exception e) { Log.Error(e, "Error while handling notification."); }
-                                }
+                                Log.Information($"Notification received: {ipcNotification.Topic} / {ipcNotification.Message}");
+                                try { NotificationReceived?.Invoke(null, ipcNotification); } catch (Exception e) { Log.Error(e, "Error while handling notification."); }
                             }
                         }
-                        Log.Information("Client disconnected. Waiting for new connection.");
-                        bool isHandleInvalidAfterDisconnect = pipeServer.SafePipeHandle.IsInvalid;
-                        Log.Information("After Client Disconnect - Pipe Server IsConnected: {IsConnected}, IsHandleInvalid: {IsHandleInvalid}", pipeServer.IsConnected, isHandleInvalidAfterDisconnect);
                     }
+
+                    Log.Information("Client disconnected. Waiting for new connection.");
+                    bool isHandleInvalidAfterDisconnect = pipeServer.SafePipeHandle.IsInvalid; // **GET IsHandleInvalid BEFORE LOGGING**
+                    Log.Information("After Client Disconnect - Pipe Server IsConnected: {IsConnected}, IsHandleInvalid: {IsHandleInvalid}", pipeServer.IsConnected, isHandleInvalidAfterDisconnect); // Log it
                 }
                 catch (ObjectDisposedException disposedEx)
                 {
@@ -124,6 +131,35 @@ namespace Bundlingway.Core.Utilities
                 {
                     Log.Error(ex, "General Error in ListenForNotifications loop.");
                     await Task.Delay(1000);
+                }
+                finally
+                {
+                    if (reader != null) // Dispose of StreamReader first
+                    {
+                        try
+                        {
+                            reader.Close(); // Close StreamReader
+                            reader.Dispose(); // Dispose StreamReader
+                            Log.Information("StreamReader Disposed in finally block.");
+                        }
+                        catch (Exception disposeEx)
+                        {
+                            Log.Error(disposeEx, "Error disposing reader in finally block.");
+                        }
+                    }
+                    if (pipeServer != null) // Then dispose of pipeServer
+                    {
+                        try
+                        {
+                            pipeServer.Close();
+                            pipeServer.Dispose();
+                            Log.Information("Pipe Server Disposed in finally block.");
+                        }
+                        catch (Exception disposeEx)
+                        {
+                            Log.Error(disposeEx, "Error disposing pipeServer in finally block.");
+                        }
+                    }
                 }
             }
             Log.Information("ListenForNotifications loop exited.");
@@ -209,67 +245,32 @@ namespace Bundlingway.Core.Utilities
             try
             {
                 // Create a new shortcut using COM objects
-                Type? shellType = null;
-                try
+                Type? shellType = Type.GetTypeFromProgID("WScript.Shell");
+                if (shellType == null)
                 {
-                    shellType = Type.GetTypeFromProgID("WScript.Shell");
-                    if (shellType == null)
-                    {
-                        Log.Error("Failed to get WScript.Shell type.");
-                        return;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Exception while getting WScript.Shell type.");
+                    Log.Error("Failed to get WScript.Shell type.");
                     return;
                 }
 
-                dynamic? shell = null;
-                try
+                dynamic? shell = Activator.CreateInstance(shellType);
+                if (shell == null)
                 {
-                    shell = Activator.CreateInstance(shellType);
-                    if (shell == null)
-                    {
-                        Log.Error("Failed to create WScript.Shell instance.");
-                        return;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Exception while creating WScript.Shell instance.");
+                    Log.Error("Failed to create WScript.Shell instance.");
                     return;
                 }
 
-                dynamic? shortcut = null;
-                try
+                var shortcut = shell.CreateShortcut(shortcutPath);
+                if (shortcut == null)
                 {
-                    shortcut = shell.CreateShortcut(shortcutPath);
-                    if (shortcut == null)
-                    {
-                        Log.Error("Failed to create shortcut.");
-                        return;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Exception while creating shortcut.");
+                    Log.Error("Failed to create shortcut.");
                     return;
                 }
 
-                try
-                {
-                    shortcut.TargetPath = targetPath;
-                    shortcut.WorkingDirectory = Path.GetDirectoryName(targetPath);
-                    shortcut.Description = "Shortcut for " + shortcutName;
-                    shortcut.IconLocation = targetPath;
-                    shortcut.Save();
-                }
-                catch (Exception ex)
-                {
-                    Log.Error(ex, "Exception while setting shortcut properties or saving.");
-                    return;
-                }
+                shortcut.TargetPath = targetPath;
+                shortcut.WorkingDirectory = Path.GetDirectoryName(targetPath);
+                shortcut.Description = "Shortcut for " + shortcutName;
+                shortcut.IconLocation = targetPath;
+                shortcut.Save();
 
                 Log.Information("Desktop shortcut created successfully.");
             }

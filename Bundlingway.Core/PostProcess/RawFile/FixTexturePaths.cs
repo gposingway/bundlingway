@@ -68,15 +68,28 @@ namespace Bundlingway.PostProcess.RawFile
         private List<string> ExtractTexturePaths(string line)
         {
             var texturePaths = new List<string>();
-            var matches = System.Text.RegularExpressions.Regex.Matches(line, "\"([^\"]+)\"");
-            foreach (System.Text.RegularExpressions.Match match in matches)
+            int startIndex = 0;
+
+            while (true)
             {
-                var texturePath = match.Groups[1].Value;
-                if (Bundlingway.Core.Constants.TextureExtensions.Any(ext => texturePath.ToLowerInvariant().EndsWith(ext)))
+                startIndex = line.IndexOf("\"", startIndex);
+                if (startIndex == -1)
+                    break;
+
+                int endIndex = line.IndexOf("\"", startIndex + 1);
+                if (endIndex == -1)
+                    break;
+
+                string texturePath = line.Substring(startIndex + 1, endIndex - startIndex - 1);
+
+                if (Bundlingway.Core.Constants.TextureExtensions.Any(texturePath.ToLowerInvariant().EndsWith))
                 {
                     texturePaths.Add(texturePath);
                 }
+
+                startIndex = endIndex + 1;
             }
+
             return texturePaths;
         }
     }

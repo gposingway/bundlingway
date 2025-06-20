@@ -1,6 +1,11 @@
 using Bundlingway.Core.Interfaces;
+using Bundlingway.Utilities.Extensions;
+using System;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+using System.Windows.Forms;
 
-namespace Bundlingway.UI.WinForms.UI
+namespace Bundlingway.UI.WinForms
 {
     /// <summary>
     /// WinForms implementation of user notification service.
@@ -35,10 +40,10 @@ namespace Bundlingway.UI.WinForms.UI
             
             if (_mainForm != null)
             {
-                _mainForm.Invoke(() =>
+                _mainForm.Invoke((Action)(() =>
                 {
                     MessageBox.Show(fullMessage, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                });
+                }));
             }
             else
             {
@@ -52,10 +57,10 @@ namespace Bundlingway.UI.WinForms.UI
         {
             if (_mainForm != null)
             {
-                _mainForm.Invoke(() =>
+                _mainForm.Invoke((Action)(() =>
                 {
                     MessageBox.Show(message, "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                });
+                }));
             }
             else
             {
@@ -69,10 +74,10 @@ namespace Bundlingway.UI.WinForms.UI
         {
             if (_mainForm != null)
             {
-                _mainForm.Invoke(() =>
+                _mainForm.Invoke((Action)(() =>
                 {
                     MessageBox.Show(message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                });
+                }));
             }
             else
             {
@@ -92,10 +97,10 @@ namespace Bundlingway.UI.WinForms.UI
             if (_mainForm != null)
             {
                 var result = DialogResult.No;
-                _mainForm.Invoke(() =>
+                _mainForm.Invoke((Action)(() =>
                 {
                     result = MessageBox.Show(message, title, MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                });
+                }));
                 return Task.FromResult(result == DialogResult.Yes);
             }
             else

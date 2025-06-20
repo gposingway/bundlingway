@@ -24,22 +24,20 @@ namespace Bundlingway.Utilities.Extensions
                 try
                 {
                     string originalContent = File.ReadAllText(filePath);
-                    string content = originalContent;
+                    string content = File.ReadAllText(filePath);
 
                     foreach (var kvp in replacements)
                         content = content.Replace(kvp.Key, kvp.Value);
 
                     // Also replace invalid lines
+
                     // If a line starts with "//", remove it
                     content = Regex.Replace(content, @"^\s*//.*$", "", RegexOptions.Multiline);
 
                     if (originalContent != content)
                     {
                         Log.Information("[Replacement] - " + filePath);
-                        // Atomic write: write to temp file, then replace original
-                        string tempFile = filePath + ".tmp";
-                        File.WriteAllText(tempFile, content);
-                        File.Replace(tempFile, filePath, null);
+                        File.WriteAllText(filePath, content);
                     }
                 }
                 catch (Exception ex)
@@ -182,18 +180,7 @@ namespace Bundlingway.Utilities.Extensions
                 mustUpdate = true;
             }
 
-            if (mustUpdate)
-            {
-                try
-                {
-                    parser.WriteFile(preset.Filename, iniData);
-                }
-                catch (Exception ex)
-                {
-                    Serilog.Log.Error(ex, $"Failed to write INI file: {preset.Filename}");
-                    // Optionally, handle or rethrow as needed
-                }
-            }
+            if (mustUpdate) parser.WriteFile(preset.Filename, iniData);
 
             return preset;
         }
@@ -263,12 +250,9 @@ namespace Bundlingway.Utilities.Extensions
                     ? json.FromJson<Dictionary<string, bool>>()
                     : new Dictionary<string, bool>();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                // Log the exception details for visibility
-                Serilog.Log.Error(ex, "Error processing techniques in PostProcessorExtensions");
-                // Optionally, rethrow or handle gracefully as needed
-                // throw;
+                //TODO: Add proper exception handling
             }
 
             return model;
