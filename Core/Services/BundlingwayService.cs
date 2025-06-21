@@ -1,10 +1,7 @@
 using Bundlingway.Core.Interfaces;
 using Bundlingway.Model;
-using Bundlingway.Utilities.Extensions;
 using Serilog;
 using System.IO.Compression;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Bundlingway.Core.Services
 {
