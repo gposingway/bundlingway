@@ -9,6 +9,7 @@ using Bundlingway.Utilities.Extensions;
 using Serilog;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Bundlingway
@@ -32,7 +33,6 @@ namespace Bundlingway
 
         public void InitializeServices(IServiceProvider serviceProvider)
         {
-
             _envService = serviceProvider.GetService(typeof(IAppEnvironmentService)) as IAppEnvironmentService
                 ?? throw new InvalidOperationException("IAppEnvironmentService is not registered in the DI container.");
             _packageService = serviceProvider.GetService(typeof(PackageService)) as PackageService
@@ -45,8 +45,10 @@ namespace Bundlingway
                 ?? throw new InvalidOperationException("IConfigurationService is not registered in the DI container.");
             _bundlingwayService = serviceProvider.GetService(typeof(BundlingwayService)) as BundlingwayService
                 ?? throw new InvalidOperationException("BundlingwayService is not registered in the DI container.");
+            var fileSystemService = serviceProvider.GetService(typeof(IFileSystemService)) as IFileSystemService
+                ?? throw new InvalidOperationException("IFileSystemService is not registered in the DI container.");
 
-            _presenter = new LandingPresenter(this, _packageService, _reShadeService, _gPosingwayService, _configService, _envService, _bundlingwayService);
+            _presenter = new LandingPresenter(this, _packageService, _reShadeService, _gPosingwayService, _configService, _envService, _bundlingwayService, fileSystemService);
             Text = $"Bundlingway · v{_envService.AppVersion}";
 
             BindAllTaggedControls();
@@ -57,17 +59,18 @@ namespace Bundlingway
             txtBrowserIntegration.DoAction(() => txtBrowserIntegration.Text = CustomProtocolHandler.IsCustomProtocolRegistered(Constants.GPosingwayProtocolHandler));
 
             ProcessHelper.NotificationReceived += ProcessHelper_NotificationReceived;
+            _packageService.PackagesUpdated += PackageService_PackagesUpdated;
+
             _ = ProcessHelper.ListenForNotifications();
-
-            _ = ModernUI.UpdateElements(); // If implemented, otherwise call the method directly
-
+            _ = ModernUI.UpdateElements();
             _ = ModernUI.Announce(Constants.MessageCategory.Ready.ToString());
         }
 
         protected override void OnShown(EventArgs e)
         {
             base.OnShown(e);
-            _ = OnShownAsync(e).ContinueWith(t => {
+            _ = OnShownAsync(e).ContinueWith(t =>
+            {
                 if (t.Exception != null)
                 {
                     Serilog.Log.Error(t.Exception, "Unhandled exception in OnShownAsync");
@@ -109,7 +112,6 @@ namespace Bundlingway
         {
             _ = ModernUI.Announce(((Control)sender).Tag.ToString());
         }
-
         private void ProcessHelper_NotificationReceived(object sender, IPCNotification e)
         {
             switch (e.Topic)
@@ -122,7 +124,28 @@ namespace Bundlingway
                     _ = ModernUI.BringToFront(); // If implemented, otherwise call the method directly
                     break;
             }
-        }        // Helper for safe async event handling
+        }
+        private void PackageService_PackagesUpdated(object sender, PackageEventArgs e)
+        {
+            // Update only the specific packages that changed based on operation type
+            this.DoAction(() =>
+            {
+                if (e.Packages != null && e.Packages.Any())
+                {
+                    // Determine operation type from message
+                    if (!string.IsNullOrEmpty(e.Message) && e.Message.Contains("Removed"))
+                    {
+                        // Package was removed from catalog - remove from grid
+                        _ = RemovePackagesFromGridAsync(e.Packages);
+                    }
+                    else
+                    {
+                        // Package was added/updated - update in grid
+                        _ = UpdatePackagesInGridAsync(e.Packages);
+                    }
+                }
+            });
+        }// Helper for safe async event handling
         private async void RunSafeAsync(Func<Task> asyncAction)
         {
             try
@@ -184,7 +207,6 @@ namespace Bundlingway
         private async Task PopulateGridAsync()
         {
             Log.Information("frmLanding: PopulateGrid - Populating the grid with resource packages");
-            await _packageService.ScanPackagesAsync();
             var packages = await _packageService.GetAllPackagesAsync() ?? [];
 
             if (dgvPackages == null)
@@ -266,13 +288,142 @@ namespace Bundlingway
                         DataGridViewColumn column = dgvPackages.Columns[columnName];
                         ListSortDirection listSortDirection = sortOrder == SortOrder.Ascending ?
                             ListSortDirection.Ascending :
-                            ListSortDirection.Descending;
-
-                        dgvPackages.Sort(column, listSortDirection);
+                            ListSortDirection.Descending; dgvPackages.Sort(column, listSortDirection);
                         column.HeaderCell.SortGlyphDirection = sortOrder;
                         break; // Remove for multi-column sorting (and implement a DataGridViewColumnComparer)
                     }
                 }
+            });
+        }        /// <summary>
+                 /// Efficiently updates only the specified packages in the grid without full reload.
+                 /// </summary>
+                 /// <param name="packagesToUpdate">The packages to update in the grid</param>
+        private async Task UpdatePackagesInGridAsync(IEnumerable<ResourcePackage> packagesToUpdate)
+        {
+            if (dgvPackages == null || packagesToUpdate == null)
+            {
+                Log.Warning("frmLanding: UpdatePackagesInGridAsync - dgvPackages is null or no packages to update");
+                return;
+            }
+
+            var packageList = packagesToUpdate.ToList();
+            if (!packageList.Any()) return;
+
+            Log.Information($"frmLanding: UpdatePackagesInGridAsync - Updating {packageList.Count} package(s) in grid");            dgvPackages?.DoAction(async () =>
+            {
+                bool needsVisibleRefresh = false;
+                
+                foreach (var updatedPackage in packageList)
+                {
+                    // Find existing row for this package
+                    DataGridViewRow existingRow = null;
+                    int rowIndex = -1;
+                    
+                    for (int i = 0; i < dgvPackages.Rows.Count; i++)
+                    {
+                        var row = dgvPackages.Rows[i];
+                        if (row.Tag is ResourcePackage pkg &&
+                            pkg.Name.Equals(updatedPackage.Name, StringComparison.OrdinalIgnoreCase))
+                        {
+                            existingRow = row;
+                            rowIndex = i;
+                            break;
+                        }
+                    }
+
+                    // Create updated row data
+                    var tagLine = "";
+                    if (updatedPackage.Favorite) tagLine += "★";
+                    if (updatedPackage.Locked) tagLine += "🔒";
+
+                    if (existingRow != null)
+                    {
+                        // Update existing row
+                        existingRow.Cells[0].Value = tagLine;
+                        existingRow.Cells[1].Value = updatedPackage.Type.GetDescription();
+                        existingRow.Cells[2].Value = updatedPackage.Label ?? updatedPackage.Name;
+                        existingRow.Cells[3].Value = updatedPackage.Status.GetDescription();
+                        existingRow.Tag = updatedPackage;
+                        
+                        // Check if this row is visible
+                        if (IsRowVisible(rowIndex))
+                        {
+                            needsVisibleRefresh = true;
+                        }
+                    }
+                    else
+                    {
+                        // Add new row if package doesn't exist
+                        var newRow = new DataGridViewRow();
+                        newRow.CreateCells(dgvPackages,
+                            tagLine,
+                            updatedPackage.Type.GetDescription(),
+                            updatedPackage.Label ?? updatedPackage.Name,
+                            updatedPackage.Status.GetDescription()
+                        );
+                        newRow.Tag = updatedPackage;
+                        dgvPackages.Rows.Add(newRow);
+                        
+                        // New rows are typically at the end, check if visible
+                        if (IsRowVisible(dgvPackages.Rows.Count - 1))
+                        {
+                            needsVisibleRefresh = true;
+                        }
+                    }
+                }
+
+                // Only refresh if visible rows were updated
+                if (needsVisibleRefresh)
+                {
+                    dgvPackages.Refresh();
+                    dgvPackages.Invalidate();
+                    await Task.Delay(1);
+                }
+
+                // Update package count label
+                lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
+            });
+        }        /// <summary>
+                 /// Removes packages from the grid that are no longer in the service's package list.
+                 /// </summary>
+                 /// <param name="packagesToRemove">The packages to remove from the grid</param>
+        private async Task RemovePackagesFromGridAsync(IEnumerable<ResourcePackage> packagesToRemove)
+        {
+            if (dgvPackages == null || packagesToRemove == null)
+            {
+                return;
+            }
+
+            var packageList = packagesToRemove.ToList();
+            if (!packageList.Any()) return;
+
+            Log.Information($"frmLanding: RemovePackagesFromGridAsync - Removing {packageList.Count} package(s) from grid");
+
+            dgvPackages?.DoAction(() =>
+            {
+                var rowsToRemove = new List<DataGridViewRow>();
+
+                foreach (var packageToRemove in packageList)
+                {
+                    foreach (DataGridViewRow row in dgvPackages.Rows)
+                    {
+                        if (row.Tag is ResourcePackage pkg &&
+                            pkg.Name.Equals(packageToRemove.Name, StringComparison.OrdinalIgnoreCase))
+                        {
+                            rowsToRemove.Add(row);
+                            break;
+                        }
+                    }
+                }
+
+                // Remove rows
+                foreach (var row in rowsToRemove)
+                {
+                    dgvPackages.Rows.Remove(row);
+                }
+
+                // Update package count label
+                lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
             });
         }
 
@@ -824,7 +975,8 @@ namespace Bundlingway
 
         public async Task SetReShadeStatusAsync(string status, bool enabled, bool visible, string buttonText)
         {
-            this.DoAction(() => {
+            this.DoAction(() =>
+            {
                 txtReShadeStatus.Text = status;
                 btnInstallReShade.Enabled = enabled;
                 btnInstallReShade.Visible = visible;
@@ -834,7 +986,8 @@ namespace Bundlingway
 
         public async Task SetGPosingwayStatusAsync(string status, bool enabled, bool visible, string buttonText)
         {
-            this.DoAction(() => {
+            this.DoAction(() =>
+            {
                 txtGPosingwayStatus.Text = status;
                 btnInstallGPosingway.Enabled = enabled;
                 btnInstallGPosingway.Visible = visible;
@@ -874,6 +1027,33 @@ namespace Bundlingway
         public async Task SetBrowserIntegrationStatusAsync(string status)
         {
             txtBrowserIntegration.Text = status;
+        }
+
+        /// <summary>
+        /// Checks if a row at the given index is currently visible in the DataGridView viewport.
+        /// </summary>
+        /// <param name="rowIndex">The row index to check</param>
+        /// <returns>True if the row is visible, false otherwise</returns>
+        private bool IsRowVisible(int rowIndex)
+        {
+            if (dgvPackages == null || rowIndex < 0 || rowIndex >= dgvPackages.Rows.Count)
+                return false;
+
+            try
+            {
+                int firstVisible = dgvPackages.FirstDisplayedScrollingRowIndex;
+                if (firstVisible < 0) return false;
+
+                int displayedCount = dgvPackages.DisplayedRowCount(false);
+                int lastVisible = firstVisible + displayedCount - 1;
+
+                return rowIndex >= firstVisible && rowIndex <= lastVisible;
+            }
+            catch
+            {
+                // If there's any exception getting visibility info, assume it's visible to be safe
+                return true;
+            }
         }
     }
 }

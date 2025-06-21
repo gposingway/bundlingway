@@ -226,12 +226,12 @@ namespace Bundlingway
             await _configService.SaveAsync();
 
 
-            if (_mustPropagate)
-            {
-                _ = ModernUI.Announce("Shortcuts saved! Updating installed presets...");
-                _ = _packageService.ScanPackagesAsync();
-                _ = ModernUI.Announce("Installed presets updated!");
-            }
+            //if (_mustPropagate)
+            //{
+            //    _ = ModernUI.Announce("Shortcuts saved! Updating installed presets...");
+            //    _ = _packageService.ScanPackagesAsync();
+            //    _ = ModernUI.Announce("Installed presets updated!");
+            //}
 
             Close();
         }

@@ -1,5 +1,7 @@
 ﻿using System.Security.Cryptography;
+using Bundlingway.Core.Interfaces;
 using Bundlingway.Core.Services;
+using Bundlingway.Model;
 
 namespace Bundlingway.Utilities.Extensions
 {
@@ -88,6 +90,23 @@ namespace Bundlingway.Utilities.Extensions
             comparisonMap = comparisonMap.OrderBy(i => i.Key).ToDictionary(i => i.Key, i => i.Value);
 
             return comparisonMap;
+        }
+
+        /// <summary>
+        /// Saves the package catalog entry to its local folder.
+        /// </summary>
+        /// <param name="package">The package to save.</param>
+        /// <param name="fileSystemService">The file system service to use for file operations.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public static async Task SaveAsync(this ResourcePackage package, IFileSystemService fileSystemService)
+        {
+            if (package == null) throw new ArgumentNullException(nameof(package));
+            if (fileSystemService == null) throw new ArgumentNullException(nameof(fileSystemService));
+            if (string.IsNullOrEmpty(package.LocalFolder)) throw new ArgumentException("Package LocalFolder cannot be null or empty.", nameof(package.LocalFolder));
+
+            var catalogPath = Path.Combine(package.LocalFolder, Bundlingway.Constants.Files.CatalogEntry);
+            var json = package.ToJson() ?? throw new InvalidOperationException("Failed to serialize package to JSON.");
+            await fileSystemService.WriteAllTextAsync(catalogPath, json);
         }
     }
 

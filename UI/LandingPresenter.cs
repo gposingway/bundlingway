@@ -2,6 +2,8 @@ using Bundlingway.Core.Interfaces;
 using Bundlingway.Core.Services;
 using Bundlingway.Model;
 using Bundlingway.Utilities;
+using System.IO;
+using System.Linq;
 
 namespace Bundlingway.UI
 {
@@ -14,8 +16,9 @@ namespace Bundlingway.UI
         private readonly IConfigurationService _configService;
         private readonly IAppEnvironmentService _envService;
         private readonly BundlingwayService _bundlingwayService;
+        private readonly IFileSystemService _fileSystem;
 
-        public LandingPresenter(ILandingView view, PackageService packageService, ReShadeService reShadeService, GPosingwayService gPosingwayService, IConfigurationService configService, IAppEnvironmentService envService, BundlingwayService bundlingwayService)
+        public LandingPresenter(ILandingView view, PackageService packageService, ReShadeService reShadeService, GPosingwayService gPosingwayService, IConfigurationService configService, IAppEnvironmentService envService, BundlingwayService bundlingwayService, IFileSystemService fileSystem)
         {
             _view = view;
             _packageService = packageService;
@@ -24,9 +27,12 @@ namespace Bundlingway.UI
             _configService = configService;
             _envService = envService;
             _bundlingwayService = bundlingwayService;
+            _fileSystem = fileSystem;
         }
 
-        public async Task InitializeAsync()        {            var c = _configService.Configuration;
+        public async Task InitializeAsync()
+        {
+            var c = _configService.Configuration;
             var gamePath = c.Game.InstallationFolder;
             if (!string.IsNullOrEmpty(gamePath))
             {
@@ -38,7 +44,7 @@ namespace Bundlingway.UI
         }
 
         public async Task OnDetectSettingsAsync()
-        {   
+        {
             // Perform real detection
             await Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService);
 
@@ -103,15 +109,12 @@ namespace Bundlingway.UI
 
         public async Task PopulateGridAsync()
         {
-            await _packageService.ScanPackagesAsync();
-            var packages = await _packageService.GetAllPackagesAsync() ?? Enumerable.Empty<ResourcePackage>();
+            var packages = await _packageService.GetAllPackagesAsync() ?? [];
             await _view.SetPackagesAsync(packages);
-        }
-
-        public async Task OnboardPackagesAsync(IEnumerable<string> files)
+        }        public async Task OnboardPackagesAsync(IEnumerable<string> files)
         {
             await _packageService.OnboardPackagesAsync(files);
-            await PopulateGridAsync();
+            // Note: UI updates will be handled by PackagesUpdated events
         }
 
         public async Task OnInstallPackageAsync()
@@ -127,35 +130,30 @@ namespace Bundlingway.UI
                     Filter = $"Archive files ({filter})|{filter}",
                     Title = "Select a Package File",
                     Multiselect = true
-                };
-                if (ofd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                };                if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     await _packageService.OnboardPackagesAsync(ofd.FileNames);
-                    await PopulateGridAsync();
+                    // Note: UI updates will be handled by PackagesUpdated events
                 }
             }
-            catch (Exception e)
+            catch
             {
                 throw;
             }
 
-        }
-
-        public async Task OnRemovePackagesAsync()
+        }        public async Task OnRemovePackagesAsync()
         {
             // Remove selected packages
             var selectedPackages = _view.GetSelectedPackages();
-            foreach (var pkg in selectedPackages)
-                await _packageService.RemovePackageAsync(pkg);
-            await PopulateGridAsync();
-        }
-
-        public async Task OnUninstallPackagesAsync()
+            await Task.WhenAll(selectedPackages.Select(_packageService.RemovePackageAsync));
+            ModernUI.Announce("All selected packages removed!");
+            // Note: UI updates will be handled by PackagesUpdated events
+        }        public async Task OnUninstallPackagesAsync()
         {
             var selectedPackages = _view.GetSelectedPackages();
-            foreach (var pkg in selectedPackages)
-                await _packageService.UninstallPackageAsync(pkg);
-            await PopulateGridAsync();
+            await Task.WhenAll(selectedPackages.Select(_packageService.UninstallPackageAsync));
+            ModernUI.Announce("All selected packages uninstalled!");
+            // Note: UI updates will be handled by PackagesUpdated events
         }
 
         public async Task OnInstallReShadeAsync()
@@ -169,64 +167,53 @@ namespace Bundlingway.UI
             await _gPosingwayService.UpdateAsync();
             await UpdateElementsAsync();
             await PopulateGridAsync();
-        }
-
-        public async Task OnReinstallPackagesAsync()
+        }        public async Task OnReinstallPackagesAsync()
         {
             var selectedPackages = _view.GetSelectedPackages();
-            foreach (var pkg in selectedPackages)
-                await _packageService.ReinstallPackageAsync(pkg);
-            await PopulateGridAsync();
-        }
-
-        public async Task OnToggleFavoriteAsync()
+            await Task.WhenAll(selectedPackages.Select(_packageService.ReinstallPackageAsync));
+            ModernUI.Announce("All selected packages reinstalled!");
+            // Note: UI updates will be handled by PackagesUpdated events
+        }public async Task OnToggleFavoriteAsync()
         {
             var selectedPackages = _view.GetSelectedPackages();
-            foreach (var pkg in selectedPackages)
-                await _packageService.ToggleFavoriteAsync(pkg);
-            await PopulateGridAsync();
-        }
-
-        public async Task OnToggleLockedAsync()
+            await Task.WhenAll(selectedPackages.Select(_packageService.ToggleFavoriteAsync));
+            // Note: UI updates will be handled by PackagesUpdated events
+        }        public async Task OnToggleLockedAsync()
         {
             var selectedPackages = _view.GetSelectedPackages();
-            foreach (var pkg in selectedPackages)
-                await _packageService.ToggleLockedAsync(pkg);
-            await PopulateGridAsync();
+            await Task.WhenAll(selectedPackages.Select(_packageService.ToggleLockedAsync));
+            // Note: UI updates will be handled by PackagesUpdated events
         }
-
         public void OpenPackagesFolder()
         {
             string repositoryPath = _envService.PackageFolder;
-            if (string.IsNullOrEmpty(repositoryPath) || !System.IO.Directory.Exists(repositoryPath))
+            if (string.IsNullOrEmpty(repositoryPath) || !_fileSystem.DirectoryExists(repositoryPath))
             {
                 System.Windows.Forms.MessageBox.Show("Package Folder not found or path is empty.", "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
                 return;
             }
             System.Diagnostics.Process.Start("explorer.exe", repositoryPath);
         }
-
         public void OpenGameFolder()
         {
             var config = _configService.Configuration;
             var gamePath = config?.Game?.InstallationFolder;
-            if (string.IsNullOrEmpty(gamePath) || !System.IO.Directory.Exists(gamePath))
+            if (string.IsNullOrEmpty(gamePath) || !_fileSystem.DirectoryExists(gamePath))
             {
                 System.Windows.Forms.MessageBox.Show("Game Folder not found or path is empty.", "Error", System.Windows.Forms.MessageBoxButtons.OK, System.Windows.Forms.MessageBoxIcon.Error);
                 return;
             }
             System.Diagnostics.Process.Start("explorer.exe", gamePath);
         }
-
         public void OpenLogFile()
         {
             var logDirectory = _envService.BundlingwayDataFolder;
-            if (string.IsNullOrEmpty(logDirectory) || !System.IO.Directory.Exists(logDirectory))
+            if (string.IsNullOrEmpty(logDirectory) || !_fileSystem.DirectoryExists(logDirectory))
                 return;
-            var logFiles = System.IO.Directory.GetFiles(logDirectory, Bundlingway.Constants.Files.Log.Split('.')[0] + "*.txt");
-            if (logFiles.Length == 0) return;
-            var latestLogFile = logFiles.OrderByDescending(f => new System.IO.FileInfo(f).LastWriteTime).First();
-            if (System.IO.File.Exists(latestLogFile))
+            var logFiles = _fileSystem.GetFiles(logDirectory, Bundlingway.Constants.Files.Log.Split('.')[0] + "*.txt");
+            if (!logFiles.Any()) return;
+            var latestLogFile = logFiles.OrderByDescending(f => _fileSystem.GetLastWriteTime(f)).First();
+            if (_fileSystem.FileExists(latestLogFile))
             {
                 System.Diagnostics.Process.Start("notepad.exe", latestLogFile);
             }
@@ -241,49 +228,48 @@ namespace Bundlingway.UI
         {
             ProcessHelper.OpenUrlInBrowser("https://github.com/gposingway/bundlingway");
         }
-
         public void BackupData()
         {
-            var target = System.IO.Path.Combine(_envService.BundlingwayDataFolder, Bundlingway.Constants.Folders.Backup);
+            var target = Path.Combine(_envService.BundlingwayDataFolder, Bundlingway.Constants.Folders.Backup);
             if (string.IsNullOrEmpty(target))
             {
                 ModernUI.Announce("Backup path is invalid.");
                 return;
             }
-            if (!System.IO.Directory.Exists(target))
+            if (!_fileSystem.DirectoryExists(target))
             {
-                System.IO.Directory.CreateDirectory(target);
+                _fileSystem.CreateDirectory(target);
             }
-            var source1 = System.IO.Path.Combine(_envService.BundlingwayDataFolder, Bundlingway.Constants.Folders.Cache);
-            if (System.IO.Directory.Exists(source1))
+            var source1 = Path.Combine(_envService.BundlingwayDataFolder, Bundlingway.Constants.Folders.Cache);
+            if (_fileSystem.DirectoryExists(source1))
             {
-                foreach (var file in System.IO.Directory.GetFiles(source1))
+                foreach (var file in _fileSystem.GetFiles(source1))
                 {
-                    var destFile = System.IO.Path.Combine(target, System.IO.Path.GetFileName(file));
-                    System.IO.File.Copy(file, destFile, true);
+                    var destFile = Path.Combine(target, Path.GetFileName(file));
+                    _fileSystem.CopyFile(file, destFile, true);
                 }
             }
-            var source2 = System.IO.Path.Combine(_envService.BundlingwayDataFolder, Bundlingway.Constants.Folders.Packages);
-            if (System.IO.Directory.Exists(source2))
+            var source2 = Path.Combine(_envService.BundlingwayDataFolder, Bundlingway.Constants.Folders.Packages);
+            if (_fileSystem.DirectoryExists(source2))
             {
-                foreach (var folder in System.IO.Directory.GetDirectories(source2))
+                foreach (var folder in _fileSystem.GetDirectories(source2))
                 {
-                    var source = System.IO.Path.Combine(folder, Bundlingway.Constants.Folders.SourcePackage);
-                    if (System.IO.Path.GetFileName(folder).Equals(Bundlingway.Constants.Folders.SinglePresets))
+                    var source = Path.Combine(folder, Bundlingway.Constants.Folders.SourcePackage);
+                    if (Path.GetFileName(folder).Equals(Bundlingway.Constants.Folders.SinglePresets))
                     {
                         foreach (var acceptableFile in Bundlingway.Constants.AcceptableFilesInPresetFolder)
-                            foreach (var file in System.IO.Directory.GetFiles(folder, acceptableFile))
+                            foreach (var file in _fileSystem.GetFiles(folder, acceptableFile))
                             {
-                                var destFile = System.IO.Path.Combine(target, System.IO.Path.GetFileName(file));
-                                System.IO.File.Copy(file, destFile, true);
+                                var destFile = Path.Combine(target, Path.GetFileName(file));
+                                _fileSystem.CopyFile(file, destFile, true);
                             }
                     }
-                    else if (System.IO.Directory.Exists(source))
+                    else if (_fileSystem.DirectoryExists(source))
                     {
-                        foreach (var file in System.IO.Directory.GetFiles(source))
+                        foreach (var file in _fileSystem.GetFiles(source))
                         {
-                            var destFile = System.IO.Path.Combine(target, System.IO.Path.GetFileName(file));
-                            System.IO.File.Copy(file, destFile, true);
+                            var destFile = Path.Combine(target, Path.GetFileName(file));
+                            _fileSystem.CopyFile(file, destFile, true);
                         }
                     }
                 }

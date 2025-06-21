@@ -28,11 +28,6 @@ namespace Bundlingway.Core.Services
 
             switch (args[1].ToLower())
             {
-                case "scan":
-                    await notification.AnnounceAsync("Scanning packages...");
-                    await packageService.ScanPackagesAsync();
-                    await notification.AnnounceAsync("Scan complete.");
-                    break;
                 case "install":
                     if (args.Length < 3)
                     {

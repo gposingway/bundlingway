@@ -24,9 +24,15 @@ namespace Bundlingway.Core.Services
 
         public void MoveFile(string sourcePath, string destinationPath) => File.Move(sourcePath, destinationPath);
 
-        public async Task<string> ReadAllTextAsync(string path) => await File.ReadAllTextAsync(path);
+        public async Task<string> ReadAllTextAsync(string path)
+        {
+            return File.ReadAllText(path); // Ensure the file exists before opening it
+        }
 
-        public async Task WriteAllTextAsync(string path, string content) => await File.WriteAllTextAsync(path, content);
+        public async Task WriteAllTextAsync(string path, string content)
+        {
+            File.WriteAllText(path, content);
+        }
 
         public IEnumerable<string> GetFiles(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly)
             => Directory.GetFiles(path, searchPattern, searchOption);
@@ -34,15 +40,44 @@ namespace Bundlingway.Core.Services
         public IEnumerable<string> GetDirectories(string path, string searchPattern = "*", SearchOption searchOption = SearchOption.TopDirectoryOnly)
             => Directory.GetDirectories(path, searchPattern, searchOption);
 
-        public long GetFileSize(string path) => new FileInfo(path).Length;
+        public long GetFileSize(string path)
+        {
+            // Use FileStream with read sharing to avoid locking issues
+            using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            return stream.Length;
+        }
 
-        public DateTime GetCreationTime(string path) => File.GetCreationTime(path);
+        public DateTime GetCreationTime(string path)
+        {
+            try
+            {
+                // Use FileInfo to get creation time - safer than File.GetCreationTime in some scenarios
+                return new FileInfo(path).CreationTime;
+            }
+            catch
+            {
+                // Fallback to File.GetCreationTime if FileInfo fails
+                return File.GetCreationTime(path);
+            }
+        }
 
-        public DateTime GetLastWriteTime(string path) => File.GetLastWriteTime(path);
+        public DateTime GetLastWriteTime(string path)
+        {
+            try
+            {
+                // Use FileInfo to get last write time - safer than File.GetLastWriteTime in some scenarios
+                return new FileInfo(path).LastWriteTime;
+            }
+            catch
+            {
+                // Fallback to File.GetLastWriteTime if FileInfo fails
+                return File.GetLastWriteTime(path);
+            }
+        }
 
-        public Stream OpenRead(string path) => File.OpenRead(path);
+        public Stream OpenRead(string path) => new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
-        public Stream OpenWrite(string path) => File.OpenWrite(path);
+        public Stream OpenWrite(string path) => new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.Read);
 
         public string GetSinglePresetsFolder()
         {

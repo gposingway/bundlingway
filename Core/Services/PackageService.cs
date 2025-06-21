@@ -24,6 +24,71 @@ namespace Bundlingway.Core.Services
         private readonly IUserNotificationService _notifications;
         private readonly IAppEnvironmentService _appEnvironment;
         private ImmutableList<ResourcePackage> _cachedPackages = ImmutableList<ResourcePackage>.Empty;
+        private bool _packagesInitialized = false;
+        private readonly object _initializationLock = new object();
+
+        /// <summary>
+        /// Gets the cached packages, initializing them on first access if necessary.
+        /// </summary>
+        private ImmutableList<ResourcePackage> CachedPackages
+        {
+            get
+            {
+                if (!_packagesInitialized)
+                {
+                    lock (_initializationLock)
+                    {
+                        if (!_packagesInitialized)
+                        {
+                            // Synchronously scan packages on first access
+                            try
+                            {
+                                var packageFolder = _fileSystem.GetPackageFolder();
+                                if (_fileSystem.DirectoryExists(packageFolder))
+                                {
+                                    var packageDirs = _fileSystem.GetDirectories(packageFolder);
+                                    var foundPackages = new List<ResourcePackage>();
+                                    foreach (var dir in packageDirs)
+                                    {
+                                        var catalogPath = Path.Combine(dir, Bundlingway.Constants.Files.CatalogEntry);
+                                        if (_fileSystem.FileExists(catalogPath))
+                                        {
+                                            try
+                                            {
+                                                var json = _fileSystem.ReadAllTextAsync(catalogPath).Result;
+                                                var pkg = json.FromJson<ResourcePackage>();
+
+                                                // Healing: if the package is missing LocalPresetFolder, set it to the package folder
+                                                if (pkg != null && string.IsNullOrEmpty(pkg.LocalFolder) && !string.IsNullOrEmpty(pkg.LocalPresetFolder))
+                                                {
+                                                    pkg.LocalFolder = dir;
+                                                }
+
+                                                if (pkg != null)
+                                                    foundPackages.Add(pkg);
+                                            }
+                                            catch
+                                            {
+
+                                            }
+                                        }
+                                    }
+                                    _cachedPackages = foundPackages.ToImmutableList();
+                                }
+                                _packagesInitialized = true;
+                            }
+                            catch (Exception ex)
+                            {
+                                Log.Warning($"Failed to initialize packages cache: {ex.Message}");
+                                _cachedPackages = ImmutableList<ResourcePackage>.Empty;
+                                _packagesInitialized = true;
+                            }
+                        }
+                    }
+                }
+                return _cachedPackages;
+            }
+        }
 
         public PackageService(
             IConfigurationService configService,
@@ -42,44 +107,19 @@ namespace Bundlingway.Core.Services
         }
 
         public event EventHandler<PackageEventArgs>? PackagesUpdated;
-
         public Task<IEnumerable<ResourcePackage>> GetAllPackagesAsync()
         {
-            // Return cached packages if available
-            return Task.FromResult<IEnumerable<ResourcePackage>>(_cachedPackages);
+            // Return cached packages, initializing if necessary
+            return Task.FromResult<IEnumerable<ResourcePackage>>(CachedPackages);
         }
 
         public Task<ResourcePackage?> GetPackageByNameAsync(string packageName)
         {
             if (string.IsNullOrWhiteSpace(packageName))
                 return Task.FromResult<ResourcePackage?>(null);
-            // Search cached packages by Name (case-insensitive)
-            return Task.FromResult(_cachedPackages.FirstOrDefault(pkg => pkg.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase)));
-        }
 
-        public async Task ScanPackagesAsync()
-        {
-            var packageFolder = _fileSystem.GetPackageFolder();
-            var packageDirs = _fileSystem.GetDirectories(packageFolder);
-            var foundPackages = new List<ResourcePackage>();
-            foreach (var dir in packageDirs)
-            {
-                var catalogPath = Path.Combine(dir, Bundlingway.Constants.Files.CatalogEntry);
-                if (_fileSystem.FileExists(catalogPath))
-                {
-                    try
-                    {
-                        var json = await _fileSystem.ReadAllTextAsync(catalogPath);
-                        var pkg = json.FromJson<ResourcePackage>();
-                        if (pkg != null)
-                            foundPackages.Add(pkg);
-                    }
-                    catch { /* Ignore invalid or missing catalog files */ }
-                }
-            }
-            _cachedPackages = foundPackages.ToImmutableList();
-            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = foundPackages, Message = "Scan complete" });
-            await Task.CompletedTask.ConfigureAwait(false);
+            // Search cached packages by Name (case-insensitive), initializing if necessary
+            return Task.FromResult(CachedPackages.FirstOrDefault(pkg => pkg.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase)));
         }
 
         public async Task<ResourcePackage> OnboardPackageAsync(string filePath, string? packageName = null, bool autoInstall = true)
@@ -103,6 +143,7 @@ namespace Bundlingway.Core.Services
 
                 if (!_fileSystem.DirectoryExists(targetPath)) _fileSystem.CreateDirectory(targetPath);
                 _fileSystem.CopyFile(filePath, targetFileName, true);
+
                 var pkg = new ResourcePackage
                 {
                     Name = newFileName,
@@ -121,7 +162,12 @@ namespace Bundlingway.Core.Services
 
                 if (autoInstall) await InstallPackageAsync(pkg);
 
-                _cachedPackages.Add(pkg);
+                // Add to cached packages
+                lock (_initializationLock)
+                {
+                    _cachedPackages = _cachedPackages.Add(pkg);
+                    _packagesInitialized = true;
+                }
                 PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [pkg], Message = "Onboarded" });
 
                 return pkg;
@@ -136,7 +182,7 @@ namespace Bundlingway.Core.Services
                 // Secure extraction to prevent Zip-Slip
                 await Task.Run(() =>
                 {
-                    using (var archive = System.IO.Compression.ZipFile.OpenRead(filePath))
+                    using (var archive = ZipFile.OpenRead(filePath))
                     {
                         foreach (var entry in archive.Entries)
                         {
@@ -246,7 +292,7 @@ namespace Bundlingway.Core.Services
 
             // Save catalog entry as JSON
             var catalogPath = Path.Combine(targetPackagePath, Bundlingway.Constants.Files.CatalogEntry);
-            System.IO.File.WriteAllText(catalogPath, newCatalogEntry.ToJson());
+            File.WriteAllText(catalogPath, newCatalogEntry.ToJson());
 
             new PostProcessorService(_appEnvironment).RunPipeline(newCatalogEntry);
 
@@ -300,6 +346,8 @@ namespace Bundlingway.Core.Services
         {
             Log.Information($"PackageService.InstallPackageAsync: Installing package: {package.Name}");
 
+            package.Status = ResourcePackage.EStatus.Installing;
+
             string sourcePackagePath = package.LocalFolder;
             string localCatalogFilePath = Path.Combine(sourcePackagePath, Constants.Files.CatalogEntry);
 
@@ -331,9 +379,8 @@ namespace Bundlingway.Core.Services
 
             if (string.IsNullOrEmpty(config.Game.InstallationFolder))
             {
-                Log.Error("PackageService.InstallPackageAsync: Game installation folder is not configured.");
-                catalogEntry.Status = ResourcePackage.EStatus.Error;
-                catalogEntry.ToJsonFile(localCatalogFilePath);
+                Log.Error("PackageService.InstallPackageAsync: Game installation folder is not configured.");                catalogEntry.Status = ResourcePackage.EStatus.Error;
+                await SaveAsync(catalogEntry); // Ensure the package state is saved
                 return catalogEntry;
             }
 
@@ -411,9 +458,11 @@ namespace Bundlingway.Core.Services
                         if (_fileSystem.GetFiles(sourceTexturesFolder, "*.*", SearchOption.AllDirectories).Any() ||
                             _fileSystem.GetDirectories(sourceTexturesFolder).Any())
                         {
-                            if (!string.IsNullOrEmpty(gameTexturesFolder))
-                                _fileSystem.CreateDirectory(gameTexturesFolder);
-                            Log.Information($"PackageService.InstallPackageAsync: Created game textures folder at: {gameTexturesFolder}"); foreach (var file in _fileSystem.GetFiles(sourceTexturesFolder, "*.*", SearchOption.AllDirectories))
+                            if (!string.IsNullOrEmpty(gameTexturesFolder)) _fileSystem.CreateDirectory(gameTexturesFolder);
+
+                            Log.Information($"PackageService.InstallPackageAsync: Created game textures folder at: {gameTexturesFolder}");
+
+                            foreach (var file in _fileSystem.GetFiles(sourceTexturesFolder, "*.*", SearchOption.AllDirectories))
                             {
                                 if (!string.IsNullOrEmpty(gameTexturesFolder))
                                 {
@@ -456,46 +505,192 @@ namespace Bundlingway.Core.Services
                 }
 
                 catalogEntry.Status = ResourcePackage.EStatus.Installed;
-                Log.Information("PackageService.InstallPackageAsync: Updated catalog entry status to Installed.");
 
-                catalogEntry.ToJsonFile(localCatalogFilePath);
-                Log.Information("PackageService.InstallPackageAsync: Saved updated catalog entry to file.");
                 Log.Information("PackageService.InstallPackageAsync: Package installed successfully.");
-
-                await _configService.SaveAsync();
-                PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { catalogEntry }, Message = $"Installed {catalogEntry.Name}" });
+                PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [catalogEntry], Message = $"Installed {catalogEntry.Name}" });
             }
             catch (Exception e)
             {
-                Log.Error(e, "PackageService.InstallPackageAsync: Error installing package");
+                Log.Error(e, "PackageService.InstallPackageAsync: Error installing package");      
                 catalogEntry.Status = ResourcePackage.EStatus.Error;
-                catalogEntry.ToJsonFile(localCatalogFilePath);
-                throw;
             }
 
-            return catalogEntry;
-            package.Status = ResourcePackage.EStatus.Installed;
-            // Example: update config (stub)
-            await _configService.SaveAsync();
-            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Installed {package.Name}" });
-            return await Task.FromResult(package);
-        }
+            await SaveAsync(catalogEntry); // Ensure the package state is saved    
 
+            return catalogEntry;
+        }
         public async Task UninstallPackageAsync(ResourcePackage package)
         {
+            Log.Information($"PackageService.UninstallPackageAsync: Starting uninstall for package: {package.Name}");
+
+            if (package.Locked)
+            {
+                Log.Warning($"PackageService.UninstallPackageAsync: Package {package.Name} is locked and cannot be uninstalled.");
+                return;
+            }
+
             package.Status = ResourcePackage.EStatus.NotInstalled;
-            // Remove package files
-            if (!string.IsNullOrEmpty(package.LocalFolder) && _fileSystem.DirectoryExists(package.LocalFolder))
-                _fileSystem.DeleteDirectory(package.LocalFolder, true);
-            await _configService.SaveAsync();
-            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = new[] { package }, Message = $"Uninstalled {package.Name}" });
+
+            // Get the source package folders to determine what files should be removed
+            var sourcePackagePath = package.LocalFolder;
+            if (string.IsNullOrEmpty(sourcePackagePath) || !_fileSystem.DirectoryExists(sourcePackagePath))
+            {
+                Log.Warning($"PackageService.UninstallPackageAsync: Source package folder not found for {package.Name}");
+                PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Uninstalled {package.Name}" });
+                return;
+            }
+
+            var sourcePresetsFolder = Path.Combine(sourcePackagePath, Constants.Folders.PackagePresets);
+            var sourceTexturesFolder = Path.Combine(sourcePackagePath, Constants.Folders.PackageTextures);
+            var sourceShadersFolder = Path.Combine(sourcePackagePath, Constants.Folders.PackageShaders);
+
+            // Remove preset files that match the package content
+            if (!string.IsNullOrEmpty(package.LocalPresetFolder) && _fileSystem.DirectoryExists(package.LocalPresetFolder))
+            {
+                await RemoveMatchingFilesAsync(sourcePresetsFolder, package.LocalPresetFolder, "presets");
+            }
+
+            // Remove texture files that match the package content
+            if (!string.IsNullOrEmpty(package.LocalTextureFolder) && _fileSystem.DirectoryExists(package.LocalTextureFolder))
+            {
+                await RemoveMatchingFilesAsync(sourceTexturesFolder, package.LocalTextureFolder, "textures");
+            }
+
+            // Remove shader files that match the package content
+            if (!string.IsNullOrEmpty(package.LocalShaderFolder) && _fileSystem.DirectoryExists(package.LocalShaderFolder))
+            {
+                await RemoveMatchingFilesAsync(sourceShadersFolder, package.LocalShaderFolder, "shaders");
+            }
+
+            await SaveAsync(package); // Save the updated package state
+
+            //await _configService.SaveAsync();
+            PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Uninstalled {package.Name}" });
+
+            Log.Information($"PackageService.UninstallPackageAsync: Completed uninstall for package: {package.Name}");
+        }
+
+        private async Task RemoveMatchingFilesAsync(string sourceFolder, string targetFolder, string fileType)
+        {
+            if (!_fileSystem.DirectoryExists(sourceFolder) || !_fileSystem.DirectoryExists(targetFolder))
+            {
+                Log.Information($"PackageService.RemoveMatchingFilesAsync: Source or target folder does not exist for {fileType}");
+                return;
+            }
+
+            Log.Information($"PackageService.RemoveMatchingFilesAsync: Removing {fileType} files from {targetFolder}");
+
+            try
+            {
+                // Get all files from the source package folder
+                var sourceFiles = _fileSystem.GetFiles(sourceFolder, "*.*", SearchOption.AllDirectories);
+                var filesToRemove = new List<string>(); foreach (var sourceFile in sourceFiles)
+                {
+                    // Calculate the relative path from the source folder
+                    var relativePath = Path.GetRelativePath(sourceFolder, sourceFile);
+                    var targetFile = Path.Combine(targetFolder, relativePath);
+
+                    // Check if the corresponding file exists in the target location
+                    if (_fileSystem.FileExists(targetFile))
+                    {
+                        // Mark for removal - we remove any file that matches the package structure
+                        filesToRemove.Add(targetFile);
+                        Log.Information($"PackageService.RemoveMatchingFilesAsync: Marked for removal: {targetFile}");
+                    }
+                }
+
+                // Remove the identified files
+                foreach (var fileToRemove in filesToRemove)
+                {
+                    try
+                    {
+                        _fileSystem.DeleteFile(fileToRemove);
+                        Log.Information($"PackageService.RemoveMatchingFilesAsync: Removed file: {fileToRemove}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"PackageService.RemoveMatchingFilesAsync: Failed to remove file {fileToRemove}: {ex.Message}");
+                    }
+                }
+
+                // Clean up empty directories
+                await CleanupEmptyDirectoriesAsync(targetFolder);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"PackageService.RemoveMatchingFilesAsync: Error processing {fileType} files: {ex.Message}");
+            }
+        }
+
+        private async Task CleanupEmptyDirectoriesAsync(string rootFolder)
+        {
+            if (!_fileSystem.DirectoryExists(rootFolder))
+                return;
+
+            try
+            {
+                // Get all subdirectories, process deepest first
+                var directories = _fileSystem.GetDirectories(rootFolder, "*", SearchOption.AllDirectories)
+                    .OrderByDescending(d => d.Length) // Process deepest paths first
+                    .ToList();
+
+                foreach (var directory in directories)
+                {
+                    try
+                    {
+                        // Check if directory is empty (no files and no subdirectories)
+                        var hasFiles = _fileSystem.GetFiles(directory, "*", SearchOption.TopDirectoryOnly).Any();
+                        var hasSubDirs = _fileSystem.GetDirectories(directory, "*", SearchOption.TopDirectoryOnly).Any();
+
+                        if (!hasFiles && !hasSubDirs)
+                        {
+                            _fileSystem.DeleteDirectory(directory, false);
+                            Log.Information($"PackageService.CleanupEmptyDirectoriesAsync: Removed empty directory: {directory}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"PackageService.CleanupEmptyDirectoriesAsync: Failed to remove directory {directory}: {ex.Message}");
+                    }
+                }
+
+                // Finally check if the root folder itself is empty
+                var rootHasFiles = _fileSystem.GetFiles(rootFolder, "*", SearchOption.TopDirectoryOnly).Any();
+                var rootHasSubDirs = _fileSystem.GetDirectories(rootFolder, "*", SearchOption.TopDirectoryOnly).Any();
+
+                if (!rootHasFiles && !rootHasSubDirs)
+                {
+                    try
+                    {
+                        _fileSystem.DeleteDirectory(rootFolder, false);
+                        Log.Information($"PackageService.CleanupEmptyDirectoriesAsync: Removed empty root directory: {rootFolder}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Warning($"PackageService.CleanupEmptyDirectoriesAsync: Failed to remove root directory {rootFolder}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"PackageService.CleanupEmptyDirectoriesAsync: Error cleaning up directories: {ex.Message}");
+            }
+
             await Task.CompletedTask;
         }
 
         public async Task ReinstallPackageAsync(ResourcePackage package)
         {
-            await UninstallPackageAsync(package);
-            await InstallPackageAsync(package);
+            try
+            {
+                await UninstallPackageAsync(package);
+                await InstallPackageAsync(package);
+
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, $"PackageService.ReinstallPackageAsync: Error reinstalling package {package.Name}");
+            }
         }
 
         public async Task<string> DownloadAndInstallAsync(string url, string? packageName = null)
@@ -535,9 +730,14 @@ namespace Bundlingway.Core.Services
                 valid |= _fileSystem.GetFiles(package.LocalShaderFolder, "*.fx", System.IO.SearchOption.AllDirectories).Any();
             return Task.FromResult(valid);
         }
-
         public async Task RemovePackageAsync(ResourcePackage package)
         {
+            if (package.Locked)
+            {
+                Log.Warning($"PackageService.RemovePackageAsync: Package {package.Name} is locked and cannot be removed.");
+                return;
+            }
+
             // Uninstall the package first if needed
             await UninstallPackageAsync(package);
 
@@ -557,7 +757,61 @@ namespace Bundlingway.Core.Services
             {
                 _fileSystem.DeleteDirectory(folder, true);
             }
+
+            // Remove from cached packages
+            lock (_initializationLock)
+            {
+                _cachedPackages = _cachedPackages.Remove(package);
+            }
+
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Removed {package.Name}" });
+        }
+
+        internal void Refresh()
+        {
+            _packagesInitialized = false;
+        }
+
+        /// <summary>
+        /// Saves a package's catalog entry, refreshes the cache, and announces the change.
+        /// </summary>
+        /// <param name="package">The package to save.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public async Task SaveAsync(ResourcePackage package)
+        {
+            if (package == null) throw new ArgumentNullException(nameof(package));
+            
+            try
+            {
+                // Save the package catalog entry
+                await package.SaveAsync(_fileSystem);
+                
+                // Refresh the cache entry
+                lock (_initializationLock)
+                {
+                    var existingIndex = _cachedPackages.FindIndex(p => p.Name.Equals(package.Name, StringComparison.OrdinalIgnoreCase));
+                    if (existingIndex >= 0)
+                    {
+                        // Update existing package in cache
+                        _cachedPackages = _cachedPackages.SetItem(existingIndex, package);
+                    }
+                    else
+                    {
+                        // Add new package to cache
+                        _cachedPackages = _cachedPackages.Add(package);
+                    }
+                }
+                
+                // Announce the change for UI update
+                PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Saved {package.Name}" });
+                
+                Log.Information($"PackageService.SaveAsync: Successfully saved package: {package.Name}");
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"PackageService.SaveAsync: Failed to save package {package.Name}: {ex.Message}");
+                throw;
+            }
         }
     }
 }
