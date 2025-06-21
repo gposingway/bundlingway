@@ -1,5 +1,6 @@
-﻿﻿using Bundlingway.Model;
-using Bundlingway.Utilities.Handler;
+﻿﻿using Bundlingway.Core.Interfaces;
+using Bundlingway.Core.Services;
+using Bundlingway.Model;
 using Serilog;
 
 namespace Bundlingway.Utilities
@@ -13,9 +14,6 @@ namespace Bundlingway.Utilities
         {
             try
             {
-                // Initialize the local configuration provider
-                Instances.LocalConfigProvider = new ConfigProvider<BundlingwayConfig>();
-
                 Log.Information("Bootstrap.Initialize: Initialization completed.");
             }
             catch (Exception ex)
@@ -27,40 +25,24 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Detects settings for the application and related components.
         /// </summary>
-        public static async Task DetectSettings()
+        public static async Task DetectSettings(IAppEnvironmentService envService, IConfigurationService configService, BundlingwayService bundlingwayService, GPosingwayService gPosingwayService, ReShadeService reShadeService)
         {
             try
             {
                 _ = UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.DetectingSettings));
                 Log.Information("Bootstrap.DetectSettings: Starting settings detection.");
                 // Load the local configuration
-                Instances.LocalConfigProvider.Load();
-
-                // Initialize the resource packages list if it's null
-                if (Instances.ResourcePackages == null)
-                    Instances.ResourcePackages = [];
+                await configService.LoadAsync();
 
                 // Check for Bundlingway updates
-                await CheckBundlingway();
+                await CheckBundlingway(envService, bundlingwayService);
 
                 // Check for the game client and related components
-                await CheckGameClient().ContinueWith(async a =>
-                {
-                    await Task.WhenAll(
-                        CheckReShade(),
-                        CheckGPosingway()
-                        );
-                });
-
-                // Save the local configuration
-                Instances.LocalConfigProvider.Save();
-
-                
-
-                Log.Information("Bootstrap.DetectSettings: Settings detection completed.");
-                _ = UI.Announce(Constants.Bundlingway.GetMessage(Constants.MessageCategory.Ready));
-
-                _ = UI.UpdateElements();
+                await CheckGameClient(envService, configService);
+                await Task.WhenAll(
+                    CheckReShade(envService, reShadeService),
+                    CheckGPosingway(envService, gPosingwayService, configService)
+                );
             }
             catch (Exception ex)
             {
@@ -71,15 +53,13 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Checks for Bundlingway updates.
         /// </summary>
-        private static async Task CheckBundlingway()
+        private static async Task CheckBundlingway(IAppEnvironmentService envService, BundlingwayService bundlingwayService)
         {
             try
             {
                 Log.Information("Bootstrap.CheckBundlingway: Checking Bundlingway.");
-                // Get local and remote Bundlingway information
-                await Handler.Bundlingway.GetLocalInfo();
-                await Handler.Bundlingway.GetRemoteInfo();
-                Instances.LocalConfigProvider.Save();
+                await bundlingwayService.GetLocalInfoAsync();
+                await bundlingwayService.GetRemoteInfoAsync();
                 Log.Information("Bootstrap.CheckBundlingway: Bundlingway check completed.");
             }
             catch (Exception ex)
@@ -91,46 +71,47 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Checks for the game client and related settings.
         /// </summary>
-        public static async Task CheckGameClient()
+        public static async Task CheckGameClient(IAppEnvironmentService envService, IConfigurationService configService)
         {
             try
             {
-                var c = Instances.LocalConfigProvider.Configuration.Game;
-
+                var c = configService.Configuration.Game;
                 Log.Information("Bootstrap.CheckGameClient: Checking game client.");
 
                 // If the game is running, get the process path
-                if (Instances.IsGameRunning)
+                if (envService.IsGameRunning)
                 {
                     var procPath = ProcessHelper.GetProcessPath(Constants.Files.GameProcess);
-
                     if (procPath != null)
                     {
                         c.ClientLocation = procPath;
+                        c.InstallationFolder = Path.GetDirectoryName(procPath);
                     }
                 }
-
-                // If the client location is not valid, reset it
-                if (c.ClientLocation != null)
-                    if (!File.Exists(c.ClientLocation))
+                else if (!string.IsNullOrEmpty(c.InstallationFolder) && !string.IsNullOrEmpty(c.ClientLocation))
+                {
+                    // Game is not running, but a path is present
+                    bool folderExists = Directory.Exists(c.InstallationFolder);
+                    bool exeExists = File.Exists(c.ClientLocation);
+                    if (!folderExists || !exeExists)
                     {
+                        // If either is missing, clear both
                         c.ClientLocation = null;
                         c.InstallationFolder = null;
                     }
-                    else
+                    // else: both exist, proceed without overwriting (allow GPosingway/ReShade checks)
+                }
+                // else: no path, do nothing
+
+                // Shader analysis (if valid)
+                if (!string.IsNullOrEmpty(c.InstallationFolder))
+                {
+                    var shaderFolderPath = Path.Combine(c.InstallationFolder, Constants.Folders.GameShaders);
+                    if (Directory.Exists(shaderFolderPath))
                     {
-                        // Get the installation folder and shader folder path
-                        c.InstallationFolder = Path.GetDirectoryName(c.ClientLocation);
-
-                        var shaderFolderPath = Path.Combine(c.InstallationFolder, Constants.Folders.GameShaders);
-
-                        // If the shader folder exists, analyze the shaders
-                        if (Directory.Exists(shaderFolderPath))
-                        {
-                            // In the background we will save the shader analysis to the data folder.
-                            // _ = ManagedResources.Shader.SaveShaderAnalysisToPath(shaderFolderPath, Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.ShaderAnalysis)).ContinueWith(i=> UI.Announce("Installed shaders analysis finished!"));
-                        }
+                        // _ = ManagedResources.Shader.SaveShaderAnalysisToPath(shaderFolderPath, Path.Combine(envService.BundlingwayDataFolder, Constants.Files.ShaderAnalysis)).ContinueWith(i=> UI.Announce("Installed shaders analysis finished!"));
                     }
+                }
 
                 Log.Information("Bootstrap.CheckGameClient: Game client check completed.");
             }
@@ -143,14 +124,15 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Checks for GPosingway updates.
         /// </summary>
-        public static async Task CheckGPosingway()
-        {
+        public static async Task CheckGPosingway(IAppEnvironmentService envService, GPosingwayService gPosingwayService, IConfigurationService configService)        {
             try
             {
                 Log.Information("Bootstrap.CheckGPosingway: Checking GPosingway.");
-                await GPosingway.GetLocalInfo();
-                await GPosingway.GetRemoteInfo();
-                Instances.LocalConfigProvider.Save();
+                if (gPosingwayService != null)
+                {
+                    await gPosingwayService.CheckStatusAsync();
+                }
+                await configService.SaveAsync();
                 Log.Information("Bootstrap.CheckGPosingway: GPosingway check completed.");
             }
             catch (Exception ex)
@@ -162,14 +144,11 @@ namespace Bundlingway.Utilities
         /// <summary>
         /// Checks for ReShade updates.
         /// </summary>
-        public static async Task CheckReShade()
-        {
+        public static async Task CheckReShade(IAppEnvironmentService envService, ReShadeService reShadeService)        {
             try
             {
                 Log.Information("Bootstrap.CheckReShade: Checking ReShade.");
-                await ReShade.GetLocalInfo();
-                await ReShade.GetRemoteInfo();
-                Instances.LocalConfigProvider.Save();
+                await reShadeService.CheckStatusAsync();
                 Log.Information("Bootstrap.CheckReShade: ReShade check completed.");
             }
             catch (Exception ex)

@@ -1,4 +1,5 @@
-﻿using Bundlingway.Model;
+﻿using Bundlingway.Core.Services;
+using Bundlingway.Model;
 using Bundlingway.Utilities;
 using System;
 using System.Collections.Generic;
@@ -7,9 +8,16 @@ namespace Bundlingway.PostProcess.RawFile
 {
     public class FixTexturePaths : IRawFileProcess
     {
+        private readonly IAppEnvironmentService _envService;
+
         public bool ApplyToPresets { get; set; } = true;
         public bool ApplyToShaders { get; set; } = false;
         public int Order { get; set; } = 6;
+
+        public FixTexturePaths(IAppEnvironmentService envService)
+        {
+            _envService = envService;
+        }
 
         public bool PostProcess(Preset preset)
         {
@@ -19,8 +27,8 @@ namespace Bundlingway.PostProcess.RawFile
         public Dictionary<string, string> GetReplacementMap(ResourcePackage package, List<string> presetFileList, string baselinePath, Logging _logger)
         {
             var replacementMap = new Dictionary<string, string>();
-            var textureFolder = Path.Combine(Instances.PackageFolder, package.Name, Constants.Folders.PackageTextures);
-            var presetFolder = Path.Combine(Instances.PackageFolder, package.Name, Constants.Folders.PackagePresets);
+            var textureFolder = Path.Combine(_envService.PackageFolder, package.Name, Constants.Folders.PackageTextures);
+            var presetFolder = Path.Combine(_envService.PackageFolder, package.Name, Constants.Folders.PackagePresets);
 
             foreach (var presetFile in presetFileList)
             {

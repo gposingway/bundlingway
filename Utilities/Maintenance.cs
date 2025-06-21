@@ -1,4 +1,6 @@
-﻿using Bundlingway.Utilities.Extensions;
+﻿using Bundlingway.Core.Interfaces;
+using Bundlingway.Core.Services;
+using Bundlingway.Utilities.Extensions;
 using Newtonsoft.Json;
 using Serilog;
 
@@ -6,37 +8,35 @@ namespace Bundlingway.Utilities
 {
     public static class Maintenance
     {
-
-        public static void RemoveTempDir()
+        public static void RemoveTempDir(IAppEnvironmentService envService)
         {
-            if (Directory.Exists(Instances.TempFolder))
-                Directory.Delete(Instances.TempFolder, true);
+            if (Directory.Exists(envService.TempFolder))
+                Directory.Delete(envService.TempFolder, true);
         }
 
-        internal static async Task EnsureConfiguration()
+        internal static async Task EnsureConfiguration(IConfigurationService configService)
         {
-
             var mustRefresh = false;
 
-            if (Instances.LocalConfigProvider.Configuration.Shortcuts == null)
+            if (configService.Configuration.Shortcuts == null)
             {
-                Instances.LocalConfigProvider.Configuration.Shortcuts = [];
+                configService.Configuration.Shortcuts = [];
                 mustRefresh = true;
             }
 
             foreach (var kvp in Constants.DefaultShortcuts)
             {
-                if (!Instances.LocalConfigProvider.Configuration.Shortcuts.ContainsKey(kvp.Key))
+                if (!configService.Configuration.Shortcuts.ContainsKey(kvp.Key))
                 {
-                    Instances.LocalConfigProvider.Configuration.Shortcuts.Add(kvp.Key, kvp.Value);
+                    configService.Configuration.Shortcuts.Add(kvp.Key, kvp.Value);
                     mustRefresh = true;
                 }
             }
 
-            if (mustRefresh) Instances.LocalConfigProvider.Save();
+            if (mustRefresh) await configService.SaveAsync();
         }
 
-        internal static async Task PrepareEnvironmentAsync()
+        internal static async Task PrepareEnvironmentAsync(IAppEnvironmentService envService)
         {
             var settings = new JsonSerializerSettings
             {
@@ -47,19 +47,19 @@ namespace Bundlingway.Utilities
 
             JsonConvert.DefaultSettings = () => settings;
 
-            if (!Directory.Exists(Instances.BundlingwayDataFolder))
-                Directory.CreateDirectory(Instances.BundlingwayDataFolder);
+            if (!Directory.Exists(envService.BundlingwayDataFolder))
+                Directory.CreateDirectory(envService.BundlingwayDataFolder);
 
-            if (!Directory.Exists(Instances.SinglePresetsFolder))
-                Directory.CreateDirectory(Instances.SinglePresetsFolder);
+            if (!Directory.Exists(envService.SinglePresetsFolder))
+                Directory.CreateDirectory(envService.SinglePresetsFolder);
 
-            string localCatalogFilePath = Path.Combine(Instances.SinglePresetsFolder, Constants.Files.CatalogEntry);
+            string localCatalogFilePath = Path.Combine(envService.SinglePresetsFolder, Constants.Files.CatalogEntry);
 
-            if (!File.Exists(localCatalogFilePath)) Constants.SingleFileCatalog.ToJsonFile(localCatalogFilePath);
+            if (!File.Exists(localCatalogFilePath)) Constants.SingleFileCatalog(envService).ToJsonFile(localCatalogFilePath);
 
             Log.Logger = new LoggerConfiguration()
                       .WriteTo.File(
-                        Path.Combine(Instances.BundlingwayDataFolder, Constants.Files.Log),
+                        Path.Combine(envService.BundlingwayDataFolder, Constants.Files.Log),
                         fileSizeLimitBytes: 1 * 1024 * 1024 * 1024, // 1 GB
                         retainedFileCountLimit: 10,
                         rollingInterval: RollingInterval.Day,

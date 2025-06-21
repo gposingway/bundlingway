@@ -1,5 +1,9 @@
 using Bundlingway.Utilities;
-using System.Diagnostics;
+using Bundlingway.Core.Services;
+using Bundlingway.UI.WinForms; 
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Bundlingway.Core.Interfaces;
 
 namespace Bundlingway
 {
@@ -11,45 +15,93 @@ namespace Bundlingway
         [STAThread]
         static void Main(string[] args)
         {
+            MainAsync(args).GetAwaiter().GetResult();
+        }
+
+        static async Task MainAsync(string[] args)
+        {
+            var envService = new AppEnvironmentService();
+
             try
             {
                 // Prepare the environment (e.g., create necessary directories)
-                Maintenance.PrepareEnvironmentAsync().Wait();
+                Maintenance.PrepareEnvironmentAsync(envService).Wait();
 
                 // Initialize application configuration
                 ApplicationConfiguration.Initialize();
 
-                // Initialize the application (e.g., load settings)
-                Bootstrap.Initialize().Wait();
-                Instances.LocalConfigProvider.Load();
-                Maintenance.EnsureConfiguration().Wait();
+                // Set up DI container
+                var services = new ServiceCollection();
 
-                // Check if command-line arguments are provided (headless mode)
-                if (args.Length > 0)
+                // Register core services (no UI dependencies)
+                services.AddSingleton<IAppEnvironmentService>(envService);
+                services.AddSingleton<IConfigurationService>(provider =>
                 {
-                    // Process command-line arguments
-                    var result = Utilities.Handler.CommandLineArgs.ProcessAsync(args).Result;
+                    var configService = new ConfigurationService(Path.Combine(envService.BundlingwayDataFolder, Constants.Files.BundlingwayConfig));
+                    configService.LoadAsync().Wait();
+                    return configService;
+                }); 
+                
+                services.AddSingleton<IFileSystemService, FileSystemService>();
+                services.AddSingleton<IHttpClientService, HttpClientService>();
+                services.AddSingleton<PostProcessorService>();
+                services.AddSingleton<PackageService>();
+                services.AddSingleton<BundlingwayService>();
+                services.AddSingleton<ReShadeService>();
+                services.AddSingleton<GPosingwayService>();
+                services.AddSingleton<ICommandLineService, CommandLineService>();
+                services.AddSingleton<IApplicationHost, ApplicationHost>();
+                services.AddLogging(configure => configure.AddConsole());
+                services.AddSingleton<EnvironmentService>();
 
-                    // Check if another instance of the application is already running
-                    if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
-                    {
-                        // Notify other instances and close the client
-                        ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.PackageInstalled, Message = result });
+                // Defer building the provider until after UI services are registered
 
-                        Process.GetCurrentProcess().Kill();
-                    }
+                // Register frmLanding as singleton
+                services.AddSingleton<frmLanding>();
+                // Register UI-specific services with the actual mainForm (resolved from provider)
+                services.AddSingleton<IUserNotificationService>(provider => new WinFormsNotificationService(provider.GetRequiredService<frmLanding>()));
+                services.AddSingleton<IProgressReporter>(provider => new WinFormsProgressReporter(provider.GetRequiredService<frmLanding>()));
+                // Register frmShortcuts for DI
+                services.AddTransient<frmShortcuts>(provider =>
+                    new frmShortcuts(
+                        provider.GetRequiredService<PackageService>(),
+                        provider.GetRequiredService<IConfigurationService>()
+                    )
+                );
+
+                // Headless mode registration
+                if (args != null && args.Length > 0 && args[0] == "--headless")
+                {
+                    services.AddSingleton<IUserNotificationService, ConsoleNotificationService>();
+                    services.AddSingleton<IProgressReporter, ConsoleProgressReporter>();
                 }
 
-                // Check for duplicate instances (UI mode)
-                if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
-                {
-                    // Notify other instances and close the client
-                    ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.DuplicatedInstances });
-                    Process.GetCurrentProcess().Kill();
-                }
+                // Now build the final provider
+                var serviceProvider = services.BuildServiceProvider();
+
+                // Resolve main form from DI
+                frmLanding mainForm = serviceProvider.GetRequiredService<frmLanding>();
+
+                // Initialize services in the main form
+                mainForm.InitializeServices(serviceProvider);
+
+                // ModernUI bridge (static)
+                var notificationService = serviceProvider.GetRequiredService<IUserNotificationService>();
+                var progressReporter = serviceProvider.GetRequiredService<IProgressReporter>();
+                ModernUI.Initialize(notificationService, progressReporter);
 
                 // Run the application in UI mode
-                Application.Run(new frmLanding());
+                Application.Run(mainForm);
+
+                // Headless mode entry point
+                if (args != null && args.Length > 0 && args[0] == "--headless")
+                {
+                    var appHost = serviceProvider.GetRequiredService<IApplicationHost>();
+                    await appHost.InitializeAsync();
+                    await HeadlessScript.RunAsync(serviceProvider, args);
+                    await appHost.ShutdownAsync();
+                    return;
+                }
             }
             catch (Exception ex)
             {

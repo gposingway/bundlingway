@@ -1,4 +1,7 @@
 ﻿using System.Security.Cryptography;
+using Bundlingway.Core.Interfaces;
+using Bundlingway.Core.Services;
+using Bundlingway.Model;
 
 namespace Bundlingway.Utilities.Extensions
 {
@@ -16,7 +19,7 @@ namespace Bundlingway.Utilities.Extensions
         /// <param name="oldKey">The key to be replaced.</param>
         /// <param name="newKey">The new key to replace the old key.</param>
         /// <returns>The dictionary with the key replaced.</returns>
-        public static Dictionary<TKey, TValue> ReplaceKey<TKey, TValue>(this Dictionary<TKey, TValue> originalDictionary, TKey oldKey, TKey newKey)
+        public static Dictionary<TKey, TValue> ReplaceKey<TKey, TValue>(this Dictionary<TKey, TValue> originalDictionary, TKey oldKey, TKey newKey) where TKey : notnull
         {
             if (!originalDictionary.ContainsKey(oldKey))
                 return originalDictionary; // Key not found, return the original dictionary unchanged
@@ -48,21 +51,25 @@ namespace Bundlingway.Utilities.Extensions
         /// </summary>
         /// <param name="PackageA">The name of the first package.</param>
         /// <param name="PackageB">The name of the second package.</param>
+        /// <param name="envService">The environment service instance.</param>
         /// <returns>A dictionary where the key is the shader file name and the value is the comparison result.</returns>
-        public static Dictionary<string, string> ComparePackages(string PackageA, string PackageB)
+        public static Dictionary<string, string> ComparePackages(string PackageA, string PackageB, IAppEnvironmentService envService)
         {
-            var a = Instances.Packages.Get(PackageA);
-            var b = Instances.Packages.Get(PackageB);
+            var a = envService.Packages.Get(PackageA);
+            var b = envService.Packages.Get(PackageB);
 
             var comparisonMap = new Dictionary<string, string>();
 
-            foreach (var item in a.ShaderFiles)
+            var aShaderFiles = a?.ShaderFiles ?? new Dictionary<string, string>();
+            var bShaderFiles = b?.ShaderFiles ?? new Dictionary<string, string>();
+
+            foreach (var item in aShaderFiles)
             {
                 var result = "Same";
 
-                if (b.ShaderFiles.ContainsKey(item.Key))
+                if (bShaderFiles.ContainsKey(item.Key))
                 {
-                    if (b.ShaderFiles[item.Key] != item.Value)
+                    if (bShaderFiles[item.Key] != item.Value)
                     {
                         result = "Different version";
                     }
@@ -75,7 +82,7 @@ namespace Bundlingway.Utilities.Extensions
                 comparisonMap[item.Key] = result;
             }
 
-            foreach (var item in b.ShaderFiles.Where(i => !a.ShaderFiles.ContainsKey(i.Key)))
+            foreach (var item in bShaderFiles.Where(i => !aShaderFiles.ContainsKey(i.Key)))
             {
                 comparisonMap[item.Key] = PackageB + " only";
             }
@@ -83,6 +90,25 @@ namespace Bundlingway.Utilities.Extensions
             comparisonMap = comparisonMap.OrderBy(i => i.Key).ToDictionary(i => i.Key, i => i.Value);
 
             return comparisonMap;
+        }
+
+        /// <summary>
+        /// Saves the package catalog entry to its local folder.
+        /// </summary>
+        /// <param name="package">The package to save.</param>
+        /// <param name="fileSystemService">The file system service to use for file operations.</param>
+        /// <returns>A task representing the asynchronous operation.</returns>
+        public static async Task SaveAsync(this ResourcePackage package, IFileSystemService fileSystemService)
+        {
+            if (package == null) throw new ArgumentNullException(nameof(package));
+            if (fileSystemService == null) throw new ArgumentNullException(nameof(fileSystemService));
+            if (string.IsNullOrEmpty(package.LocalFolder)) throw new ArgumentException("Package LocalFolder cannot be null or empty.", nameof(package.LocalFolder));
+
+            fileSystemService.CreateDirectory(package.LocalFolder);
+
+            var catalogPath = Path.Combine(package.LocalFolder, Bundlingway.Constants.Files.CatalogEntry);
+            var json = package.ToJson() ?? throw new InvalidOperationException("Failed to serialize package to JSON.");
+            await fileSystemService.WriteAllTextAsync(catalogPath, json);
         }
     }
 

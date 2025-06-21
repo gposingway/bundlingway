@@ -38,25 +38,20 @@ namespace Bundlingway.Model
             CorePackage,
         }
 
-        public string Name { get; set; }
-        public string Label { get; set; }
-        public string Version { get; set; }
-        public string Source { get; set; }
+        public required string Name { get; set; }
+        public required string Label { get; set; }
+        public required string Version { get; set; }
+        public required string Source { get; set; }
         public EType Type { get; set; }
         public EStatus Status { get; set; }
         public bool Default { get; set; }
-        public string LocalPresetFolder { get; set; }
-        public string LocalTextureFolder { get; set; }
-        public string LocalShaderFolder { get; set; }
+        public required string LocalPresetFolder { get; set; }
+        public required string LocalTextureFolder { get; set; }
+        public required string LocalShaderFolder { get; set; }
         public bool Bundle { get; set; }
         public bool Hidden { get; set; }
         public bool Favorite { get; set; }
         public bool Locked { get; set; }
-        public string LocalFolder { get; set; }
-
-        internal async Task Install()
-        {
-            await Utilities.Handler.Package.Install(Name);
-        }
+        public required string LocalFolder { get; set; }
     }
 }
