@@ -379,7 +379,8 @@ namespace Bundlingway.Core.Services
 
             if (string.IsNullOrEmpty(config.Game.InstallationFolder))
             {
-                Log.Error("PackageService.InstallPackageAsync: Game installation folder is not configured.");                catalogEntry.Status = ResourcePackage.EStatus.Error;
+                Log.Error("PackageService.InstallPackageAsync: Game installation folder is not configured.");
+                catalogEntry.Status = ResourcePackage.EStatus.Error;
                 await SaveAsync(catalogEntry); // Ensure the package state is saved
                 return catalogEntry;
             }
@@ -393,15 +394,19 @@ namespace Bundlingway.Core.Services
                 gamePresetsFolder = Path.Combine(gamePresetsFolder, collectionName);
                 gameTexturesFolder = Path.Combine(config.Game.InstallationFolder, Constants.Folders.GameShaders, Constants.Folders.PackageTextures, collectionName);
                 gameShaderFolder = Path.Combine(gameShaderFolder, Constants.Folders.PackageShaders, collectionName);
+
+                catalogEntry.LocalPresetFolder = gamePresetsFolder;
+                catalogEntry.LocalTextureFolder = gameTexturesFolder;
+                catalogEntry.LocalShaderFolder = gameShaderFolder;
+            }
+            else
+            {
+                gameTexturesFolder = Path.Combine(config.Game.InstallationFolder, Constants.Folders.GameShaders, Constants.Folders.PackageTextures);
+                gameShaderFolder = Path.Combine(config.Game.InstallationFolder, Constants.Folders.GameShaders, Constants.Folders.PackageShaders);
             }
 
             try
             {
-                catalogEntry.LocalPresetFolder = gamePresetsFolder;
-                catalogEntry.LocalTextureFolder = gameTexturesFolder;
-                catalogEntry.LocalShaderFolder = gameShaderFolder;
-
-                // Presets:
                 if (_fileSystem.DirectoryExists(sourcePresetsFolder))
                 {
                     if (catalogEntry.Bundle)
@@ -410,9 +415,6 @@ namespace Bundlingway.Core.Services
                         {
                             var relativePath = Path.GetRelativePath(sourcePresetsFolder, folder);
                             var targetFolder = Path.Combine(gamePresetsFolder, relativePath);
-
-                            if (_fileSystem.DirectoryExists(targetFolder))
-                                _fileSystem.DeleteDirectory(targetFolder, true);
 
                             _fileSystem.CreateDirectory(targetFolder);
                         }
@@ -486,14 +488,15 @@ namespace Bundlingway.Core.Services
                     {
                         _fileSystem.CreateDirectory(gameShaderFolder);
 
-                        var referenceFolder = Path.Combine(_appEnvironment.PackageFolder, catalogEntry.Name, Constants.Folders.PackageShaders);
+                        var referenceFolder = Path.Combine(catalogEntry.LocalFolder, Constants.Folders.PackageShaders);
 
                         foreach (var file in _fileSystem.GetFiles(sourceShadersFolder, "*.*", SearchOption.AllDirectories))
                         {
                             var shaderFileExtension = Path.GetExtension(file).ToLower();
 
                             if (!catalogEntry.Bundle && !Constants.ShaderExtensions.Contains(shaderFileExtension))
-                                continue; var relativePath = Path.GetRelativePath(referenceFolder, file);
+                                continue;
+                            var relativePath = Path.GetRelativePath(referenceFolder, file);
                             var targetPath = Path.Combine(gameShaderFolder, relativePath);
                             var targetDir = Path.GetDirectoryName(targetPath);
                             if (!string.IsNullOrEmpty(targetDir))
@@ -511,7 +514,7 @@ namespace Bundlingway.Core.Services
             }
             catch (Exception e)
             {
-                Log.Error(e, "PackageService.InstallPackageAsync: Error installing package");      
+                Log.Error(e, "PackageService.InstallPackageAsync: Error installing package");
                 catalogEntry.Status = ResourcePackage.EStatus.Error;
             }
 
@@ -714,6 +717,13 @@ namespace Bundlingway.Core.Services
 
         public async Task ToggleLockedAsync(ResourcePackage package)
         {
+
+            if (package.Type == ResourcePackage.EType.CorePackage)
+            {
+                Log.Warning($"PackageService.RemovePackageAsync: Cannot unlock core package {package.Name}.");
+                return;
+            }
+
             package.Locked = !package.Locked;
             await _configService.SaveAsync();
             PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Locked toggled for {package.Name}" });
@@ -735,6 +745,12 @@ namespace Bundlingway.Core.Services
             if (package.Locked)
             {
                 Log.Warning($"PackageService.RemovePackageAsync: Package {package.Name} is locked and cannot be removed.");
+                return;
+            }
+
+            if (package.Type == ResourcePackage.EType.CorePackage)
+            {
+                Log.Warning($"PackageService.RemovePackageAsync: Cannot remove core package {package.Name}.");
                 return;
             }
 
@@ -780,12 +796,12 @@ namespace Bundlingway.Core.Services
         public async Task SaveAsync(ResourcePackage package)
         {
             if (package == null) throw new ArgumentNullException(nameof(package));
-            
+
             try
             {
                 // Save the package catalog entry
                 await package.SaveAsync(_fileSystem);
-                
+
                 // Refresh the cache entry
                 lock (_initializationLock)
                 {
@@ -801,10 +817,10 @@ namespace Bundlingway.Core.Services
                         _cachedPackages = _cachedPackages.Add(package);
                     }
                 }
-                
+
                 // Announce the change for UI update
                 PackagesUpdated?.Invoke(this, new PackageEventArgs { Packages = [package], Message = $"Saved {package.Name}" });
-                
+
                 Log.Information($"PackageService.SaveAsync: Successfully saved package: {package.Name}");
             }
             catch (Exception ex)

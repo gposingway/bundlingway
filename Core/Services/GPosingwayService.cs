@@ -34,7 +34,7 @@ namespace Bundlingway.Core.Services
 
         public async Task<(bool success, string version)> GetRemoteInfoAsync()
         {
-            var c =  _configService.Configuration.GPosingway;
+            var c = _configService.Configuration.GPosingway;
             string url = Constants.Urls.GPosingwayConfigFileUrl;
             string methodName = nameof(GetRemoteInfoAsync);
 
@@ -95,20 +95,31 @@ namespace Bundlingway.Core.Services
             }
             await _configService.SaveAsync();
             await _notificationService.AnnounceAsync($"GPosingway local status: {c.Status}, version: {c.LocalVersion}");
-        }        public async Task UpdateAsync(bool force = true)
+        }
+
+        public async Task UpdateAsync(bool force = true)
         {
             string methodName = nameof(UpdateAsync);
-            var c = _configService.Configuration.GPosingway;
-            var configUrl = Bundlingway.Constants.Urls.GPosingwayConfigFileUrl;
-
-            // Prepare or get the package using the service
-            var gposingwayPackage = await _packageService.GetPackageByNameAsync(Bundlingway.Constants.GPosingwayDefaultPackage(_envService).Name)
-                ?? await _packageService.OnboardPackageAsync(Bundlingway.Constants.GPosingwayDefaultPackage(_envService).Name);
-
-            var configDestPath = Path.Combine(gposingwayPackage.LocalFolder, Bundlingway.Constants.Files.GPosingwayConfig);
 
             try
             {
+
+                var c = _configService.Configuration.GPosingway;
+                var configUrl = Constants.Urls.GPosingwayConfigFileUrl;
+
+                // Prepare or get the package using the service
+                var gposingwayPackage = await _packageService.GetPackageByNameAsync(Bundlingway.Constants.GPosingwayDefaultPackage(_envService).Name);
+
+                if (gposingwayPackage == null)
+                {
+                    gposingwayPackage = Constants.GPosingwayDefaultPackage(_envService);
+                    _packageService.SaveAsync(gposingwayPackage).Wait(); // Ensure package is saved before proceeding
+                }
+
+
+                var configDestPath = Path.Combine(gposingwayPackage.LocalFolder, Bundlingway.Constants.Files.GPosingwayConfig);
+
+
                 // Step 1: Download the gposingway-definitions.json config file
                 if (force || !_fileSystemService.FileExists(configDestPath))
                 {
@@ -150,7 +161,7 @@ namespace Bundlingway.Core.Services
                 // Step 3: Download the actual GPosingway package ZIP
                 await _notificationService.AnnounceAsync($"Downloading GPosingway package v{version}...");
                 var packageZipPath = Path.Combine(gposingwayPackage.LocalFolder, Constants.Files.GPosingwayPackage);
-                
+
                 var packageResponse = await _httpClientService.GetAsync(packageUrl);
                 packageResponse.EnsureSuccessStatusCode();
                 using (var fs = _fileSystemService.OpenWrite(packageZipPath))
@@ -186,8 +197,8 @@ namespace Bundlingway.Core.Services
                         }
                     }
                 }
-                Log.Information($"{methodName}: Successfully extracted GPosingway package."); 
-                
+                Log.Information($"{methodName}: Successfully extracted GPosingway package.");
+
                 // Step 5: Copy shaders and presets to both package and game directories
                 await _notificationService.AnnounceAsync("Installing GPosingway files...");
                 var gameFolder = _configService.Configuration.Game.InstallationFolder;
@@ -198,44 +209,52 @@ namespace Bundlingway.Core.Services
                     return;
                 }
 
-                // Clear and recreate the package's local shader and preset folders
-                if (_fileSystemService.DirectoryExists(gposingwayPackage.LocalShaderFolder))
-                    _fileSystemService.DeleteDirectory(gposingwayPackage.LocalShaderFolder, true);
-                if (_fileSystemService.DirectoryExists(gposingwayPackage.LocalPresetFolder))
-                    _fileSystemService.DeleteDirectory(gposingwayPackage.LocalPresetFolder, true);
-                _fileSystemService.CreateDirectory(gposingwayPackage.LocalShaderFolder);
-                _fileSystemService.CreateDirectory(gposingwayPackage.LocalPresetFolder);
+                if (string.IsNullOrEmpty(gposingwayPackage.LocalShaderFolder)) // Ensure the package has a local shader folder
+                    gposingwayPackage.LocalShaderFolder = Path.Combine(gameFolder, Constants.Folders.GameShaders, Constants.Folders.PackageShaders);
 
-                // Copy shaders to both package and game directories
-                var shadersSource = Path.Combine(extractPath, "reshade-shaders");
+                if (string.IsNullOrEmpty(gposingwayPackage.LocalPresetFolder)) // Ensure the package has a local preset folder
+                    gposingwayPackage.LocalPresetFolder = Path.Combine(gameFolder, Constants.Folders.GamePresets);
+
+                if (string.IsNullOrEmpty(gposingwayPackage.LocalTextureFolder)) // Ensure the package has a local texture folder
+                    gposingwayPackage.LocalTextureFolder = Path.Combine(gameFolder, Constants.Folders.GameShaders, Constants.Folders.PackageTextures);  
+
+                var shadersSource = Path.Combine(extractPath, Constants.Folders.GameShaders, Constants.Folders.PackageShaders);
                 if (_fileSystemService.DirectoryExists(shadersSource))
                 {
-                    // Copy to package's local shader folder
-                    CopyDirectory(shadersSource, gposingwayPackage.LocalShaderFolder);
-                    
-                    // Copy to game's shader folder
-                    var gameShadersDestination = Path.Combine(gameFolder, "reshade-shaders");
-                    CopyDirectory(shadersSource, gameShadersDestination);
-                    
-                    Log.Information($"{methodName}: Copied shaders to package and game directories.");
+                    // Copy to package's local folders
+                    var packageShadersDestination = Path.Combine(gposingwayPackage.LocalFolder, Constants.Folders.PackageShaders);
+                    CopyDirectory(shadersSource, packageShadersDestination);
+
+                    Log.Information($"{methodName}: Copied shaders to package directory.");
+                }
+
+                var texturesSource = Path.Combine(extractPath, Constants.Folders.GameShaders, Constants.Folders.PackageTextures);
+                if (_fileSystemService.DirectoryExists(texturesSource))
+                {
+                    // Copy to package's local folders
+                    var packagetexturesDestination = Path.Combine(gposingwayPackage.LocalFolder, Constants.Folders.PackageTextures);
+                    CopyDirectory(texturesSource, packagetexturesDestination);
+
+                    Log.Information($"{methodName}: Copied textures to package and game directory.");
                 }
 
                 // Copy presets to both package and game directories
-                var presetsSource = Path.Combine(extractPath, "reshade-presets");
+                var presetsSource = Path.Combine(extractPath, Constants.Folders.GamePresets);
                 if (_fileSystemService.DirectoryExists(presetsSource))
                 {
-                    // Copy to package's local preset folder
-                    CopyDirectory(presetsSource, gposingwayPackage.LocalPresetFolder);
-                    
                     // Copy to game's preset folder
-                    var gamePresetsDestination = Path.Combine(gameFolder, "reshade-presets");
-                    CopyDirectory(presetsSource, gamePresetsDestination);
-                    
-                    Log.Information($"{methodName}: Copied presets to package and game directories.");
-                }                // Step 6: Update package version and status
+                    var packagepresetsDestination = Path.Combine(gposingwayPackage.LocalFolder, Constants.Folders.PackagePresets);
+                    CopyDirectory(presetsSource, packagepresetsDestination);
+
+                    Log.Information($"{methodName}: Copied presets to package directoriy.");
+                }
+                
+                // Step 6: Update package version and status
                 gposingwayPackage.Version = version;
                 gposingwayPackage.Label = $"GPosingway v{version}";
-                gposingwayPackage.Status = ResourcePackage.EStatus.Installed;
+                gposingwayPackage.Status = ResourcePackage.EStatus.NotInstalled;
+
+                _packageService.SaveAsync(gposingwayPackage).Wait(); // Ensure package is saved before proceeding
 
                 // Run post-processing pipeline
                 await Task.Run(() => new PostProcessorService(_envService).RunPipeline(gposingwayPackage));
@@ -289,13 +308,13 @@ namespace Bundlingway.Core.Services
         public async Task CheckStatusAsync()
         {
             Log.Information("GPosingwayService.CheckStatusAsync: Starting combined local and remote info check.");
-            
+
             // Check local info first
             await GetLocalInfoAsync();
-            
+
             // Then check remote info
             await GetRemoteInfoAsync();
-            
+
             Log.Information("GPosingwayService.CheckStatusAsync: Combined check completed.");
         }
     }

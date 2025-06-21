@@ -104,6 +104,8 @@ namespace Bundlingway.Utilities.Extensions
             if (fileSystemService == null) throw new ArgumentNullException(nameof(fileSystemService));
             if (string.IsNullOrEmpty(package.LocalFolder)) throw new ArgumentException("Package LocalFolder cannot be null or empty.", nameof(package.LocalFolder));
 
+            fileSystemService.CreateDirectory(package.LocalFolder);
+
             var catalogPath = Path.Combine(package.LocalFolder, Bundlingway.Constants.Files.CatalogEntry);
             var json = package.ToJson() ?? throw new InvalidOperationException("Failed to serialize package to JSON.");
             await fileSystemService.WriteAllTextAsync(catalogPath, json);

@@ -111,7 +111,8 @@ namespace Bundlingway.UI
         {
             var packages = await _packageService.GetAllPackagesAsync() ?? [];
             await _view.SetPackagesAsync(packages);
-        }        public async Task OnboardPackagesAsync(IEnumerable<string> files)
+        }
+        public async Task OnboardPackagesAsync(IEnumerable<string> files)
         {
             await _packageService.OnboardPackagesAsync(files);
             // Note: UI updates will be handled by PackagesUpdated events
@@ -130,7 +131,7 @@ namespace Bundlingway.UI
                     Filter = $"Archive files ({filter})|{filter}",
                     Title = "Select a Package File",
                     Multiselect = true
-                };                if (ofd.ShowDialog() == DialogResult.OK)
+                }; if (ofd.ShowDialog() == DialogResult.OK)
                 {
                     await _packageService.OnboardPackagesAsync(ofd.FileNames);
                     // Note: UI updates will be handled by PackagesUpdated events
@@ -141,14 +142,16 @@ namespace Bundlingway.UI
                 throw;
             }
 
-        }        public async Task OnRemovePackagesAsync()
+        }
+        public async Task OnRemovePackagesAsync()
         {
             // Remove selected packages
             var selectedPackages = _view.GetSelectedPackages();
             await Task.WhenAll(selectedPackages.Select(_packageService.RemovePackageAsync));
             ModernUI.Announce("All selected packages removed!");
             // Note: UI updates will be handled by PackagesUpdated events
-        }        public async Task OnUninstallPackagesAsync()
+        }
+        public async Task OnUninstallPackagesAsync()
         {
             var selectedPackages = _view.GetSelectedPackages();
             await Task.WhenAll(selectedPackages.Select(_packageService.UninstallPackageAsync));
@@ -164,21 +167,24 @@ namespace Bundlingway.UI
 
         public async Task OnInstallGPosingwayAsync()
         {
-            await _gPosingwayService.UpdateAsync();
+            await _gPosingwayService.UpdateAsync(true);
             await UpdateElementsAsync();
             await PopulateGridAsync();
-        }        public async Task OnReinstallPackagesAsync()
+        }
+        public async Task OnReinstallPackagesAsync()
         {
             var selectedPackages = _view.GetSelectedPackages();
             await Task.WhenAll(selectedPackages.Select(_packageService.ReinstallPackageAsync));
             ModernUI.Announce("All selected packages reinstalled!");
             // Note: UI updates will be handled by PackagesUpdated events
-        }public async Task OnToggleFavoriteAsync()
+        }
+        public async Task OnToggleFavoriteAsync()
         {
             var selectedPackages = _view.GetSelectedPackages();
             await Task.WhenAll(selectedPackages.Select(_packageService.ToggleFavoriteAsync));
             // Note: UI updates will be handled by PackagesUpdated events
-        }        public async Task OnToggleLockedAsync()
+        }
+        public async Task OnToggleLockedAsync()
         {
             var selectedPackages = _view.GetSelectedPackages();
             await Task.WhenAll(selectedPackages.Select(_packageService.ToggleLockedAsync));
