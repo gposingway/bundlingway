@@ -2,6 +2,7 @@ using Bundlingway.Core.Interfaces;
 using Bundlingway.Core.Services;
 using Bundlingway.Model;
 using Bundlingway.Utilities;
+using Serilog;
 using System.IO;
 using System.Linq;
 
@@ -137,8 +138,9 @@ namespace Bundlingway.UI
                     // Note: UI updates will be handled by PackagesUpdated events
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                Log.Error(ex, "Failed to onboard packages");
                 throw;
             }
 

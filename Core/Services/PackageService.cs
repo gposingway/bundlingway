@@ -67,9 +67,9 @@ namespace Bundlingway.Core.Services
                                                 if (pkg != null)
                                                     foundPackages.Add(pkg);
                                             }
-                                            catch
+                                            catch (Exception ex)
                                             {
-
+                                                Log.Warning($"Failed to parse package catalog at '{catalogPath}': {ex.Message}");
                                             }
                                         }
                                     }

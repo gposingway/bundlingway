@@ -249,10 +249,9 @@ namespace Bundlingway.Utilities.Extensions
                 model.OriginalTechniques = !string.IsNullOrEmpty(json)
                     ? json.FromJson<Dictionary<string, bool>>()
                     : new Dictionary<string, bool>();
-            }
-            catch (Exception)
+            }            catch (Exception ex)
             {
-                //TODO: Add proper exception handling
+                Log.Warning($"Failed to parse shader toggle state from JSON: {ex.Message}");
             }
 
             return model;

@@ -39,9 +39,9 @@ namespace Bundlingway.Utilities.Extensions
              try
             {
                 return JsonConvert.SerializeObject(obj, format);
-            }
-            catch
+            }            catch (Exception ex)
             {
+                Log.Warning($"Failed to serialize object to JSON: {ex.Message}");
                 return null;
             }
         }

@@ -30,23 +30,15 @@ namespace Bundlingway
             _serviceProvider = serviceProvider;
             InitializeComponent();
         }
-
         public void InitializeServices(IServiceProvider serviceProvider)
         {
-            _envService = serviceProvider.GetService(typeof(IAppEnvironmentService)) as IAppEnvironmentService
-                ?? throw new InvalidOperationException("IAppEnvironmentService is not registered in the DI container.");
-            _packageService = serviceProvider.GetService(typeof(PackageService)) as PackageService
-                ?? throw new InvalidOperationException("PackageService is not registered in the DI container.");
-            _reShadeService = serviceProvider.GetService(typeof(ReShadeService)) as ReShadeService
-                ?? throw new InvalidOperationException("ReShadeService is not registered in the DI container.");
-            _gPosingwayService = serviceProvider.GetService(typeof(GPosingwayService)) as GPosingwayService
-                ?? throw new InvalidOperationException("GPosingwayService is not registered in the DI container.");
-            _configService = serviceProvider.GetService(typeof(IConfigurationService)) as IConfigurationService
-                ?? throw new InvalidOperationException("IConfigurationService is not registered in the DI container.");
-            _bundlingwayService = serviceProvider.GetService(typeof(BundlingwayService)) as BundlingwayService
-                ?? throw new InvalidOperationException("BundlingwayService is not registered in the DI container.");
-            var fileSystemService = serviceProvider.GetService(typeof(IFileSystemService)) as IFileSystemService
-                ?? throw new InvalidOperationException("IFileSystemService is not registered in the DI container.");
+            _envService = serviceProvider.GetRequiredService<IAppEnvironmentService>();
+            _packageService = serviceProvider.GetRequiredService<PackageService>();
+            _reShadeService = serviceProvider.GetRequiredService<ReShadeService>();
+            _gPosingwayService = serviceProvider.GetRequiredService<GPosingwayService>();
+            _configService = serviceProvider.GetRequiredService<IConfigurationService>();
+            _bundlingwayService = serviceProvider.GetRequiredService<BundlingwayService>();
+            var fileSystemService = serviceProvider.GetRequiredService<IFileSystemService>();
 
             _presenter = new LandingPresenter(this, _packageService, _reShadeService, _gPosingwayService, _configService, _envService, _bundlingwayService, fileSystemService);
             Text = $"Bundlingway · v{_envService.AppVersion}";
@@ -309,16 +301,18 @@ namespace Bundlingway
             var packageList = packagesToUpdate.ToList();
             if (!packageList.Any()) return;
 
-            Log.Information($"frmLanding: UpdatePackagesInGridAsync - Updating {packageList.Count} package(s) in grid");            dgvPackages?.DoAction(async () =>
+            Log.Information($"frmLanding: UpdatePackagesInGridAsync - Updating {packageList.Count} package(s) in grid");
+
+            dgvPackages?.DoAction(async () =>
             {
                 bool needsVisibleRefresh = false;
-                
+
                 foreach (var updatedPackage in packageList)
                 {
                     // Find existing row for this package
                     DataGridViewRow existingRow = null;
                     int rowIndex = -1;
-                    
+
                     for (int i = 0; i < dgvPackages.Rows.Count; i++)
                     {
                         var row = dgvPackages.Rows[i];
@@ -344,7 +338,7 @@ namespace Bundlingway
                         existingRow.Cells[2].Value = updatedPackage.Label ?? updatedPackage.Name;
                         existingRow.Cells[3].Value = updatedPackage.Status.GetDescription();
                         existingRow.Tag = updatedPackage;
-                        
+
                         // Check if this row is visible
                         if (IsRowVisible(rowIndex))
                         {
@@ -363,7 +357,7 @@ namespace Bundlingway
                         );
                         newRow.Tag = updatedPackage;
                         dgvPackages.Rows.Add(newRow);
-                        
+
                         // New rows are typically at the end, check if visible
                         if (IsRowVisible(dgvPackages.Rows.Count - 1))
                         {
