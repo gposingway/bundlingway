@@ -6,8 +6,7 @@ using Newtonsoft.Json.Linq;
 using Serilog;
 
 namespace Bundlingway.Core.Services
-{
-    public class GPosingwayService
+{    public class GPosingwayService
     {
         private readonly PackageService _packageService;
         private readonly IConfigurationService _configService;
@@ -15,6 +14,7 @@ namespace Bundlingway.Core.Services
         private readonly IFileSystemService _fileSystemService;
         private readonly IHttpClientService _httpClientService;
         private readonly IAppEnvironmentService _envService;
+        private readonly PostProcessorService _postProcessorService;
 
         public GPosingwayService(
             PackageService packageService,
@@ -22,7 +22,8 @@ namespace Bundlingway.Core.Services
             IUserNotificationService notificationService,
             IFileSystemService fileSystemService,
             IHttpClientService httpClientService,
-            IAppEnvironmentService envService)
+            IAppEnvironmentService envService,
+            PostProcessorService postProcessorService)
         {
             _packageService = packageService;
             _configService = configService;
@@ -30,6 +31,7 @@ namespace Bundlingway.Core.Services
             _fileSystemService = fileSystemService;
             _httpClientService = httpClientService;
             _envService = envService;
+            _postProcessorService = postProcessorService;
         }
 
         public async Task<(bool success, string version)> GetRemoteInfoAsync()
@@ -254,10 +256,8 @@ namespace Bundlingway.Core.Services
                 gposingwayPackage.Label = $"GPosingway v{version}";
                 gposingwayPackage.Status = ResourcePackage.EStatus.NotInstalled;
 
-                _packageService.SaveAsync(gposingwayPackage).Wait(); // Ensure package is saved before proceeding
-
-                // Run post-processing pipeline
-                await Task.Run(() => new PostProcessorService(_envService).RunPipeline(gposingwayPackage));
+                _packageService.SaveAsync(gposingwayPackage).Wait(); // Ensure package is saved before proceeding                // Run post-processing pipeline
+                await Task.Run(() => _postProcessorService.RunPipeline(gposingwayPackage));
 
                 // Final installation step
                 await _packageService.InstallPackageAsync(gposingwayPackage);

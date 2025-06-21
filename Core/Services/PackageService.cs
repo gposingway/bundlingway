@@ -16,13 +16,13 @@ namespace Bundlingway.Core.Services
      /// Service-based implementation of package management logic, decoupled from UI.
      /// </summary>
     public class PackageService
-    {
-        private readonly IConfigurationService _configService;
+    {        private readonly IConfigurationService _configService;
         private readonly IFileSystemService _fileSystem;
         private readonly IHttpClientService _httpClient;
         private readonly IProgressReporter _progressReporter;
         private readonly IUserNotificationService _notifications;
         private readonly IAppEnvironmentService _appEnvironment;
+        private readonly PostProcessorService _postProcessorService;
         private ImmutableList<ResourcePackage> _cachedPackages = ImmutableList<ResourcePackage>.Empty;
         private bool _packagesInitialized = false;
         private readonly object _initializationLock = new object();
@@ -88,15 +88,14 @@ namespace Bundlingway.Core.Services
                 }
                 return _cachedPackages;
             }
-        }
-
-        public PackageService(
+        }        public PackageService(
             IConfigurationService configService,
             IFileSystemService fileSystem,
             IHttpClientService httpClient,
             IProgressReporter progressReporter,
             IUserNotificationService notifications,
-            IAppEnvironmentService appEnvironment)
+            IAppEnvironmentService appEnvironment,
+            PostProcessorService postProcessorService)
         {
             _configService = configService;
             _fileSystem = fileSystem;
@@ -104,6 +103,7 @@ namespace Bundlingway.Core.Services
             _progressReporter = progressReporter;
             _notifications = notifications;
             _appEnvironment = appEnvironment;
+            _postProcessorService = postProcessorService;
         }
 
         public event EventHandler<PackageEventArgs>? PackagesUpdated;
@@ -158,7 +158,7 @@ namespace Bundlingway.Core.Services
                     LocalFolder = targetPath
                 };
 
-                new PostProcessorService(_appEnvironment).RunPipeline(pkg);
+                _postProcessorService.RunPipeline(pkg);
 
                 if (autoInstall) await InstallPackageAsync(pkg);
 
@@ -294,7 +294,7 @@ namespace Bundlingway.Core.Services
             var catalogPath = Path.Combine(targetPackagePath, Bundlingway.Constants.Files.CatalogEntry);
             File.WriteAllText(catalogPath, newCatalogEntry.ToJson());
 
-            new PostProcessorService(_appEnvironment).RunPipeline(newCatalogEntry);
+            _postProcessorService.RunPipeline(newCatalogEntry);
 
             if (autoInstall) await InstallPackageAsync(newCatalogEntry);
             // Return the onboarded ResourcePackage

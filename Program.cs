@@ -1,12 +1,8 @@
 using Bundlingway.Utilities;
 using Bundlingway.Core.Services;
-using Bundlingway.UI.WinForms; // Assuming WinForms services are here
+using Bundlingway.UI.WinForms; 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using System.IO;
-using System.Windows.Forms;
-using System.Diagnostics;
 using Bundlingway.Core.Interfaces;
 
 namespace Bundlingway
@@ -44,9 +40,11 @@ namespace Bundlingway
                     var configService = new ConfigurationService(Path.Combine(envService.BundlingwayDataFolder, Constants.Files.BundlingwayConfig));
                     configService.LoadAsync().Wait();
                     return configService;
-                });
+                }); 
+                
                 services.AddSingleton<IFileSystemService, FileSystemService>();
                 services.AddSingleton<IHttpClientService, HttpClientService>();
+                services.AddSingleton<PostProcessorService>();
                 services.AddSingleton<PackageService>();
                 services.AddSingleton<BundlingwayService>();
                 services.AddSingleton<ReShadeService>();
