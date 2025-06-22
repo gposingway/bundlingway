@@ -46,5 +46,10 @@ namespace Bundlingway.Core.Interfaces
         /// <param name="title">Optional title for the confirmation dialog</param>
         /// <returns>True if user confirms, false otherwise</returns>
         Task<bool> ConfirmAsync(string message, string title = "Confirm");
+
+        /// <summary>
+        /// Brings the main application window to front.
+        /// </summary>
+        Task BringToFrontAsync();
     }
 }

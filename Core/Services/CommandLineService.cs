@@ -183,6 +183,18 @@ namespace Bundlingway.Core.Services
                 }
             }
             return null;
+        }        public async Task HandleProtocolAsync(string protocolUrl)
+        {
+            try
+            {
+                Log.Information($"Handling protocol URL: {protocolUrl}");
+                await ProcessAsync(new[] { protocolUrl });
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to handle protocol URL: {ProtocolUrl}", protocolUrl);
+                throw;
+            }
         }
     }
 }

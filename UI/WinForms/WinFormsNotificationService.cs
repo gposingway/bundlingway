@@ -110,5 +110,19 @@ namespace Bundlingway.UI.WinForms
                 return Task.FromResult(false);
             }
         }
+
+        public async Task BringToFrontAsync()
+        {
+            if (_mainForm != null)
+            {
+                _mainForm.Invoke(() =>
+                {
+                    if (_mainForm.WindowState == FormWindowState.Minimized)
+                        _mainForm.WindowState = FormWindowState.Normal;
+                    _mainForm.BringToFront();
+                    _mainForm.Activate();
+                });
+            }
+        }
     }
 }

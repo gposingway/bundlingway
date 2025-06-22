@@ -116,8 +116,7 @@ namespace Bundlingway
                     _ = ModernUI.BringToFront(); // If implemented, otherwise call the method directly
                     break;
             }
-        }
-        private void PackageService_PackagesUpdated(object sender, PackageEventArgs e)
+        }        private void PackageService_PackagesUpdated(object sender, PackageEventArgs e)
         {
             // Update only the specific packages that changed based on operation type
             this.DoAction(() =>
@@ -133,7 +132,8 @@ namespace Bundlingway
                     else
                     {
                         // Package was added/updated - update in grid
-                        _ = UpdatePackagesInGridAsync(e.Packages);
+                        var shouldSelectAndScroll = !string.IsNullOrEmpty(e.Message) && e.Message.Contains("Installed");
+                        _ = UpdatePackagesInGridAsync(e.Packages, shouldSelectAndScroll);
                     }
                 }
             });
@@ -290,7 +290,7 @@ namespace Bundlingway
                  /// Efficiently updates only the specified packages in the grid without full reload.
                  /// </summary>
                  /// <param name="packagesToUpdate">The packages to update in the grid</param>
-        private async Task UpdatePackagesInGridAsync(IEnumerable<ResourcePackage> packagesToUpdate)
+        private async Task UpdatePackagesInGridAsync(IEnumerable<ResourcePackage> packagesToUpdate, bool selectAndScrollToFirst = false)
         {
             if (dgvPackages == null || packagesToUpdate == null)
             {

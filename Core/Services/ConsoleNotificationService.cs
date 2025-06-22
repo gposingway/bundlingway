@@ -56,5 +56,11 @@ namespace Bundlingway.Core.Services
             Console.WriteLine();
             return Task.FromResult(key.KeyChar == 'y' || key.KeyChar == 'Y');
         }
+
+        public Task BringToFrontAsync()
+        {
+            // No-op for console mode - there's no window to bring to front
+            return Task.CompletedTask;
+        }
     }
 }
