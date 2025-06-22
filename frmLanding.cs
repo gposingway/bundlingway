@@ -364,9 +364,7 @@ namespace Bundlingway
                             needsVisibleRefresh = true;
                         }
                     }
-                }
-
-                // Only refresh if visible rows were updated
+                }                // Only refresh if visible rows were updated
                 if (needsVisibleRefresh)
                 {
                     dgvPackages.Refresh();
@@ -376,8 +374,15 @@ namespace Bundlingway
 
                 // Update package count label
                 lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
+                
+                // If requested, select and scroll to the first updated package
+                if (selectAndScrollToFirst && packageList.Any())
+                {
+                    var firstPackage = packageList.First();
+                    await SelectAndScrollToPackageAsync(firstPackage.Name);
+                }
             });
-        }        /// <summary>
+        }/// <summary>
                  /// Removes packages from the grid that are no longer in the service's package list.
                  /// </summary>
                  /// <param name="packagesToRemove">The packages to remove from the grid</param>
@@ -1048,6 +1053,65 @@ namespace Bundlingway
                 // If there's any exception getting visibility info, assume it's visible to be safe
                 return true;
             }
+        }        /// <summary>
+        /// Selects and scrolls to a specific package in the grid by name.
+        /// </summary>
+        /// <param name="packageName">The name of the package to select and scroll to</param>
+        private async Task SelectAndScrollToPackageAsync(string packageName)
+        {
+            if (dgvPackages == null || string.IsNullOrWhiteSpace(packageName))
+                return;
+
+            dgvPackages.DoAction(() =>
+            {
+                try
+                {
+                    // Find the row with the matching package
+                    DataGridViewRow targetRow = null;
+                    int targetIndex = -1;
+
+                    for (int i = 0; i < dgvPackages.Rows.Count; i++)
+                    {
+                        var row = dgvPackages.Rows[i];
+                        if (row.Tag is ResourcePackage pkg &&
+                            pkg.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            targetRow = row;
+                            targetIndex = i;
+                            break;
+                        }
+                    }
+
+                    if (targetRow != null)
+                    {
+                        // Clear current selection
+                        dgvPackages.ClearSelection();
+                        
+                        // Select the target row
+                        targetRow.Selected = true;
+                        dgvPackages.CurrentCell = targetRow.Cells[0];
+                        
+                        // Scroll to make the row visible
+                        dgvPackages.FirstDisplayedScrollingRowIndex = Math.Max(0, targetIndex - 2);
+                        
+                        // Bring the main window to front to ensure visibility
+                        if (WindowState == FormWindowState.Minimized)
+                            WindowState = FormWindowState.Normal;
+                        BringToFront();
+                        Activate();
+                        
+                        Log.Information("Selected and scrolled to package: {PackageName} at row {RowIndex}", packageName, targetIndex);
+                    }
+                    else
+                    {
+                        Log.Warning("Package not found in grid for selection: {PackageName}", packageName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Failed to select and scroll to package: {PackageName}", packageName);
+                }
+            });
         }
     }
 }

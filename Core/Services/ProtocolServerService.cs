@@ -73,6 +73,12 @@ namespace Bundlingway.Core.Services
                 {
                     string notificationText = message.Substring("NOTIFICATION:".Length);
                     await HandleNotificationAsync(notificationText);
+                    
+                    // If this is a package installation notification, trigger a package refresh
+                    if (notificationText.Contains("installed successfully") || notificationText.Contains("Package installed"))
+                    {
+                        await HandlePackageInstallationNotificationAsync();
+                    }
                 }
                 else
                 {
@@ -83,7 +89,7 @@ namespace Bundlingway.Core.Services
             {
                 Log.Error(ex, "Failed to handle incoming protocol message: {Message}", message);
             }
-        }        private async Task HandleBringToFrontRequestAsync()
+        }private async Task HandleBringToFrontRequestAsync()
         {
             try
             {
@@ -111,7 +117,21 @@ namespace Bundlingway.Core.Services
             catch (Exception ex)
             {
                 Log.Error(ex, "Failed to display protocol notification: {Notification}", notificationText);
-            }        }
+            }        }        private async Task HandlePackageInstallationNotificationAsync()
+        {
+            try
+            {
+                // Get the package service and trigger a smart refresh that compares before/after
+                var packageService = _serviceProvider.GetRequiredService<PackageService>();
+                await packageService.RefreshAndNotifyAsync();
+                
+                Log.Information("Triggered smart package refresh after installation notification");
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to refresh packages after installation notification");
+            }
+        }
 
         public async Task<bool> SendMessageToExistingInstanceAsync(string message)
         {

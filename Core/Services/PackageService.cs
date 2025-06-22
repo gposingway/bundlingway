@@ -789,6 +789,49 @@ namespace Bundlingway.Core.Services
         }
 
         /// <summary>
+        /// Refreshes the package cache and triggers events for any newly discovered packages.
+        /// </summary>
+        public async Task RefreshAndNotifyAsync()
+        {
+            try
+            {
+                // Get current packages before refresh
+                var packagesBefore = _cachedPackages.ToList();
+                
+                // Reset and reload packages
+                _packagesInitialized = false;
+                var packagesAfter = await GetAllPackagesAsync();
+                
+                // Find newly discovered packages (packages that exist now but didn't before)
+                var newPackages = packagesAfter
+                    .Where(after => !packagesBefore.Any(before => 
+                        before.Name.Equals(after.Name, StringComparison.OrdinalIgnoreCase)))
+                    .ToList();
+                
+                if (newPackages.Any())
+                {
+                    Log.Information("Found {Count} new packages after refresh: {Names}", 
+                        newPackages.Count, 
+                        string.Join(", ", newPackages.Select(p => p.Name)));
+                    
+                    // Trigger PackagesUpdated event for new packages
+                    foreach (var newPackage in newPackages)
+                    {
+                        PackagesUpdated?.Invoke(this, new PackageEventArgs 
+                        { 
+                            Packages = [newPackage], 
+                            Message = $"Installed {newPackage.Name}" 
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to refresh packages and notify");
+            }
+        }
+
+        /// <summary>
         /// Saves a package's catalog entry, refreshes the cache, and announces the change.
         /// </summary>
         /// <param name="package">The package to save.</param>
