@@ -72,11 +72,9 @@ namespace Bundlingway.Core.Services
                             return null;
                         }
                         package = new DownloadPackage { Name = name, Url = url };
-                    }
+                    }                    Log.Information($"Parsed name: {name}, url: {url}");
 
-                    Log.Information($"Parsed name: {name}, url: {url}");
-
-                    await _notificationService.AnnounceAsync($"Installing package: {name ?? url}");
+                    await _notificationService.AnnounceAsync($"Downloading package: {name ?? url}");
                     if (package.Url == null || package.Name == null)
                     {
                         Log.Warning("Package Url or Name is null. Aborting installation.");
@@ -84,8 +82,9 @@ namespace Bundlingway.Core.Services
                         return null;
                     }
 
+                    await _notificationService.AnnounceAsync($"Installing package: {package.Name}");
                     var packageName = await _packageService.DownloadAndInstallAsync(package.Url, package.Name);
-                    await _notificationService.AnnounceAsync($"Installation: {packageName}");
+                    await _notificationService.AnnounceAsync($"Installation completed: {packageName}");
                     Log.Information(packageName);
                     return packageName;
                 }
@@ -183,12 +182,12 @@ namespace Bundlingway.Core.Services
                 }
             }
             return null;
-        }        public async Task HandleProtocolAsync(string protocolUrl)
+        }        public async Task<string?> HandleProtocolAsync(string protocolUrl)
         {
             try
             {
                 Log.Information($"Handling protocol URL: {protocolUrl}");
-                await ProcessAsync(new[] { protocolUrl });
+                return await ProcessAsync(new[] { protocolUrl });
             }
             catch (Exception ex)
             {

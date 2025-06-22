@@ -120,14 +120,16 @@ namespace Bundlingway
             services.AddLogging(configure => configure.AddConsole());            services.AddSingleton<EnvironmentService>();
             services.AddSingleton<ISingleInstanceService, SingleInstanceService>();
             services.AddSingleton<IProtocolServerService, ProtocolServerService>();
-        }
-
-        private static async Task HandleProtocolInvocation(IAppEnvironmentService envService, string protocolUrl)
+        }        private static async Task HandleProtocolInvocation(IAppEnvironmentService envService, string protocolUrl)
         {
+            IProtocolServerService? protocolService = null;
+            
             try
             {
                 // Prepare minimal environment for headless operation
-                Maintenance.PrepareEnvironmentAsync(envService).Wait();                // Set up minimal DI container for headless operation
+                Maintenance.PrepareEnvironmentAsync(envService).Wait();
+
+                // Set up minimal DI container for headless operation
                 var services = new ServiceCollection();
                 RegisterCoreServices(services, envService);
 
@@ -135,12 +137,38 @@ namespace Bundlingway
                 services.AddSingleton<IProgressReporter, ConsoleProgressReporter>();
 
                 var serviceProvider = services.BuildServiceProvider();
-                var commandLineService = serviceProvider.GetRequiredService<ICommandLineService>();// Handle the protocol URL
-                await commandLineService.HandleProtocolAsync(protocolUrl);
+                protocolService = serviceProvider.GetRequiredService<IProtocolServerService>();
+                
+                // Extract package name from URL for early notification
+                var packageName = ExtractPackageNameFromUrl(protocolUrl);
+                
+                // Send initial notification that we received the request
+                if (!string.IsNullOrEmpty(packageName))
+                {
+                    await protocolService.NotifyExistingInstanceAsync($"Browser request received for package: {packageName}");
+                }
+                else
+                {
+                    await protocolService.NotifyExistingInstanceAsync("Browser installation request received...");
+                }
 
-                // Notify any existing UI instance about success
-                var protocolService = serviceProvider.GetRequiredService<IProtocolServerService>();
-                await protocolService.NotifyExistingInstanceAsync("Package installed successfully from browser!");
+                // Send notification that we're starting the installation
+                await protocolService.NotifyExistingInstanceAsync("Starting package installation...");
+
+                var commandLineService = serviceProvider.GetRequiredService<ICommandLineService>();
+
+                // Handle the protocol URL
+                var installedPackageName = await commandLineService.HandleProtocolAsync(protocolUrl);
+
+                // Send success notification with the actual installed package name
+                if (!string.IsNullOrEmpty(installedPackageName))
+                {
+                    await protocolService.NotifyExistingInstanceAsync($"Package '{installedPackageName}' installed successfully from browser!");
+                }
+                else
+                {
+                    await protocolService.NotifyExistingInstanceAsync("Package installed successfully from browser!");
+                }
             }
             catch (Exception ex)
             {
@@ -149,19 +177,48 @@ namespace Bundlingway
                 // Try to notify existing instance about the failure
                 try
                 {
-                    var services = new ServiceCollection();
-                    RegisterCoreServices(services, envService);
-                    services.AddSingleton<IUserNotificationService, ConsoleNotificationService>();
-                    services.AddSingleton<IProgressReporter, ConsoleProgressReporter>();
+                    if (protocolService == null)
+                    {
+                        var services = new ServiceCollection();
+                        RegisterCoreServices(services, envService);
+                        services.AddSingleton<IUserNotificationService, ConsoleNotificationService>();
+                        services.AddSingleton<IProgressReporter, ConsoleProgressReporter>();
 
-                    var serviceProvider = services.BuildServiceProvider();
-                    var protocolService = serviceProvider.GetRequiredService<IProtocolServerService>();
-                    await protocolService.NotifyExistingInstanceAsync("Failed to install package from browser due to an error.");
+                        var serviceProvider = services.BuildServiceProvider();
+                        protocolService = serviceProvider.GetRequiredService<IProtocolServerService>();
+                    }
+                    
+                    await protocolService.NotifyExistingInstanceAsync($"Failed to install package from browser: {ex.Message}");
                 }
                 catch
                 {
                     // Ignore notification failures during error handling
                 }
+            }
+        }
+
+        /// <summary>
+        /// Extracts the package name from a protocol URL for early notification purposes.
+        /// </summary>
+        /// <param name="protocolUrl">The protocol URL to parse</param>
+        /// <returns>The package name if found, otherwise null</returns>
+        private static string ExtractPackageNameFromUrl(string protocolUrl)
+        {
+            try
+            {
+                var prefix = Constants.GPosingwayProtocolHandler + "://open/?";
+                if (!protocolUrl.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    return null;
+
+                var queryString = protocolUrl.Substring(prefix.Length);
+                var queryParams = System.Web.HttpUtility.ParseQueryString(queryString);
+                
+                return queryParams["name"];
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Debug(ex, "Failed to extract package name from URL: {ProtocolUrl}", protocolUrl);
+                return null;
             }
         }
     }
