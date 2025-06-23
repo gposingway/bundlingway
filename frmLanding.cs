@@ -3,13 +3,11 @@ using Bundlingway.Core.Services;
 using Bundlingway.Core.Interfaces;
 using Bundlingway.Model;
 using Bundlingway.UI;
-using Bundlingway.UI.WinForms;
 using Bundlingway.Utilities;
 using Bundlingway.Utilities.Extensions;
 using Serilog;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Bundlingway
@@ -22,6 +20,7 @@ namespace Bundlingway
         private IConfigurationService _configService;
         private IAppEnvironmentService _envService;
         private BundlingwayService _bundlingwayService;
+        private IUserNotificationService _notificationService;
         private LandingPresenter _presenter;
         private readonly IServiceProvider _serviceProvider;
 
@@ -38,14 +37,15 @@ namespace Bundlingway
             _gPosingwayService = serviceProvider.GetRequiredService<GPosingwayService>();
             _configService = serviceProvider.GetRequiredService<IConfigurationService>();
             _bundlingwayService = serviceProvider.GetRequiredService<BundlingwayService>();
+            _notificationService = serviceProvider.GetRequiredService<IUserNotificationService>();
             var fileSystemService = serviceProvider.GetRequiredService<IFileSystemService>();
 
-            _presenter = new LandingPresenter(this, _packageService, _reShadeService, _gPosingwayService, _configService, _envService, _bundlingwayService, fileSystemService);
+            _presenter = new LandingPresenter(this, _packageService, _reShadeService, _gPosingwayService, _configService, _envService, _bundlingwayService, fileSystemService, _notificationService, serviceProvider.GetRequiredService<IElevationService>());
             Text = $"Bundlingway · v{_envService.AppVersion}";
 
             BindAllTaggedControls();
 
-            _ = ModernUI.Announce(Constants.MessageCategory.ApplicationStart.ToString());
+            _ = _notificationService.AnnounceAsync(Constants.MessageCategory.ApplicationStart.ToString());
 
             txtDesktopShortcut.DoAction(() => txtDesktopShortcut.Text = ProcessHelper.CheckDesktopShortcutStatus());
             txtBrowserIntegration.DoAction(() => txtBrowserIntegration.Text = CustomProtocolHandler.IsCustomProtocolRegistered(Constants.GPosingwayProtocolHandler));
@@ -54,8 +54,8 @@ namespace Bundlingway
             _packageService.PackagesUpdated += PackageService_PackagesUpdated;
 
             _ = ProcessHelper.ListenForNotifications();
-            _ = ModernUI.UpdateElements();
-            _ = ModernUI.Announce(Constants.MessageCategory.Ready.ToString());
+
+            _ = _notificationService.AnnounceAsync(Constants.MessageCategory.Ready.ToString());
         }
 
         protected override void OnShown(EventArgs e)
@@ -74,10 +74,9 @@ namespace Bundlingway
         {
             await _presenter.InitializeAsync();
         }
-
         private async Task InitializeAsync()
         {
-            await Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService);
+            await Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService, _notificationService);
             await UpdateElements();
             await PopulateGridAsync();
         }
@@ -102,7 +101,7 @@ namespace Bundlingway
 
         private void Generic_MouseEnter(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce(((Control)sender).Tag.ToString());
+            _ = _notificationService.AnnounceAsync(((Control)sender).Tag.ToString());
         }
         private void ProcessHelper_NotificationReceived(object sender, IPCNotification e)
         {
@@ -110,13 +109,14 @@ namespace Bundlingway
             {
                 case Constants.Events.PackageInstalling:
                 case Constants.Events.PackageInstalled:
-                    _ = ModernUI.Announce(e.Message);
+                    _ = _notificationService.AnnounceAsync(e.Message);
                     break;
                 case Constants.Events.DuplicatedInstances:
-                    _ = ModernUI.BringToFront(); // If implemented, otherwise call the method directly
+                    this.BringToFront();
                     break;
             }
-        }        private void PackageService_PackagesUpdated(object sender, PackageEventArgs e)
+        }
+        private void PackageService_PackagesUpdated(object sender, PackageEventArgs e)
         {
             // Update only the specific packages that changed based on operation type
             this.DoAction(() =>
@@ -374,7 +374,7 @@ namespace Bundlingway
 
                 // Update package count label
                 lblGrpPackages.Text = $"{dgvPackages.Rows.Count} Packages";
-                
+
                 // If requested, select and scroll to the first updated package
                 if (selectAndScrollToFirst && packageList.Any())
                 {
@@ -383,9 +383,9 @@ namespace Bundlingway
                 }
             });
         }/// <summary>
-                 /// Removes packages from the grid that are no longer in the service's package list.
-                 /// </summary>
-                 /// <param name="packagesToRemove">The packages to remove from the grid</param>
+         /// Removes packages from the grid that are no longer in the service's package list.
+         /// </summary>
+         /// <param name="packagesToRemove">The packages to remove from the grid</param>
         private async Task RemovePackagesFromGridAsync(IEnumerable<ResourcePackage> packagesToRemove)
         {
             if (dgvPackages == null || packagesToRemove == null)
@@ -582,7 +582,7 @@ namespace Bundlingway
             {
                 btnUpdate?.DoAction(() => { btnUpdate.Visible = true; });
 
-                _ = ModernUI.Announce($"A new Bundlingway version ({c.Bundlingway.RemoteVersion}) is out!");
+                _ = _notificationService.AnnounceAsync($"A new Bundlingway version ({c.Bundlingway.RemoteVersion}) is out!");
             }
             else
             {
@@ -628,7 +628,7 @@ namespace Bundlingway
                 if (c.ReShade.Status != EPackageStatus.NotInstalled)
                 {
                     reShadeBtnEnabled = !_envService.IsGameRunning;
-                    _ = ModernUI.Announce("If you want to update ReShade, shut down the game first!");
+                    _ = _notificationService.AnnounceAsync("If you want to update ReShade, shut down the game first!");
                 }
             }
 
@@ -847,12 +847,12 @@ namespace Bundlingway
                 }
                 else
                 {
-                    await ModernUI.Announce("Package folder not found!");
+                    await _notificationService.AnnounceAsync("Package folder not found!");
                 }
             }
             catch (Exception ex)
             {
-                await ModernUI.Announce($"Could not open folder: {ex.Message}");
+                await _notificationService.AnnounceAsync($"Could not open folder: {ex.Message}");
             }
         }
 
@@ -879,11 +879,11 @@ namespace Bundlingway
                     package.Label = newName;
                     // Update UI
                     _ = PopulateGridAsync();
-                    await ModernUI.Announce($"Package renamed to \"{newName}\"");
+                    await _notificationService.AnnounceAsync($"Package renamed to \"{newName}\"");
                 }
                 catch (Exception ex)
                 {
-                    await ModernUI.Announce($"Could not rename package: {ex.Message}");
+                    await _notificationService.AnnounceAsync($"Could not rename package: {ex.Message}");
                 }
             }
         }
@@ -1054,9 +1054,9 @@ namespace Bundlingway
                 return true;
             }
         }        /// <summary>
-        /// Selects and scrolls to a specific package in the grid by name.
-        /// </summary>
-        /// <param name="packageName">The name of the package to select and scroll to</param>
+                 /// Selects and scrolls to a specific package in the grid by name.
+                 /// </summary>
+                 /// <param name="packageName">The name of the package to select and scroll to</param>
         private async Task SelectAndScrollToPackageAsync(string packageName)
         {
             if (dgvPackages == null || string.IsNullOrWhiteSpace(packageName))
@@ -1086,20 +1086,20 @@ namespace Bundlingway
                     {
                         // Clear current selection
                         dgvPackages.ClearSelection();
-                        
+
                         // Select the target row
                         targetRow.Selected = true;
                         dgvPackages.CurrentCell = targetRow.Cells[0];
-                        
+
                         // Scroll to make the row visible
                         dgvPackages.FirstDisplayedScrollingRowIndex = Math.Max(0, targetIndex - 2);
-                        
+
                         // Bring the main window to front to ensure visibility
                         if (WindowState == FormWindowState.Minimized)
                             WindowState = FormWindowState.Normal;
                         BringToFront();
                         Activate();
-                        
+
                         Log.Information("Selected and scrolled to package: {PackageName} at row {RowIndex}", packageName, targetIndex);
                     }
                     else

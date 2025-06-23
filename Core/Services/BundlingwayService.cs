@@ -1,6 +1,7 @@
 using Bundlingway.Core.Interfaces;
 using Bundlingway.Model;
 using Serilog;
+using System.Collections.Generic;
 using System.IO.Compression;
 
 namespace Bundlingway.Core.Services
@@ -51,11 +52,11 @@ namespace Bundlingway.Core.Services
             try
             {
                 Log.Information("BundlingwayService.GetRemoteInfo: Getting remote Bundlingway information.");
-
                 // Download the remote configuration
-                var jsonContent = await _httpClient.GetStringAsync(Constants.Urls.BundlingwayPackageLatestTag);
+                var headers = new Dictionary<string, string> { ["Accept"] = "application/vnd.github.v3+json" };
+                var jsonContent = await _httpClient.GetStringAsync(Constants.Urls.BundlingwayPackageLatestTag, headers);
                 // Deserialize the GitHub release/tag API response
-                var release = System.Text.Json.JsonSerializer.Deserialize<Bundlingway.Model.GitHubReleaseInfo>(jsonContent);
+                var release = System.Text.Json.JsonSerializer.Deserialize<GitHubReleaseInfo>(jsonContent);
                 var config = _configService.Configuration;
                 config.Bundlingway.RemoteVersion = release?.TagName ?? "unknown";
                 config.Bundlingway.RemoteLink = release?.Assets?.FirstOrDefault(a => a.Name != null && a.Name.EndsWith(".exe"))?.BrowserDownloadUrl ?? string.Empty;
@@ -179,6 +180,21 @@ namespace Bundlingway.Core.Services
                 await _notifications.ShowErrorAsync("Failed to update Bundlingway", ex);
                 throw;
             }
+        }
+        /// <summary>
+        /// Checks the status of Bundlingway by getting both local and remote information.
+        /// </summary>
+        public async Task CheckStatusAsync()
+        {
+            Log.Information("BundlingwayService.CheckStatusAsync: Starting combined local and remote info check.");
+
+            // Check local info first
+            await GetLocalInfoAsync();
+
+            // Then check remote info
+            await GetRemoteInfoAsync();
+
+            Log.Information("BundlingwayService.CheckStatusAsync: Combined check completed.");
         }
     }
 }

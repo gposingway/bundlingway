@@ -16,7 +16,8 @@ namespace Bundlingway.Core.Services
      /// Service-based implementation of package management logic, decoupled from UI.
      /// </summary>
     public class PackageService
-    {        private readonly IConfigurationService _configService;
+    {
+        private readonly IConfigurationService _configService;
         private readonly IFileSystemService _fileSystem;
         private readonly IHttpClientService _httpClient;
         private readonly IProgressReporter _progressReporter;
@@ -40,7 +41,6 @@ namespace Bundlingway.Core.Services
                     {
                         if (!_packagesInitialized)
                         {
-                            // Synchronously scan packages on first access
                             try
                             {
                                 var packageFolder = _fileSystem.GetPackageFolder();
@@ -58,7 +58,6 @@ namespace Bundlingway.Core.Services
                                                 var json = _fileSystem.ReadAllTextAsync(catalogPath).Result;
                                                 var pkg = json.FromJson<ResourcePackage>();
 
-                                                // Healing: if the package is missing LocalPresetFolder, set it to the package folder
                                                 if (pkg != null && string.IsNullOrEmpty(pkg.LocalFolder) && !string.IsNullOrEmpty(pkg.LocalPresetFolder))
                                                 {
                                                     pkg.LocalFolder = dir;
@@ -73,7 +72,7 @@ namespace Bundlingway.Core.Services
                                             }
                                         }
                                     }
-                                    _cachedPackages = foundPackages.ToImmutableList();
+                                    _cachedPackages = [.. foundPackages];
                                 }
                                 _packagesInitialized = true;
                             }
@@ -88,7 +87,8 @@ namespace Bundlingway.Core.Services
                 }
                 return _cachedPackages;
             }
-        }        public PackageService(
+        }
+        public PackageService(
             IConfigurationService configService,
             IFileSystemService fileSystem,
             IHttpClientService httpClient,
@@ -106,10 +106,8 @@ namespace Bundlingway.Core.Services
             _postProcessorService = postProcessorService;
         }
 
-        public event EventHandler<PackageEventArgs>? PackagesUpdated;
-        public Task<IEnumerable<ResourcePackage>> GetAllPackagesAsync()
+        public event EventHandler<PackageEventArgs>? PackagesUpdated; public Task<IEnumerable<ResourcePackage>> GetAllPackagesAsync()
         {
-            // Return cached packages, initializing if necessary
             return Task.FromResult<IEnumerable<ResourcePackage>>(CachedPackages);
         }
 
@@ -118,7 +116,6 @@ namespace Bundlingway.Core.Services
             if (string.IsNullOrWhiteSpace(packageName))
                 return Task.FromResult<ResourcePackage?>(null);
 
-            // Search cached packages by Name (case-insensitive), initializing if necessary
             return Task.FromResult(CachedPackages.FirstOrDefault(pkg => pkg.Name.Equals(packageName, StringComparison.OrdinalIgnoreCase)));
         }
 
@@ -127,7 +124,6 @@ namespace Bundlingway.Core.Services
             var ext = Path.GetExtension(filePath).ToLowerInvariant();
             if (ext == ".ini" || (ext == ".txt" && (await _fileSystem.ReadAllTextAsync(filePath)).Contains("Techniques=", StringComparison.InvariantCultureIgnoreCase)))
             {
-                // Handle single preset files (.ini/.txt)
                 string fileName = Path.GetFileNameWithoutExtension(filePath);
                 string fileExtensionPreset = ext == ".txt" ? ".ini" : ext;
                 string newFileName = packageName != null ? $"{packageName.ToFileSystemSafeName()}{fileExtensionPreset}" : $"{fileName}{fileExtensionPreset}";
@@ -156,13 +152,10 @@ namespace Bundlingway.Core.Services
                     LocalTextureFolder = string.Empty,
                     LocalShaderFolder = string.Empty,
                     LocalFolder = targetPath
-                };
-
-                _postProcessorService.RunPipeline(pkg);
+                }; _postProcessorService.RunPipeline(pkg);
 
                 if (autoInstall) await InstallPackageAsync(pkg);
 
-                // Add to cached packages
                 lock (_initializationLock)
                 {
                     _cachedPackages = _cachedPackages.Add(pkg);
@@ -173,13 +166,11 @@ namespace Bundlingway.Core.Services
                 return pkg;
             }
 
-            // Archive onboarding (zip, rar, 7z)
             var archiveExtension = Path.GetExtension(filePath).ToLower();
             var tempFolderPath = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
             if (!_fileSystem.DirectoryExists(tempFolderPath)) _fileSystem.CreateDirectory(tempFolderPath);
             if (archiveExtension == ".zip")
             {
-                // Secure extraction to prevent Zip-Slip
                 await Task.Run(() =>
                 {
                     using (var archive = ZipFile.OpenRead(filePath))
@@ -188,19 +179,17 @@ namespace Bundlingway.Core.Services
                         {
                             var entryPath = entry.FullName.Replace("/", Path.DirectorySeparatorChar.ToString());
                             if (string.IsNullOrWhiteSpace(entryPath) || entryPath.Contains(".."))
-                                continue; // Prevent path traversal
+                                continue;
                             var destinationPath = Path.GetFullPath(Path.Combine(tempFolderPath, entryPath));
                             if (!destinationPath.StartsWith(Path.GetFullPath(tempFolderPath)))
-                                continue; // Prevent extraction outside tempFolderPath
+                                continue;
                             if (entry.Name == "")
                             {
-                                // Directory
                                 if (!_fileSystem.DirectoryExists(destinationPath))
                                     _fileSystem.CreateDirectory(destinationPath);
                             }
                             else
                             {
-                                // File
                                 var destDir = Path.GetDirectoryName(destinationPath);
                                 if (!string.IsNullOrEmpty(destDir) && !_fileSystem.DirectoryExists(destDir))
                                     _fileSystem.CreateDirectory(destDir);
@@ -212,7 +201,6 @@ namespace Bundlingway.Core.Services
             }
             else if (archiveExtension == ".rar" || archiveExtension == ".7z")
             {
-                // Use SharpCompress for .rar/.7z
                 using var archive = SharpCompress.Archives.ArchiveFactory.Open(filePath);
                 foreach (var entry in archive.Entries.Where(e => !e.IsDirectory))
                 {
@@ -233,14 +221,12 @@ namespace Bundlingway.Core.Services
                 }
             }
 
-            // Validate package structure
             if (!ValidateExtractedPackage(tempFolderPath))
             {
                 _fileSystem.DeleteDirectory(tempFolderPath, true);
                 throw new InvalidDataException("Invalid package structure.");
             }
 
-            // Prepare ResourcePackage
             var collectionName = Path.GetFileNameWithoutExtension(filePath);
             var newCatalogEntry = new ResourcePackage
             {
@@ -256,57 +242,42 @@ namespace Bundlingway.Core.Services
                 LocalFolder = string.Empty
             };
 
-            // Target package path
             var targetPackagePath = Path.Combine(_fileSystem.GetPackageFolder(), newCatalogEntry.Name.ToFileSystemSafeName());
             newCatalogEntry.LocalFolder = targetPackagePath;
 
             if (!_fileSystem.DirectoryExists(targetPackagePath)) _fileSystem.CreateDirectory(targetPackagePath);
             _fileSystem.CreateDirectory(Path.Combine(targetPackagePath, Constants.Folders.SourcePackage));
             var target = Path.Combine(targetPackagePath, Constants.Folders.SourcePackage, Path.GetFileName(filePath));
-            _fileSystem.CopyFile(filePath, target, true);
-
-            // Presets folder
-            var presetsFolder = Path.Combine(targetPackagePath, Constants.Folders.PackagePresets);
+            _fileSystem.CopyFile(filePath, target, true); var presetsFolder = Path.Combine(targetPackagePath, Constants.Folders.PackagePresets);
             if (!_fileSystem.DirectoryExists(presetsFolder)) _fileSystem.CreateDirectory(presetsFolder);
             newCatalogEntry.LocalPresetFolder = presetsFolder;
 
-            // Textures folder
             var texturesFolder = Path.Combine(targetPackagePath, Constants.Folders.PackageTextures);
             if (!_fileSystem.DirectoryExists(texturesFolder)) _fileSystem.CreateDirectory(texturesFolder);
             newCatalogEntry.LocalTextureFolder = texturesFolder;
 
-            // Shaders folder
             var shadersFolder = Path.Combine(targetPackagePath, Constants.Folders.PackageShaders);
             if (_fileSystem.DirectoryExists(shadersFolder)) _fileSystem.DeleteDirectory(shadersFolder, true);
             _fileSystem.CreateDirectory(shadersFolder);
             newCatalogEntry.LocalShaderFolder = shadersFolder;
 
-            // Copy files from tempFolderPath to respective folders
             CopyExtractedFilesToPackage(tempFolderPath, presetsFolder, texturesFolder, shadersFolder);
-
-            // Remove 'Previews' directories from texturesFolder
             RemovePreviewsDirectories(texturesFolder);
-
-            // Clean up temp folders
             _fileSystem.DeleteDirectory(tempFolderPath, true);
 
-            // Save catalog entry as JSON
             var catalogPath = Path.Combine(targetPackagePath, Bundlingway.Constants.Files.CatalogEntry);
             File.WriteAllText(catalogPath, newCatalogEntry.ToJson());
 
             _postProcessorService.RunPipeline(newCatalogEntry);
 
             if (autoInstall) await InstallPackageAsync(newCatalogEntry);
-            // Return the onboarded ResourcePackage
             return newCatalogEntry;
         }
 
         private bool ValidateExtractedPackage(string tempFolderPath)
         {
-            // Validate if the directory exists
             if (!_fileSystem.DirectoryExists(tempFolderPath))
                 return false;
-            // Must have at least one .ini or .fx file
             bool hasIni = _fileSystem.GetFiles(tempFolderPath, "*.ini", SearchOption.AllDirectories).Any();
             bool hasFx = _fileSystem.GetFiles(tempFolderPath, "*.fx", SearchOption.AllDirectories).Any();
             return hasIni || hasFx;
@@ -797,30 +768,30 @@ namespace Bundlingway.Core.Services
             {
                 // Get current packages before refresh
                 var packagesBefore = _cachedPackages.ToList();
-                
+
                 // Reset and reload packages
                 _packagesInitialized = false;
                 var packagesAfter = await GetAllPackagesAsync();
-                
+
                 // Find newly discovered packages (packages that exist now but didn't before)
                 var newPackages = packagesAfter
-                    .Where(after => !packagesBefore.Any(before => 
+                    .Where(after => !packagesBefore.Any(before =>
                         before.Name.Equals(after.Name, StringComparison.OrdinalIgnoreCase)))
                     .ToList();
-                
+
                 if (newPackages.Any())
                 {
-                    Log.Information("Found {Count} new packages after refresh: {Names}", 
-                        newPackages.Count, 
+                    Log.Information("Found {Count} new packages after refresh: {Names}",
+                        newPackages.Count,
                         string.Join(", ", newPackages.Select(p => p.Name)));
-                    
+
                     // Trigger PackagesUpdated event for new packages
                     foreach (var newPackage in newPackages)
                     {
-                        PackagesUpdated?.Invoke(this, new PackageEventArgs 
-                        { 
-                            Packages = [newPackage], 
-                            Message = $"Installed {newPackage.Name}" 
+                        PackagesUpdated?.Invoke(this, new PackageEventArgs
+                        {
+                            Packages = [newPackage],
+                            Message = $"Installed {newPackage.Name}"
                         });
                     }
                 }

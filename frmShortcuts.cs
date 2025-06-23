@@ -51,17 +51,17 @@ namespace Bundlingway
             { "D8", "8" },
             { "D9", "9" },
             { "D0", "0" }
-        };
-
-        private readonly PackageService _packageService;
+        };        private readonly PackageService _packageService;
         private readonly IConfigurationService _configService;
+        private readonly IUserNotificationService _notificationService;
 
 
-        public frmShortcuts(PackageService packageService, IConfigurationService configService)
+        public frmShortcuts(PackageService packageService, IConfigurationService configService, IUserNotificationService notificationService)
         {
             InitializeComponent();
             _packageService = packageService;
             _configService = configService;
+            _notificationService = notificationService;
         }
 
         private void fromShortcuts_Load(object sender, EventArgs e)
@@ -246,28 +246,26 @@ namespace Bundlingway
 
         private void btnCancel_Click(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce("A-Okay!");
+            _ = _notificationService.AnnounceAsync("A-Okay!");
             Close();
-        }
-
-        private void btnCancel_MouseEnter(object sender, EventArgs e)
+        }        private void btnCancel_MouseEnter(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce(((Control)sender).Tag?.ToString() ?? string.Empty);
+            _notificationService.AnnounceAsync(((Control)sender).Tag?.ToString() ?? string.Empty);
         }
 
         private void btnSave_MouseEnter(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce(((Control)sender).Tag?.ToString() ?? string.Empty);
+            _notificationService.AnnounceAsync(((Control)sender).Tag?.ToString() ?? string.Empty);
         }
 
         private void btnApplyAll_MouseEnter(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce(((Control)sender).Tag?.ToString() ?? string.Empty);
+            _notificationService.AnnounceAsync(((Control)sender).Tag?.ToString() ?? string.Empty);
         }
 
         private void btnDefault_MouseEnter(object sender, EventArgs e)
         {
-            _ = ModernUI.Announce(((Control)sender).Tag?.ToString() ?? string.Empty);
+            _notificationService.AnnounceAsync(((Control)sender).Tag?.ToString() ?? string.Empty);
         }
 
         private void btnDefault_Click(object sender, EventArgs e)

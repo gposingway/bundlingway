@@ -12,8 +12,8 @@
     <Title>Bundlingway Package Manager</Title>
     <Product>Bundlingway</Product>
     <ApplicationIcon>Resources\IMG_0922.ico</ApplicationIcon>
-    <AssemblyVersion>0.1.0.1</AssemblyVersion>
-    <FileVersion>0.1.0.1</FileVersion>
+    <AssemblyVersion>0.1.0.2</AssemblyVersion>
+    <FileVersion>0.1.0.2</FileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
     <NoWarn>1701;1702;CA2200;CS8603;CS8601;CS1998;CS4014;</NoWarn>
