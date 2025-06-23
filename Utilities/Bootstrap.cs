@@ -1,4 +1,4 @@
-﻿using Bundlingway.Core.Interfaces;
+﻿﻿using Bundlingway.Core.Interfaces;
 using Bundlingway.Core.Services;
 using Serilog;
 
@@ -43,15 +43,12 @@ namespace Bundlingway.Utilities
             {
                 Log.Information($"Bootstrap.DetectSettings: Error in DetectSettings: {ex.Message}");
             }
-        }
-
-        private static async Task CheckBundlingway(IAppEnvironmentService envService, BundlingwayService bundlingwayService)
+        }        private static async Task CheckBundlingway(IAppEnvironmentService envService, BundlingwayService bundlingwayService)
         {
             try
             {
                 Log.Information("Bootstrap.CheckBundlingway: Checking Bundlingway.");
-                await bundlingwayService.GetLocalInfoAsync();
-                await bundlingwayService.GetRemoteInfoAsync();
+                await bundlingwayService.CheckStatusAsync();
                 Log.Information("Bootstrap.CheckBundlingway: Bundlingway check completed.");
             }
             catch (Exception ex)

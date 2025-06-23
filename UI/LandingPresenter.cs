@@ -30,12 +30,14 @@ namespace Bundlingway.UI
             _fileSystem = fileSystem;
             _notificationService = notificationService;
             _elevationService = elevationService;
-        }
-
-        public async Task InitializeAsync()
+        }        public async Task InitializeAsync()
         {
             var c = _configService.Configuration;
             var gamePath = c.Game.InstallationFolder;
+            
+            // Check Bundlingway status (independent of game installation)
+            await _bundlingwayService.CheckStatusAsync();
+            
             if (!string.IsNullOrEmpty(gamePath))
             {
                 await _reShadeService.CheckStatusAsync();
@@ -45,9 +47,11 @@ namespace Bundlingway.UI
             await PopulateGridAsync();
         }
         public async Task OnDetectSettingsAsync()
-        {
-            // Perform real detection
+        {            // Perform real detection
             await Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService, _notificationService);
+
+            // After detection, check Bundlingway status (independent of game path)
+            await _bundlingwayService.CheckStatusAsync();
 
             // After detection, fetch local/remote info if game path is present
             var c = _configService.Configuration;
