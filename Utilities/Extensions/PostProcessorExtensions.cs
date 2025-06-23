@@ -1,4 +1,5 @@
-﻿using Bundlingway.Model;
+﻿using Bundlingway.Core.Services;
+using Bundlingway.Model;
 using Bundlingway.PostProcess.PresetItem;
 using IniParser;
 using Serilog;
@@ -46,35 +47,47 @@ namespace Bundlingway.Utilities.Extensions
             }
         }
 
-        public static void RunRawFilePipeline(this ResourcePackage package, Logging _logger)
+        public static void RunRawFilePipeline(this ResourcePackage package, Logging _logger, IAppEnvironmentService envService)
         {
-            var baseline = Path.Combine(Instances.PackageFolder, package.Name);
+            var packageFolder = envService.GetPackageFolder();
+            if (string.IsNullOrEmpty(packageFolder))
+            {
+                Log.Warning("RunRawFilePipeline: Package folder is null or empty. Aborting.");
+                return;
+            }
+            var baseline = Path.Combine(packageFolder, package.Name);
+            if (!Directory.Exists(baseline))
+            {
+                Log.Warning($"RunRawFilePipeline: Baseline directory '{baseline}' does not exist. Aborting.");
+                return;
+            }
             var presetPath = Path.Combine(baseline, Constants.Folders.PackagePresets);
-
+            if (!Directory.Exists(presetPath))
+            {
+                Log.Warning($"RunRawFilePipeline: Preset path '{presetPath}' does not exist. Aborting.");
+                return;
+            }
             List<string> textureFiles = Directory.GetFiles(presetPath, "*.*", SearchOption.AllDirectories).ToList();
-
-            foreach (var processor in Instances.RawFileProcessors)
+            foreach (var processor in envService.GetRawFileProcessors())
             {
                 var renameMap = processor.GetReplacementMap(package, textureFiles, baseline, _logger);
-
                 if (renameMap == null) continue;
                 if (renameMap.Count == 0) continue;
-
                 if (processor.ApplyToPresets) ReplaceValues(presetPath, renameMap);
             }
         }
 
-        public static Preset RunPostProcessorPipeline(this Preset preset, ResourcePackage package, IniParser.Model.IniData iniData, Logging _logger)
+        public static Preset RunPostProcessorPipeline(this Preset preset, ResourcePackage package, IniParser.Model.IniData iniData, Logging _logger, IAppEnvironmentService envService)
         {
-            var baseline = Path.Combine(Instances.PackageFolder, package.Name);
+            var baseline = Path.Combine(envService.GetPackageFolder(), package.Name);
             var presetPath = Path.Combine(baseline, Constants.Folders.PackagePresets);
             List<string> textureFiles = [.. Directory.GetFiles(presetPath, "*.*", SearchOption.AllDirectories)];
             var parser = new FileIniDataParser();
             var mustUpdate = false;
 
-            foreach (var process in Instances.PresetProcessors)
+            foreach (var process in envService.GetPresetProcessors())
             {
-                ITemplatePostProcess templateProcess = null;
+                ITemplatePostProcess? templateProcess = null;
 
                 if (process is ITemplatePostProcess tpp)
                     templateProcess = tpp;
@@ -85,8 +98,6 @@ namespace Bundlingway.Utilities.Extensions
                 {
                     if (templateProcess.PresetExclusionList?.Any(i =>
                     {
-
-                        // Check if the preset filename matches any of the exclusion patterns. It may include ? for single character and * for multiple characters. Matching is case-insensitive.
                         if (string.IsNullOrEmpty(i)) return false;
                         if (i.Contains('?') || i.Contains('*'))
                         {
@@ -94,18 +105,13 @@ namespace Bundlingway.Utilities.Extensions
                             var probe = Regex.IsMatch(Path.GetFileName(preset.Filename).ToLower(), regexPattern, RegexOptions.IgnoreCase);
                             return probe;
                         }
-
                         return preset.Filename.EndsWith(i, StringComparison.InvariantCultureIgnoreCase);
-
                     }) == true) continue;
 
-                    if (templateProcess?.Techniques?.StartWith?.Count != 0)
+                    if (templateProcess?.Techniques?.StartWith?.Count > 0)
                     {
-                        // There's a list of techniques we should start with. Let's invert and iterate.
-
                         var preList = templateProcess.Techniques.StartWith;
                         preList.Reverse();
-
                         foreach (var item in preList)
                         {
                             techniqueList.RemoveAll(i => i.Key == item);
@@ -113,11 +119,9 @@ namespace Bundlingway.Utilities.Extensions
                         }
                     }
 
-                    if (templateProcess?.Techniques?.EndWith?.Count != 0)
+                    if (templateProcess?.Techniques?.EndWith?.Count > 0)
                     {
-                        // There's a list of techniques we should end with.
-
-                        foreach (var item in templateProcess?.Techniques?.EndWith)
+                        foreach (var item in templateProcess.Techniques.EndWith ?? Enumerable.Empty<string>())
                         {
                             techniqueList.RemoveAll(i => i.Key == item);
                             techniqueList.Add(new KeyValuePair<string, bool>(item, true));
@@ -241,12 +245,13 @@ namespace Bundlingway.Utilities.Extensions
 
                 model.Techniques = techniqueList.ToDictionary(i => i.Key, i => i.Value);
 
-                model.OriginalTechniques = model.Techniques.ToJson().FromJson<Dictionary<string, bool>>();
-
-            }
-            catch (Exception)
+                var json = model.Techniques.ToJson();
+                model.OriginalTechniques = !string.IsNullOrEmpty(json)
+                    ? json.FromJson<Dictionary<string, bool>>()
+                    : new Dictionary<string, bool>();
+            }            catch (Exception ex)
             {
-                //TODO: Add proper exception handling
+                Log.Warning($"Failed to parse shader toggle state from JSON: {ex.Message}");
             }
 
             return model;

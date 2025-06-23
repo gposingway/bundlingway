@@ -648,7 +648,7 @@
             txtBrowserIntegration.Padding = new Padding(0, 6, 0, 6);
             txtBrowserIntegration.Size = new Size(280, 29);
             txtBrowserIntegration.TabIndex = 50;
-            txtBrowserIntegration.Text = "ReShade";
+            txtBrowserIntegration.Text = "Checking...";
             txtBrowserIntegration.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // txtDesktopShortcut
@@ -660,7 +660,7 @@
             txtDesktopShortcut.Padding = new Padding(0, 6, 0, 6);
             txtDesktopShortcut.Size = new Size(280, 29);
             txtDesktopShortcut.TabIndex = 49;
-            txtDesktopShortcut.Text = "ReShade";
+            txtDesktopShortcut.Text = "Checking...";
             txtDesktopShortcut.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // txtGPosingwayStatus
@@ -672,7 +672,7 @@
             txtGPosingwayStatus.Padding = new Padding(0, 6, 0, 6);
             txtGPosingwayStatus.Size = new Size(280, 29);
             txtGPosingwayStatus.TabIndex = 48;
-            txtGPosingwayStatus.Text = "ReShade";
+            txtGPosingwayStatus.Text = "Checking...";
             txtGPosingwayStatus.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // txtReShadeStatus
@@ -684,7 +684,7 @@
             txtReShadeStatus.Padding = new Padding(0, 6, 0, 6);
             txtReShadeStatus.Size = new Size(280, 33);
             txtReShadeStatus.TabIndex = 47;
-            txtReShadeStatus.Text = "ReShade";
+            txtReShadeStatus.Text = "Checking...";
             txtReShadeStatus.TextAlign = ContentAlignment.MiddleLeft;
             // 
             // btnSetDrowserIntegration

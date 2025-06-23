@@ -5,11 +5,11 @@ namespace Bundlingway.Utilities.ManagedResources
 {
     public class ShaderSignature
     {
-        public string FileName { get; set; }
-        public string Location { get; set; }
-        public Dictionary<string, string> Techniques { get; set; }
-        public string Hash { get; set; }
-        public List<string> Dependencies { get; set; }
+        public required string FileName { get; set; }
+        public required string Location { get; set; }
+        public Dictionary<string, string> Techniques { get; set; } = new();
+        public required string Hash { get; set; }
+        public List<string> Dependencies { get; set; } = new();
 
         public override string ToString()
         {
@@ -33,8 +33,8 @@ namespace Bundlingway.Utilities.ManagedResources
 
         public class ShaderConflictAnalysis
         {
-            public List<ShaderSignature> Conflicting { get; set; }
-            public List<ShaderSignature> NonConflicting { get; set; }
+            public List<ShaderSignature> Conflicting { get; set; } = new();
+            public List<ShaderSignature> NonConflicting { get; set; } = new();
         }
 
         public static async Task<ShaderConflictAnalysis> CheckForConflictsWith(this Dictionary<string, ShaderSignature> signatureSet1, Dictionary<string, ShaderSignature> signatureSet2)
@@ -59,7 +59,7 @@ namespace Bundlingway.Utilities.ManagedResources
                 .Distinct()
                 .ToDictionary(i => i, i => signatureSet2[i]);
 
-            ShaderSignature newConflict = null;
+            ShaderSignature? newConflict = null;
 
 
             try
@@ -162,17 +162,14 @@ namespace Bundlingway.Utilities.ManagedResources
 
         public static async Task<ShaderSignature> GetShaderSignature(string shaderFilePath)
         {
-
-            var result = new ShaderSignature();
-
+            var result = new ShaderSignature
+            {
+                FileName = Path.GetFileName(shaderFilePath) ?? string.Empty,
+                Location = Path.GetDirectoryName(shaderFilePath) ?? string.Empty,
+                Hash = CriptographyExtensions.MD5FromFile(shaderFilePath) ?? string.Empty
+            };
 
             result.GetTechniqueIdentifiers(shaderFilePath);
-
-            result.Location = Path.GetDirectoryName(shaderFilePath);
-            result.FileName = Path.GetFileName(shaderFilePath);
-            result.Hash = CriptographyExtensions.MD5FromFile(shaderFilePath);
-
-
             return result;
         }
 

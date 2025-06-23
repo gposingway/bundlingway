@@ -10,9 +10,11 @@ namespace Bundlingway.Utilities.Extensions
         /// <param name="dictionary">The dictionary of key-value pairs.</param>
         /// <param name="key">The key whose value to get.</param>
         /// <returns>The value associated with the specified key, or the default value if the key is not found.</returns>
-        public static TValue Get<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key)
+        public static TValue? Get<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key) where TKey : notnull
         {
-            if (dictionary.TryGetValue(key, out TValue value))
+            if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
+            if (key == null) throw new ArgumentNullException(nameof(key));
+            if (dictionary.TryGetValue(key, out TValue? value))
             {
                 return value;
             }
@@ -27,8 +29,9 @@ namespace Bundlingway.Utilities.Extensions
         /// <param name="dictionary">The dictionary of key-value pairs.</param>
         /// <param name="key">The key whose value to add or update.</param>
         /// <param name="value">The value to associate with the specified key.</param>
-        public static void Put<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, TValue value)
+        public static void Put<TKey, TValue>(this Dictionary<TKey, TValue> dictionary, TKey key, TValue value) where TKey : notnull
         {
+            if (dictionary == null) throw new ArgumentNullException(nameof(dictionary));
             dictionary[key] = value;
         }
     }

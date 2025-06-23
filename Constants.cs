@@ -1,4 +1,5 @@
 ﻿using Bundlingway.Model;
+using Bundlingway.Core.Services;
 
 namespace Bundlingway
 {
@@ -8,26 +9,32 @@ namespace Bundlingway
         public static List<string> NonTextureImageMarkers = ["[prev]", "[cover]", "[preview]", ".dds", "preview"];
         public static List<string> ShaderExtensions = [".fx", ".fxh"];
         public static List<string> InstallableExtensions = [".zip", ".rar", ".7z", ".ini"];
-        public static List<string> AcceptableFilesInPresetFolder = ["LICENSE", "README.*", "*.ini"];
+        public static List<string> AcceptableFilesInPresetFolder = ["LICENSE", "*README*", "*.ini"];
 
         public static string GPosingwayProtocolHandler = "gwpackage";
 
 
-        public static ResourcePackage SingleFileCatalog = new()
+        public static ResourcePackage SingleFileCatalog(IAppEnvironmentService envService) => new()
         {
-            LocalPresetFolder = Path.Combine(Instances.SinglePresetsFolder, Folders.PackagePresets),
+            LocalPresetFolder = Path.Combine(envService.SinglePresetsFolder, Folders.PackagePresets),
             Name = "Single Presets",
+            Label = "Single Presets",
+            Version = "1.0.0",
             Source = "Local",
             Type = ResourcePackage.EType.SinglePreset,
             Status = ResourcePackage.EStatus.Installed,
             Default = true,
             Hidden = true,
+            LocalTextureFolder = string.Empty,
+            LocalShaderFolder = string.Empty,
+            LocalFolder = envService.SinglePresetsFolder
         };
 
-        public static ResourcePackage GPosingwayDefaultPackage = new ResourcePackage()
+        public static ResourcePackage GPosingwayDefaultPackage(IAppEnvironmentService envService) => new ResourcePackage()
         {
-            LocalPresetFolder = Path.Combine(Instances.SinglePresetsFolder, Folders.PackagePresets),
             Name = "GPosingway",
+            Label = "GPosingway",
+            Version = "1.0.0",
             Source = "Local",
             Type = ResourcePackage.EType.CorePackage,
             Status = ResourcePackage.EStatus.NotDownloaded,
@@ -35,6 +42,10 @@ namespace Bundlingway
             Default = true,
             Hidden = false,
             Locked = true,
+            LocalPresetFolder = string.Empty,
+            LocalTextureFolder = string.Empty,
+            LocalShaderFolder = string.Empty,
+            LocalFolder = Path.Combine(envService.GetPackageFolder(), Folders.GposingwayPackage)
         };
 
         public static Dictionary<string, string> DefaultShortcuts = new()

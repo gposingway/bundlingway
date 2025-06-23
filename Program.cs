@@ -1,5 +1,9 @@
 using Bundlingway.Utilities;
-using System.Diagnostics;
+using Bundlingway.Core.Services;
+using Bundlingway.UI.WinForms;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Bundlingway.Core.Interfaces;
 
 namespace Bundlingway
 {
@@ -11,45 +15,72 @@ namespace Bundlingway
         [STAThread]
         static void Main(string[] args)
         {
+            MainAsync(args).GetAwaiter().GetResult();
+        }
+        static async Task MainAsync(string[] args)
+        {
+            var envService = new AppEnvironmentService();
+
             try
             {
+                // Check if this is a protocol invocation EARLY
+                bool isProtocolInvocation = args?.Length > 0 && args[0].StartsWith(Constants.GPosingwayProtocolHandler);
+                if (isProtocolInvocation && args != null)
+                {
+                    // Handle the protocol ourselves in headless mode
+                    await HandleProtocolInvocation(envService, args[0]);
+                    return;
+                }                // Regular UI startup - check for existing instance
+                var singleInstanceService = new SingleInstanceService();
+                if (await singleInstanceService.IsAnotherInstanceRunningAsync())
+                {
+                    // Another UI instance is already running, bring it to front and exit
+                    var protocolService = new ProtocolServerService(null!); // Temporary for client-only usage
+                    await protocolService.BringExistingInstanceToFrontAsync();
+                    return;
+                }
+
                 // Prepare the environment (e.g., create necessary directories)
-                Maintenance.PrepareEnvironmentAsync().Wait();
+                Maintenance.PrepareEnvironmentAsync(envService).Wait();
 
                 // Initialize application configuration
-                ApplicationConfiguration.Initialize();
+                ApplicationConfiguration.Initialize();                // Set up DI container
+                var services = new ServiceCollection();
 
-                // Initialize the application (e.g., load settings)
-                Bootstrap.Initialize().Wait();
-                Instances.LocalConfigProvider.Load();
-                Maintenance.EnsureConfiguration().Wait();
+                RegisterCoreServices(services, envService);
 
-                // Check if command-line arguments are provided (headless mode)
-                if (args.Length > 0)
-                {
-                    // Process command-line arguments
-                    var result = Utilities.Handler.CommandLineArgs.ProcessAsync(args).Result;
+                // Register frmLanding as singleton
+                services.AddSingleton<frmLanding>();                // Register UI-specific services with the actual mainForm (resolved from provider)
+                services.AddSingleton<IUserNotificationService>(provider => new WinFormsNotificationService(provider.GetRequiredService<frmLanding>()));
+                services.AddSingleton<IProgressReporter>(provider => new WinFormsProgressReporter(provider.GetRequiredService<frmLanding>()));
+                // Register frmShortcuts for DI
+                services.AddTransient<frmShortcuts>(provider =>
+                    new frmShortcuts(
+                        provider.GetRequiredService<PackageService>(),
+                        provider.GetRequiredService<IConfigurationService>()
+                    )
+                );
 
-                    // Check if another instance of the application is already running
-                    if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
-                    {
-                        // Notify other instances and close the client
-                        ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.PackageInstalled, Message = result });
+                // Now build the final provider
+                var serviceProvider = services.BuildServiceProvider();
 
-                        Process.GetCurrentProcess().Kill();
-                    }
-                }
+                // Resolve main form from DI
+                frmLanding mainForm = serviceProvider.GetRequiredService<frmLanding>();
 
-                // Check for duplicate instances (UI mode)
-                if (Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Length > 1)
-                {
-                    // Notify other instances and close the client
-                    ProcessHelper.NotifyOtherInstances(new Model.IPCNotification() { Topic = Constants.Events.DuplicatedInstances });
-                    Process.GetCurrentProcess().Kill();
-                }
+                // Initialize services in the main form
+                mainForm.InitializeServices(serviceProvider);
+
+                // ModernUI bridge (static)
+                var notificationService = serviceProvider.GetRequiredService<IUserNotificationService>();
+                var progressReporter = serviceProvider.GetRequiredService<IProgressReporter>();
+                ModernUI.Initialize(notificationService, progressReporter);                // Start protocol server for inter-instance communication
+                var protocolServer = serviceProvider.GetRequiredService<IProtocolServerService>();
+                _ = Task.Run(() => protocolServer.StartAsync());
 
                 // Run the application in UI mode
-                Application.Run(new frmLanding());
+                Application.Run(mainForm);
+
+
             }
             catch (Exception ex)
             {
@@ -65,6 +96,129 @@ namespace Bundlingway
 
                 MessageBox.Show($"Bundlingway failed to start properly. Error: {ex.Message}\n\nPlease check the log files for more details.",
                                "Startup Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+        private static void RegisterCoreServices(IServiceCollection services, IAppEnvironmentService envService)
+        {
+            // Register core services needed by both UI and headless modes
+            services.AddSingleton<IAppEnvironmentService>(envService);
+            services.AddSingleton<IConfigurationService>(provider =>
+            {
+                var configService = new ConfigurationService(Path.Combine(envService.BundlingwayDataFolder, Constants.Files.BundlingwayConfig));
+                configService.LoadAsync().Wait();
+                return configService;
+            });
+            services.AddSingleton<IFileSystemService, FileSystemService>();
+            services.AddSingleton<IHttpClientService, HttpClientService>();
+            services.AddSingleton<PostProcessorService>();
+            services.AddSingleton<PackageService>();
+            services.AddSingleton<BundlingwayService>();
+            services.AddSingleton<ReShadeService>();
+            services.AddSingleton<GPosingwayService>();
+            services.AddSingleton<ICommandLineService, CommandLineService>();
+            services.AddSingleton<IApplicationHost, ApplicationHost>();
+            services.AddLogging(configure => configure.AddConsole());            services.AddSingleton<EnvironmentService>();
+            services.AddSingleton<ISingleInstanceService, SingleInstanceService>();
+            services.AddSingleton<IProtocolServerService, ProtocolServerService>();
+        }        private static async Task HandleProtocolInvocation(IAppEnvironmentService envService, string protocolUrl)
+        {
+            IProtocolServerService? protocolService = null;
+            
+            try
+            {
+                // Prepare minimal environment for headless operation
+                Maintenance.PrepareEnvironmentAsync(envService).Wait();
+
+                // Set up minimal DI container for headless operation
+                var services = new ServiceCollection();
+                RegisterCoreServices(services, envService);
+
+                services.AddSingleton<IUserNotificationService, ConsoleNotificationService>();
+                services.AddSingleton<IProgressReporter, ConsoleProgressReporter>();
+
+                var serviceProvider = services.BuildServiceProvider();
+                protocolService = serviceProvider.GetRequiredService<IProtocolServerService>();
+                
+                // Extract package name from URL for early notification
+                var packageName = ExtractPackageNameFromUrl(protocolUrl);
+                
+                // Send initial notification that we received the request
+                if (!string.IsNullOrEmpty(packageName))
+                {
+                    await protocolService.NotifyExistingInstanceAsync($"Browser request received for package: {packageName}");
+                }
+                else
+                {
+                    await protocolService.NotifyExistingInstanceAsync("Browser installation request received...");
+                }
+
+                // Send notification that we're starting the installation
+                await protocolService.NotifyExistingInstanceAsync("Starting package installation...");
+
+                var commandLineService = serviceProvider.GetRequiredService<ICommandLineService>();
+
+                // Handle the protocol URL
+                var installedPackageName = await commandLineService.HandleProtocolAsync(protocolUrl);
+
+                // Send success notification with the actual installed package name
+                if (!string.IsNullOrEmpty(installedPackageName))
+                {
+                    await protocolService.NotifyExistingInstanceAsync($"Package '{installedPackageName}' installed successfully from browser!");
+                }
+                else
+                {
+                    await protocolService.NotifyExistingInstanceAsync("Package installed successfully from browser!");
+                }
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Error(ex, "Failed to handle protocol invocation: {ProtocolUrl}", protocolUrl);
+
+                // Try to notify existing instance about the failure
+                try
+                {
+                    if (protocolService == null)
+                    {
+                        var services = new ServiceCollection();
+                        RegisterCoreServices(services, envService);
+                        services.AddSingleton<IUserNotificationService, ConsoleNotificationService>();
+                        services.AddSingleton<IProgressReporter, ConsoleProgressReporter>();
+
+                        var serviceProvider = services.BuildServiceProvider();
+                        protocolService = serviceProvider.GetRequiredService<IProtocolServerService>();
+                    }
+                    
+                    await protocolService.NotifyExistingInstanceAsync($"Failed to install package from browser: {ex.Message}");
+                }
+                catch
+                {
+                    // Ignore notification failures during error handling
+                }
+            }
+        }
+
+        /// <summary>
+        /// Extracts the package name from a protocol URL for early notification purposes.
+        /// </summary>
+        /// <param name="protocolUrl">The protocol URL to parse</param>
+        /// <returns>The package name if found, otherwise null</returns>
+        private static string ExtractPackageNameFromUrl(string protocolUrl)
+        {
+            try
+            {
+                var prefix = Constants.GPosingwayProtocolHandler + "://open/?";
+                if (!protocolUrl.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                    return null;
+
+                var queryString = protocolUrl.Substring(prefix.Length);
+                var queryParams = System.Web.HttpUtility.ParseQueryString(queryString);
+                
+                return queryParams["name"];
+            }
+            catch (Exception ex)
+            {
+                Serilog.Log.Debug(ex, "Failed to extract package name from URL: {ProtocolUrl}", protocolUrl);
+                return null;
             }
         }
     }

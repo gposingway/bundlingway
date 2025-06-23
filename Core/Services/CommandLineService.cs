@@ -1,21 +1,28 @@
-﻿using Bundlingway.Utilities.Extensions;
+using Bundlingway.Core.Interfaces;
+using Bundlingway.Model;
+using Bundlingway.Utilities.Extensions;
 using Serilog;
 using System.Diagnostics;
 using System.Net;
 using System.Text;
 using System.Web;
-using System.Windows;
 
-namespace Bundlingway.Utilities.Handler
+namespace Bundlingway.Core.Services
 {
-    public static class CommandLineArgs
+    public class CommandLineService : ICommandLineService
     {
-        /// <summary>
-        /// Processes command-line arguments.
-        /// </summary>
-        /// <param name="args">The command-line arguments.</param>
-        /// <returns>A string result, if applicable, or null.</returns>
-        public static async Task<string> ProcessAsync(string[] args)
+        private readonly PackageService _packageService;
+        private readonly IUserNotificationService _notificationService;
+        private readonly IConfigurationService _configService;
+
+        public CommandLineService(PackageService packageService, IUserNotificationService notificationService, IConfigurationService configService)
+        {
+            _packageService = packageService;
+            _notificationService = notificationService;
+            _configService = configService;
+        }
+
+        public async Task<string?> ProcessAsync(string[] args)
         {
             if (args == null || args.Length == 0) return null;
 
@@ -39,7 +46,7 @@ namespace Bundlingway.Utilities.Handler
 
                     var packagePayload = queryParams["package"];
 
-                    var package = new DownloadPackage();
+                    DownloadPackage package;
 
                     if (packagePayload != null)
                     {
@@ -50,14 +57,12 @@ namespace Bundlingway.Utilities.Handler
                             decodedPayload = WebUtility.HtmlDecode(decodedPayload);
 
                             package = decodedPayload.FromJson<DownloadPackage>();
-
                         }
                         catch (Exception ex)
                         {
                             Log.Error(ex, "Error deserializing package payload.");
                             return null;
                         }
-
                     }
                     else
                     {
@@ -66,31 +71,34 @@ namespace Bundlingway.Utilities.Handler
                             Log.Error("URL not found in query parameters.");
                             return null;
                         }
-
                         package = new DownloadPackage { Name = name, Url = url };
+                    }                    Log.Information($"Parsed name: {name}, url: {url}");
+
+                    await _notificationService.AnnounceAsync($"Downloading package: {name ?? url}");
+                    if (package.Url == null || package.Name == null)
+                    {
+                        Log.Warning("Package Url or Name is null. Aborting installation.");
+                        await _notificationService.AnnounceAsync("Package information is incomplete. Installation aborted.");
+                        return null;
                     }
 
-                    Log.Information($"Parsed name: {name}, url: {url}");
-
-                    // Run the installation form in a separate thread
-                    await UI.NotifyAsync("Installing package", name ?? url);
-
-                    var packageName = Package.DownloadAndInstall(package).Result;
-                    await UI.NotifyAsync("Installation", packageName);
+                    await _notificationService.AnnounceAsync($"Installing package: {package.Name}");
+                    var packageName = await _packageService.DownloadAndInstallAsync(package.Url, package.Name);
+                    await _notificationService.AnnounceAsync($"Installation completed: {packageName}");
                     Log.Information(packageName);
-
                     return packageName;
                 }
 
                 // Handle client update command
                 if (currentArg == Constants.CommandLineOptions.UpdateClient)
                 {
-                    var targetFile = Instances.LocalConfigProvider.Configuration.Bundlingway.Location;
+                    var targetFile = _configService.Configuration.Bundlingway.Location;
                     Log.Information($"Updating client with target file: {targetFile}");
 
                     if (File.Exists(targetFile))
                     {
-                        var currentExePath = Process.GetCurrentProcess().MainModule.FileName;
+                        var mainModule = Process.GetCurrentProcess().MainModule;
+                        var currentExePath = mainModule != null && mainModule.FileName != null ? mainModule.FileName : string.Empty;
                         Log.Information($"Copying current executable from {currentExePath} to {targetFile}");
 
                         // Ensure no other instances of the application are running
@@ -105,16 +113,15 @@ namespace Bundlingway.Utilities.Handler
                             foreach (var process in existingProcesses)
                             {
                                 int waitAttempts = 0;
-                                while (!process.HasExited && waitAttempts < 30) // Check for exit with shorter intervals
+                                while (!process.HasExited && waitAttempts < 30)
                                 {
                                     Log.Debug($"Waiting for process {process.Id}, attempt {waitAttempts + 1}");
-                                    process.WaitForExit(1000); // Wait 1 second
+                                    process.WaitForExit(1000);
                                     waitAttempts++;
                                 }
                                 if (!process.HasExited)
                                 {
                                     Log.Warning($"Process {process.Id} did not exit gracefully after waiting. Proceeding with update.");
-                                    // Optionally: process.Kill(); - Use with caution!
                                 }
                                 else
                                 {
@@ -134,7 +141,7 @@ namespace Bundlingway.Utilities.Handler
                                 copySuccess = true;
                                 Log.Information($"File copied successfully to {targetFile}");
                             }
-                            catch (IOException ex) when (ex.HResult == -2147024864) // Error code for sharing violation (File in use)
+                            catch (IOException ex) when (ex.HResult == -2147024864)
                             {
                                 copyRetries--;
                                 Log.Warning($"File copy failed due to sharing violation. Retrying in 1 second... Retries remaining: {copyRetries}");
@@ -143,7 +150,7 @@ namespace Bundlingway.Utilities.Handler
                             catch (Exception ex)
                             {
                                 Log.Error(ex, $"Error during file copy to {targetFile}");
-                                return null; // Or handle error as needed
+                                return null;
                             }
                         }
 
@@ -151,7 +158,6 @@ namespace Bundlingway.Utilities.Handler
                         {
                             try
                             {
-                                // Start the new executable
                                 var processStartInfo = new ProcessStartInfo { FileName = targetFile, UseShellExecute = true };
                                 var process = Process.Start(processStartInfo);
                                 Log.Information("New client process started. Exiting current process.");
@@ -160,23 +166,34 @@ namespace Bundlingway.Utilities.Handler
                             catch (Exception ex)
                             {
                                 Log.Error(ex, "Error starting new process.");
-                                // Handle process start failure - maybe log and don't exit?
                                 return null;
                             }
                         }
                         else
                         {
                             Log.Error($"File copy failed after multiple retries to {targetFile}. Update aborted.");
-                            return null; // Or handle copy failure
+                            return null;
                         }
                     }
                     else
                     {
-                        Log.Error($"CommandLineArgs.ProcessAsync: {targetFile} not found.");
+                        Log.Error($"CommandLineService.ProcessAsync: {targetFile} not found.");
                     }
                 }
             }
             return null;
+        }        public async Task<string?> HandleProtocolAsync(string protocolUrl)
+        {
+            try
+            {
+                Log.Information($"Handling protocol URL: {protocolUrl}");
+                return await ProcessAsync(new[] { protocolUrl });
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "Failed to handle protocol URL: {ProtocolUrl}", protocolUrl);
+                throw;
+            }
         }
     }
 }

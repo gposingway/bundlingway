@@ -26,6 +26,6 @@ namespace Bundlingway.PostProcess.PresetItem
         Dictionary<string, string> RootElements { get; set; }
         List<Section> Sections { get; set; }
         List<string> PresetExclusionList { get; set; }
-        bool PostProcess(Preset preset);
+        new bool PostProcess(Preset preset);
     }
 }

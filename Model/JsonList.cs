@@ -23,8 +23,19 @@ namespace Bundlingway.Model
             if (File.Exists(fileName))
             {
                 var json = File.ReadAllText(fileName);
-                Clear();
-                AddRange(JsonSerializer.Deserialize<List<T>>(json));
+                try
+                {
+                    var deserialized = JsonSerializer.Deserialize<List<T>>(json);
+                    if (deserialized != null)
+                    {
+                        Clear();
+                        AddRange(deserialized);
+                    }
+                }
+                catch (Exception)
+                {
+                    // Optionally log or handle the error, but do not clear existing data
+                }
             }
         }
     }

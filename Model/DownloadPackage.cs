@@ -1,4 +1,4 @@
-﻿namespace Bundlingway.Utilities.Handler
+namespace Bundlingway.Model
 {
     public class DownloadPackage
     {
