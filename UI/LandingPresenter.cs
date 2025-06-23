@@ -5,10 +5,10 @@ using Bundlingway.Utilities;
 using Serilog;
 using System.IO;
 using System.Linq;
+using System.Windows.Forms;
 
 namespace Bundlingway.UI
-{
-    public class LandingPresenter
+{    public class LandingPresenter
     {
         private readonly ILandingView _view;
         private readonly PackageService _packageService;
@@ -16,19 +16,20 @@ namespace Bundlingway.UI
         private readonly GPosingwayService _gPosingwayService;
         private readonly IConfigurationService _configService;
         private readonly IAppEnvironmentService _envService;
-        private readonly BundlingwayService _bundlingwayService;
-        private readonly IFileSystemService _fileSystem;
+        private readonly BundlingwayService _bundlingwayService;        private readonly IFileSystemService _fileSystem;
+        private readonly IUserNotificationService _notificationService;
+        private readonly IElevationService _elevationService;
 
-        public LandingPresenter(ILandingView view, PackageService packageService, ReShadeService reShadeService, GPosingwayService gPosingwayService, IConfigurationService configService, IAppEnvironmentService envService, BundlingwayService bundlingwayService, IFileSystemService fileSystem)
+        public LandingPresenter(ILandingView view, PackageService packageService, ReShadeService reShadeService, GPosingwayService gPosingwayService, IConfigurationService configService, IAppEnvironmentService envService, BundlingwayService bundlingwayService, IFileSystemService fileSystem, IUserNotificationService notificationService, IElevationService elevationService)
         {
             _view = view;
             _packageService = packageService;
             _reShadeService = reShadeService;
             _gPosingwayService = gPosingwayService;
-            _configService = configService;
-            _envService = envService;
-            _bundlingwayService = bundlingwayService;
+            _configService = configService;            _envService = envService; _bundlingwayService = bundlingwayService;
             _fileSystem = fileSystem;
+            _notificationService = notificationService;
+            _elevationService = elevationService;
         }
 
         public async Task InitializeAsync()
@@ -43,11 +44,10 @@ namespace Bundlingway.UI
             await UpdateElementsAsync();
             await PopulateGridAsync();
         }
-
         public async Task OnDetectSettingsAsync()
         {
             // Perform real detection
-            await Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService);
+            await Bootstrap.DetectSettings(_envService, _configService, _bundlingwayService, _gPosingwayService, _reShadeService, _notificationService);
 
             // After detection, fetch local/remote info if game path is present
             var c = _configService.Configuration;
@@ -150,14 +150,14 @@ namespace Bundlingway.UI
             // Remove selected packages
             var selectedPackages = _view.GetSelectedPackages();
             await Task.WhenAll(selectedPackages.Select(_packageService.RemovePackageAsync));
-            ModernUI.Announce("All selected packages removed!");
+            _notificationService.AnnounceAsync("All selected packages removed!");
             // Note: UI updates will be handled by PackagesUpdated events
         }
         public async Task OnUninstallPackagesAsync()
         {
             var selectedPackages = _view.GetSelectedPackages();
             await Task.WhenAll(selectedPackages.Select(_packageService.UninstallPackageAsync));
-            ModernUI.Announce("All selected packages uninstalled!");
+            _notificationService.AnnounceAsync("All selected packages uninstalled!");
             // Note: UI updates will be handled by PackagesUpdated events
         }
 
@@ -177,7 +177,7 @@ namespace Bundlingway.UI
         {
             var selectedPackages = _view.GetSelectedPackages();
             await Task.WhenAll(selectedPackages.Select(_packageService.ReinstallPackageAsync));
-            ModernUI.Announce("All selected packages reinstalled!");
+            _notificationService.AnnounceAsync("All selected packages reinstalled!");
             // Note: UI updates will be handled by PackagesUpdated events
         }
         public async Task OnToggleFavoriteAsync()
@@ -241,7 +241,7 @@ namespace Bundlingway.UI
             var target = Path.Combine(_envService.BundlingwayDataFolder, Bundlingway.Constants.Folders.Backup);
             if (string.IsNullOrEmpty(target))
             {
-                ModernUI.Announce("Backup path is invalid.");
+                _notificationService.AnnounceAsync("Backup path is invalid.");
                 return;
             }
             if (!_fileSystem.DirectoryExists(target))
@@ -282,7 +282,7 @@ namespace Bundlingway.UI
                     }
                 }
             }
-            ModernUI.Announce("Backup complete!");
+            _notificationService.AnnounceAsync("Backup complete!");
             System.Diagnostics.Process.Start("explorer.exe", target);
         }
 
@@ -293,48 +293,80 @@ namespace Bundlingway.UI
             c.UI.TopMost = !c.UI.TopMost;
             await _configService.SaveAsync();
             // The view should update itself after this
-        }
-
-        public async Task CreateDesktopShortcutAsync()
+        }        public async Task CreateDesktopShortcutAsync()
         {
-            await ProcessHelper.PinToStartScreenAsync();
-            ProcessHelper.EnsureDesktopShortcut();
-            await _view.SetDesktopShortcutStatusAsync(ProcessHelper.CheckDesktopShortcutStatus());
-        }
+            var success = await _elevationService.ExecuteElevatedAsync(
+                "Create Desktop Shortcut",
+                "create-desktop-shortcut",
+                async () =>
+                {
+                    await ProcessHelper.PinToStartScreenAsync();
+                    ProcessHelper.EnsureDesktopShortcut();
+                },
+                async () =>
+                {
+                    // Fallback: try without elevation
+                    ProcessHelper.EnsureDesktopShortcut();
+                }
+            );
 
-        public async Task SetBrowserIntegrationAsync()
+            if (success)
+            {
+                await _view.SetDesktopShortcutStatusAsync(ProcessHelper.CheckDesktopShortcutStatus());
+            }
+        }        public async Task SetBrowserIntegrationAsync()
         {
-            await CustomProtocolHandler.RegisterCustomProtocolAsync(Bundlingway.Constants.GPosingwayProtocolHandler, "A collection of GPosingway-compatible ReShade resources", true);
-            await _view.SetBrowserIntegrationStatusAsync(CustomProtocolHandler.IsCustomProtocolRegistered(Bundlingway.Constants.GPosingwayProtocolHandler));
+            var success = await _elevationService.ExecuteElevatedAsync(
+                "Register Browser Integration",
+                "register-browser-integration",
+                async () =>
+                {
+                    await CustomProtocolHandler.RegisterCustomProtocolAsync(
+                        Constants.GPosingwayProtocolHandler, 
+                        "A collection of GPosingway-compatible ReShade resources", 
+                        true);
+                },
+                async () =>
+                {
+                    // Fallback: inform user that manual registration might be needed
+                    await _notificationService.AnnounceAsync("Browser integration requires administrator privileges. Some features may not work.");
+                }
+            );
+
+            if (success)
+            {
+                await _view.SetBrowserIntegrationStatusAsync(
+                    CustomProtocolHandler.IsCustomProtocolRegistered(Constants.GPosingwayProtocolHandler));
+            }
         }
 
         public void OpenEmporiumAnnouncement()
         {
-            ModernUI.Announce("A Loporrit-approved selection of presets and shaders! Fluffy, fancy, and fantastic!");
+            _notificationService.AnnounceAsync("A Loporrit-approved selection of presets and shaders! Fluffy, fancy, and fantastic!");
         }
         public void OpenDebugAnnouncement()
         {
-            ModernUI.Announce("Oh dear, what have we here? A log full of secrets! (and probably some errors…)");
+            _notificationService.AnnounceAsync("Oh dear, what have we here? A log full of secrets! (and probably some errors…)");
         }
         public void OpenAboutAnnouncement()
         {
-            ModernUI.Announce("About? About what? Oh! The project! Yes, yes, right this way!");
+            _notificationService.AnnounceAsync("About? About what? Oh! The project! Yes, yes, right this way!");
         }
         public void OpenPackagesFolderAnnouncement()
         {
-            ModernUI.Announce("Where all your precious presets and shaders live! Don’t worry, they’re well-fed.");
+            _notificationService.AnnounceAsync("Where all your precious presets and shaders live! Don't worry, they're well-fed.");
         }
         public void OpenGameFolderAnnouncement()
         {
-            ModernUI.Announce("Game files, game files everywhere! Tread carefully, adventurer!");
+            _notificationService.AnnounceAsync("Game files, game files everywhere! Tread carefully, adventurer!");
         }
         public void OpenFixItAnnouncement()
         {
-            ModernUI.Announce("Duplicated shaders? green tint everywhere? No worries, 'Fix It' is here to save the day!");
+            _notificationService.AnnounceAsync("Duplicated shaders? green tint everywhere? No worries, 'Fix It' is here to save the day!");
         }
         public void OpenInstallReShadeAnnouncement()
         {
-            ModernUI.Announce("You need to shut down the game client before you can update!");
+            _notificationService.AnnounceAsync("You need to shut down the game client before you can update!");
         }
 
         // ... Add more methods for all business logic previously in frmLanding

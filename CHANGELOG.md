@@ -39,6 +39,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated project dependencies and assembly versioning.
 - Removed obsolete static helpers and legacy service locator pattern.
 - Cleaned up UI static classes and replaced with service-based implementations.
+- Removed unused files: DummyProgressReporter.cs, HeadlessScript.cs, Instances.cs, UI.cs, FS.cs.
+- Cleaned up excessive and redundant comments throughout the codebase.
 
 ## [Unreleased]
 
