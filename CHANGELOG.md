@@ -5,6 +5,20 @@ All notable changes to Bundlingway will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0.3] - 2025-06-23
+
+### New Features
+- Users now receive a notification when the application begins unzipping downloaded files.
+- The application now requests administrator privileges upon launch.
+
+### Improvements
+- File downloads now target zip files instead of executable files.
+- Download progress notifications have been enhanced for clarity and reliability.
+- Progress bar updates are now more robust and thread-safe, preventing UI freezes and errors.
+
+### Refactor
+- Progress bar update logic has been simplified for better maintainability.
+
 ## [0.1.0.2] - 2025-06-23
 
 ### Added
