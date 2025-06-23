@@ -23,9 +23,7 @@ namespace Bundlingway.UI.WinForms
 
         public bool IsProgressActive => _isActive;
 
-        public event EventHandler<ProgressEventArgs>? ProgressUpdated;
-
-        public async Task StartProgressAsync(long total, string? description = null)
+        public event EventHandler<ProgressEventArgs>? ProgressUpdated;        public async Task StartProgressAsync(long total, string? description = null)
         {
             if (total <= 0)
                 throw new ArgumentOutOfRangeException(nameof(total), "Total must be greater than zero.");
@@ -33,9 +31,34 @@ namespace Bundlingway.UI.WinForms
             _current = 0;
             _isActive = true;
 
-            if (_mainForm != null)
+            if (_mainForm != null && !_mainForm.IsDisposed)
             {
-                await _mainForm.StartProgress(total, description);
+                try
+                {
+                    // Use BeginInvoke for non-blocking UI thread marshaling
+                    if (_mainForm.InvokeRequired)
+                    {
+                        _mainForm.BeginInvoke(new Action(() => 
+                        {
+                            try
+                            {
+                                _mainForm.StartProgress(total, description);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"[PROGRESS] Error in StartProgress: {ex.Message}");
+                            }
+                        }));
+                    }
+                    else
+                    {
+                        _mainForm.StartProgress(total, description);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[PROGRESS] Error invoking StartProgress: {ex.Message}");
+                }
             }
             else
             {
@@ -49,15 +72,38 @@ namespace Bundlingway.UI.WinForms
                 Description = description,
                 IsCompleted = false
             });
-        }
-
-        public async Task UpdateProgressAsync(long current, string? description = null)
+        }        public async Task UpdateProgressAsync(long current, string? description = null)
         {
             _current = current;
 
-            if (_mainForm != null)
+            if (_mainForm != null && !_mainForm.IsDisposed)
             {
-                await _mainForm.SetProgress(current);
+                try
+                {
+                    // Use BeginInvoke for non-blocking UI thread marshaling
+                    if (_mainForm.InvokeRequired)
+                    {
+                        _mainForm.BeginInvoke(new Action(() => 
+                        {
+                            try
+                            {
+                                _mainForm.SetProgress(current);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"[PROGRESS] Error in SetProgress: {ex.Message}");
+                            }
+                        }));
+                    }
+                    else
+                    {
+                        _mainForm.SetProgress(current);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[PROGRESS] Error invoking SetProgress: {ex.Message}");
+                }
             }
             else
             {
@@ -78,15 +124,38 @@ namespace Bundlingway.UI.WinForms
         {
             var current = _total > 0 ? (long)(percentage / 100.0 * _total) : 0;
             await UpdateProgressAsync(current, description);
-        }
-
-        public async Task StopProgressAsync()
+        }        public async Task StopProgressAsync()
         {
             _isActive = false;
 
-            if (_mainForm != null)
+            if (_mainForm != null && !_mainForm.IsDisposed)
             {
-                await _mainForm.StopProgress();
+                try
+                {
+                    // Use BeginInvoke for non-blocking UI thread marshaling
+                    if (_mainForm.InvokeRequired)
+                    {
+                        _mainForm.BeginInvoke(new Action(() => 
+                        {
+                            try
+                            {
+                                _mainForm.StopProgress();
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine($"[PROGRESS] Error in StopProgress: {ex.Message}");
+                            }
+                        }));
+                    }
+                    else
+                    {
+                        _mainForm.StopProgress();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[PROGRESS] Error invoking StopProgress: {ex.Message}");
+                }
             }
             else
             {

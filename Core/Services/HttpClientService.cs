@@ -11,9 +11,21 @@ namespace Bundlingway.Core.Services
     /// </summary>
     public class HttpClientService : IHttpClientService, IDisposable
     {
-        private readonly HttpClient _httpClient; public HttpClientService()
+        private readonly HttpClient _httpClient;
+        private readonly IUserNotificationService _notificationService;
+
+        public HttpClientService(IUserNotificationService notificationService)
         {
-            _httpClient = new HttpClient();
+            _notificationService = notificationService;
+            _httpClient = new HttpClient(new HttpClientHandler()
+            {
+                // Configure to prevent potential threading issues
+                UseCookies = false,
+                UseDefaultCredentials = false
+            });
+
+            // Set timeouts to prevent hanging
+            _httpClient.Timeout = TimeSpan.FromMinutes(10); // 10 minute total timeout
 
             // Set a standard user-agent to avoid API rejections
             // GitHub API specifically requires a proper User-Agent header
@@ -48,79 +60,82 @@ namespace Bundlingway.Core.Services
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStreamAsync();
         }
-
-        public async Task DownloadFileAsync(string url, string localPath, IProgressReporter? progressReporter = null, System.Threading.CancellationToken cancellationToken = default)
+        public async Task DownloadFileAsync(string url, string localPath, System.Threading.CancellationToken cancellationToken = default)
         {
-            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+            using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+
+            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, combinedCts.Token).ConfigureAwait(false);
+
             response.EnsureSuccessStatusCode();
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
-            bool progressStarted = false;
-            if (progressReporter != null && totalBytes > 0)
+
+            var directory = Path.GetDirectoryName(localPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
-                await progressReporter.StartProgressAsync(totalBytes, $"Downloading {Path.GetFileName(localPath)}");
-                progressStarted = true;
+                Directory.CreateDirectory(directory);
             }
 
-            using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+            using var contentStream = await response.Content.ReadAsStreamAsync(combinedCts.Token).ConfigureAwait(false);
+
+            using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.Read, 8192, FileOptions.SequentialScan);
 
             var buffer = new byte[8192];
             var totalRead = 0L;
             int bytesRead;
 
-            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, combinedCts.Token).ConfigureAwait(false)) > 0)
             {
-                await fileStream.WriteAsync(buffer, 0, bytesRead, cancellationToken);
+                await fileStream.WriteAsync(buffer.AsMemory(0, bytesRead), combinedCts.Token).ConfigureAwait(false);
                 totalRead += bytesRead;
+            }
 
-                if (progressReporter != null && totalBytes > 0)
-                {
-                    await progressReporter.UpdateProgressAsync(totalRead);
-                }
-            }
-            if (progressReporter != null && progressStarted)
-            {
-                await progressReporter.StopProgressAsync();
-            }
+            await fileStream.FlushAsync(combinedCts.Token).ConfigureAwait(false);
         }
-
-        public async Task DownloadFileAsync(string url, string localPath, Dictionary<string, string> headers, IProgressReporter? progressReporter = null, System.Threading.CancellationToken cancellationToken = default)
+        public async Task DownloadFileAsync(string url, string localPath, Dictionary<string, string> headers, System.Threading.CancellationToken cancellationToken = default)
         {
+            await _notificationService.ShowInfoAsync($"Starting download with headers from {url} to {localPath}");
+
+            // Create a timeout cancellation token to prevent hanging
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+            using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
             using var request = CreateRequestWithHeaders(HttpMethod.Get, url, headers);
-            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+
+            await _notificationService.ShowInfoAsync("Sending request with headers and ResponseHeadersRead...");
+
+            // Use ResponseHeadersRead to enable true streaming/chunked downloads
+            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, combinedCts.Token).ConfigureAwait(false);
             response.EnsureSuccessStatusCode();
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
-            bool progressStarted = false;
-            if (progressReporter != null && totalBytes > 0)
+            await _notificationService.ShowInfoAsync($"File size: {(totalBytes > 0 ? $"{totalBytes} bytes" : "unknown")}");
+
+            // Ensure directory exists
+            var directory = Path.GetDirectoryName(localPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
             {
-                await progressReporter.StartProgressAsync(totalBytes, $"Downloading {Path.GetFileName(localPath)}");
-                progressStarted = true;
+                Directory.CreateDirectory(directory);
             }
 
-            using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+            using var contentStream = await response.Content.ReadAsStreamAsync(combinedCts.Token).ConfigureAwait(false);
+            using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.Read, 8192, FileOptions.SequentialScan);
 
             var buffer = new byte[8192];
             var totalRead = 0L;
             int bytesRead;
 
-            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, combinedCts.Token).ConfigureAwait(false)) > 0)
             {
-                await fileStream.WriteAsync(buffer, 0, bytesRead, cancellationToken);
+                await fileStream.WriteAsync(buffer, 0, bytesRead, combinedCts.Token).ConfigureAwait(false);
                 totalRead += bytesRead;
-
-                if (progressReporter != null && totalBytes > 0)
-                {
-                    await progressReporter.UpdateProgressAsync(totalRead);
-                }
             }
 
-            if (progressReporter != null && progressStarted)
-            {
-                await progressReporter.StopProgressAsync();
-            }
+            await fileStream.FlushAsync(combinedCts.Token).ConfigureAwait(false);
+            await _notificationService.ShowSuccessAsync($"Download with headers completed successfully: {localPath}");
         }
         public async Task<HttpResponseMessage> GetAsync(string url) => await _httpClient.GetAsync(url);
 
@@ -161,10 +176,23 @@ namespace Bundlingway.Core.Services
 
             return request;
         }
-
         public void Dispose()
         {
             _httpClient?.Dispose();
+        }
+
+        // Overloads with IProgressReporter parameters for interface compliance
+        // Progress reporting is ignored to avoid threading issues
+        public async Task DownloadFileAsync(string url, string localPath, IProgressReporter? progressReporter, System.Threading.CancellationToken cancellationToken = default)
+        {
+            // Ignore progress reporter to avoid threading issues
+            await DownloadFileAsync(url, localPath, cancellationToken);
+        }
+
+        public async Task DownloadFileAsync(string url, string localPath, Dictionary<string, string> headers, IProgressReporter? progressReporter, System.Threading.CancellationToken cancellationToken = default)
+        {
+            // Ignore progress reporter to avoid threading issues
+            await DownloadFileAsync(url, localPath, headers, cancellationToken);
         }
     }
 }
