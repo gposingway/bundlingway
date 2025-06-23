@@ -23,9 +23,7 @@ namespace Bundlingway.UI.WinForms
 
         public bool IsProgressActive => _isActive;
 
-        public event EventHandler<ProgressEventArgs>? ProgressUpdated;
-
-        public async Task StartProgressAsync(long total, string? description = null)
+        public event EventHandler<ProgressEventArgs>? ProgressUpdated;        public async Task StartProgressAsync(long total, string? description = null)
         {
             if (total <= 0)
                 throw new ArgumentOutOfRangeException(nameof(total), "Total must be greater than zero.");
@@ -35,7 +33,15 @@ namespace Bundlingway.UI.WinForms
 
             if (_mainForm != null)
             {
-                await _mainForm.StartProgress(total, description);
+                // Use BeginInvoke for non-blocking UI thread marshaling
+                if (_mainForm.InvokeRequired)
+                {
+                    _mainForm.BeginInvoke(new Action(() => _mainForm.StartProgress(total, description)));
+                }
+                else
+                {
+                    _mainForm.StartProgress(total, description);
+                }
             }
             else
             {
@@ -49,15 +55,21 @@ namespace Bundlingway.UI.WinForms
                 Description = description,
                 IsCompleted = false
             });
-        }
-
-        public async Task UpdateProgressAsync(long current, string? description = null)
+        }        public async Task UpdateProgressAsync(long current, string? description = null)
         {
             _current = current;
 
             if (_mainForm != null)
             {
-                await _mainForm.SetProgress(current);
+                // Use BeginInvoke for non-blocking UI thread marshaling
+                if (_mainForm.InvokeRequired)
+                {
+                    _mainForm.BeginInvoke(new Action(() => _mainForm.SetProgress(current)));
+                }
+                else
+                {
+                    _mainForm.SetProgress(current);
+                }
             }
             else
             {
@@ -78,15 +90,21 @@ namespace Bundlingway.UI.WinForms
         {
             var current = _total > 0 ? (long)(percentage / 100.0 * _total) : 0;
             await UpdateProgressAsync(current, description);
-        }
-
-        public async Task StopProgressAsync()
+        }        public async Task StopProgressAsync()
         {
             _isActive = false;
 
             if (_mainForm != null)
             {
-                await _mainForm.StopProgress();
+                // Use BeginInvoke for non-blocking UI thread marshaling
+                if (_mainForm.InvokeRequired)
+                {
+                    _mainForm.BeginInvoke(new Action(() => _mainForm.StopProgress()));
+                }
+                else
+                {
+                    _mainForm.StopProgress();
+                }
             }
             else
             {

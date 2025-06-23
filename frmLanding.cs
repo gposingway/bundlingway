@@ -694,14 +694,12 @@ namespace Bundlingway
         {
             var shortcutsForm = _serviceProvider.GetRequiredService<frmShortcuts>();
             shortcutsForm.ShowDialog();
-        }
-
-        internal async Task StartProgress(long count)
+        }        internal void StartProgress(long count)
         {
-            await StartProgress(count, null);
+            StartProgress(count, null);
         }
 
-        internal async Task StartProgress(long count, string description)
+        internal void StartProgress(long count, string description)
         {
             prgCommon?.DoAction(() =>
             {
@@ -716,7 +714,7 @@ namespace Bundlingway
             });
         }
 
-        internal async Task SetProgress(long value)
+        internal void SetProgress(long value)
         {
             // Fix: Null check before unboxing prgCommon.Tag
             var tagValue = prgCommon.Tag;
@@ -728,7 +726,7 @@ namespace Bundlingway
             });
         }
 
-        internal async Task StopProgress()
+        internal void StopProgress()
         {
             prgCommon?.DoAction(() =>
             {
@@ -955,21 +953,19 @@ namespace Bundlingway
                 btnUninstall.Enabled = available;
                 btnReinstall.Enabled = available;
             });
-        }
-
-        public async Task SetProgressAsync(long value, long max)
+        }        public async Task SetProgressAsync(long value, long max)
         {
-            await SetProgress(value);
+            SetProgress(value);
         }
 
         public async Task ShowProgressAsync(long max)
         {
-            await StartProgress(max);
+            StartProgress(max);
         }
 
         public async Task HideProgressAsync()
         {
-            await StopProgress();
+            StopProgress();
         }
 
         public async Task SetReShadeStatusAsync(string status, bool enabled, bool visible, string buttonText)

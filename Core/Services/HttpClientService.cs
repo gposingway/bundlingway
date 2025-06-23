@@ -11,7 +11,7 @@ namespace Bundlingway.Core.Services
     /// </summary>
     public class HttpClientService : IHttpClientService, IDisposable
     {
-        private readonly HttpClient _httpClient;        public HttpClientService()
+        private readonly HttpClient _httpClient; public HttpClientService()
         {
             _httpClient = new HttpClient(new HttpClientHandler()
             {
@@ -55,7 +55,9 @@ namespace Bundlingway.Core.Services
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStreamAsync();
-        }        public async Task DownloadFileAsync(string url, string localPath, IProgressReporter? progressReporter = null, System.Threading.CancellationToken cancellationToken = default)
+        }
+
+        public async Task DownloadFileAsync(string url, string localPath, IProgressReporter? progressReporter = null, System.Threading.CancellationToken cancellationToken = default)
         {
             LogToConsole($"Starting download from {url} to {localPath}");
 
@@ -67,27 +69,28 @@ namespace Bundlingway.Core.Services
 
             // Create request with timeout handling
             using var request = new HttpRequestMessage(HttpMethod.Get, url);
-            
+
             LogToConsole("Sending request with ResponseHeadersRead...");
 
             // Use ResponseHeadersRead to enable true streaming/chunked downloads
             // This avoids loading the entire file into memory and prevents locking
             // Use ConfigureAwait(false) to prevent potential deadlocks
             using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, combinedCts.Token).ConfigureAwait(false);
-            
+
             LogToConsole("Response received, checking status...");
-            
+
             response.EnsureSuccessStatusCode();
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
             bool isSmallFile = totalBytes > 0 && totalBytes < 1024 * 1024; // Less than 1MB
-            
-            LogToConsole($"File size: {(totalBytes > 0 ? $"{totalBytes} bytes" : "unknown")} (small file: {isSmallFile})");            bool progressStarted = false;
+
+            LogToConsole($"File size: {(totalBytes > 0 ? $"{totalBytes} bytes" : "unknown")} (small file: {isSmallFile})"); bool progressStarted = false;
             if (progressReporter != null && totalBytes > 0)
             {
                 try
                 {
                     LogToConsole($"Starting progress reporting for {totalBytes} bytes");
+                    // Progress reporter now handles UI thread marshaling internally
                     await progressReporter.StartProgressAsync(totalBytes, $"Downloading {Path.GetFileName(localPath)}").ConfigureAwait(false);
                     progressStarted = true;
                     LogToConsole("Progress reporting started successfully");
@@ -111,9 +114,9 @@ namespace Bundlingway.Core.Services
 
             // Get the content stream with ConfigureAwait(false)
             using var contentStream = await response.Content.ReadAsStreamAsync(combinedCts.Token).ConfigureAwait(false);
-            
+
             LogToConsole("Creating file stream...");
-            
+
             using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.Read, 8192, FileOptions.SequentialScan);
 
             var buffer = new byte[8192];
@@ -149,7 +152,8 @@ namespace Bundlingway.Core.Services
             }
 
             LogToConsole($"Download completed successfully: {localPath}");
-        }        public async Task DownloadFileAsync(string url, string localPath, Dictionary<string, string> headers, IProgressReporter? progressReporter = null, System.Threading.CancellationToken cancellationToken = default)
+        }
+        public async Task DownloadFileAsync(string url, string localPath, Dictionary<string, string> headers, IProgressReporter? progressReporter = null, System.Threading.CancellationToken cancellationToken = default)
         {
             LogToConsole($"Starting download with headers from {url} to {localPath}");
 
@@ -158,20 +162,20 @@ namespace Bundlingway.Core.Services
             using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
 
             using var request = CreateRequestWithHeaders(HttpMethod.Get, url, headers);
-            
+
             LogToConsole("Sending request with headers and ResponseHeadersRead...");
 
             // Use ResponseHeadersRead to enable true streaming/chunked downloads
             using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, combinedCts.Token).ConfigureAwait(false);
-            response.EnsureSuccessStatusCode();            var totalBytes = response.Content.Headers.ContentLength ?? -1;
+            response.EnsureSuccessStatusCode(); var totalBytes = response.Content.Headers.ContentLength ?? -1;
             bool isSmallFile = totalBytes > 0 && totalBytes < 1024 * 1024; // Less than 1MB
-            
+
             LogToConsole($"File size: {(totalBytes > 0 ? $"{totalBytes} bytes" : "unknown")} (small file: {isSmallFile})");
 
             bool progressStarted = false;
             if (progressReporter != null && totalBytes > 0)
             {
-                await progressReporter.StartProgressAsync(totalBytes, $"Downloading {Path.GetFileName(localPath)}"). ConfigureAwait(false);
+                await progressReporter.StartProgressAsync(totalBytes, $"Downloading {Path.GetFileName(localPath)}").ConfigureAwait(false);
                 progressStarted = true;
             }
 
@@ -208,7 +212,7 @@ namespace Bundlingway.Core.Services
                 }
             }
 
-            await fileStream.FlushAsync(combinedCts.Token).ConfigureAwait(false);            if (progressReporter != null && progressStarted)
+            await fileStream.FlushAsync(combinedCts.Token).ConfigureAwait(false); if (progressReporter != null && progressStarted)
             {
                 await progressReporter.StopProgressAsync().ConfigureAwait(false);
             }
