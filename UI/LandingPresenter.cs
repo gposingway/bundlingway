@@ -76,10 +76,9 @@ namespace Bundlingway.UI
             await _view.SetGamePathAsync(gameIsInstalled ? (gamePath ?? string.Empty) : "Click [Detect] with the game running");
 
             if (!gameIsInstalled)
-            {
-                await _view.SetReShadeStatusAsync("Waiting game detection...", false, false, "Install");
+            {                await _view.SetReShadeStatusAsync("Waiting game detection...", false, false, "Install");
                 await _view.SetGPosingwayStatusAsync("Waiting game detection...", false, false, "Install");
-                await _view.SetUpdateButtonVisibleAsync(false);
+                await _view.SetUpdateButtonStateAsync(UpdateButtonState.Hidden);
                 return;
             }
 
@@ -104,12 +103,15 @@ namespace Bundlingway.UI
                 _ => "Unknown"
             };
             bool gPosingwayBtnVisible = c.GPosingway.Status == EPackageStatus.NotInstalled || c.GPosingway.Status == EPackageStatus.Outdated;
-            bool gPosingwayBtnEnabled = true;
-            string gPosingwayBtnText = c.GPosingway.Status == EPackageStatus.NotInstalled ? "Install" : c.GPosingway.Status == EPackageStatus.Outdated ? "Update" : "";
+            bool gPosingwayBtnEnabled = true;            string gPosingwayBtnText = c.GPosingway.Status == EPackageStatus.NotInstalled ? "Install" : c.GPosingway.Status == EPackageStatus.Outdated ? "Update" : "";
             await _view.SetGPosingwayStatusAsync(gPosingwayText, gPosingwayBtnEnabled, gPosingwayBtnVisible, gPosingwayBtnText);
+            
             // Update button
-            await _view.SetUpdateButtonVisibleAsync(c.Bundlingway.RemoteVersion != c.Bundlingway.LocalVersion);
-            await _view.SetUpdateButtonTextAsync("Update");
+            await _view.SetUpdateButtonStateAsync(
+                c.Bundlingway.RemoteVersion != c.Bundlingway.LocalVersion 
+                    ? UpdateButtonState.UpdateAvailable 
+                    : UpdateButtonState.Hidden, 
+                c.Bundlingway.RemoteVersion);
         }
 
         public async Task PopulateGridAsync()

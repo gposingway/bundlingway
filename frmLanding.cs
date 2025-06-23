@@ -577,16 +577,14 @@ namespace Bundlingway
 
                 return;
             }
-
             if (c.Bundlingway.RemoteVersion != c.Bundlingway.LocalVersion)
             {
-                btnUpdate?.DoAction(() => { btnUpdate.Visible = true; });
-
+                SetUpdateButtonState(UpdateButtonState.UpdateAvailable, c.Bundlingway.RemoteVersion);
                 _ = _notificationService.AnnounceAsync($"A new Bundlingway version ({c.Bundlingway.RemoteVersion}) is out!");
             }
             else
             {
-                btnUpdate?.DoAction(() => { btnUpdate.Visible = false; });
+                SetUpdateButtonState(UpdateButtonState.Hidden);
             }
 
             var reShadeBtnEnabled = true;
@@ -682,11 +680,9 @@ namespace Bundlingway
             });
 
         }
-
         private void btnUpdate_Click(object sender, EventArgs e)
         {
-            btnUpdate.Text = "Updating...";
-            btnUpdate.Enabled = false;
+            SetUpdateButtonState(UpdateButtonState.Updating);
             _ = _bundlingwayService.UpdateAsync();
         }
 
@@ -694,7 +690,8 @@ namespace Bundlingway
         {
             var shortcutsForm = _serviceProvider.GetRequiredService<frmShortcuts>();
             shortcutsForm.ShowDialog();
-        }        internal void StartProgress(long count)
+        }
+        internal void StartProgress(long count)
         {
             StartProgress(count, null);
         }
@@ -953,7 +950,8 @@ namespace Bundlingway
                 btnUninstall.Enabled = available;
                 btnReinstall.Enabled = available;
             });
-        }        public async Task SetProgressAsync(long value, long max)
+        }
+        public async Task SetProgressAsync(long value, long max)
         {
             SetProgress(value);
         }
@@ -1008,7 +1006,6 @@ namespace Bundlingway
         {
             btnUpdate.Visible = visible;
         }
-
         public async Task SetUpdateButtonTextAsync(string text)
         {
             btnUpdate.Text = text;
@@ -1022,6 +1019,40 @@ namespace Bundlingway
         public async Task SetBrowserIntegrationStatusAsync(string status)
         {
             txtBrowserIntegration.Text = status;
+        }        /// <summary>
+                 /// Centralized method to set the update button state and text
+                 /// </summary>
+                 /// <param name="state">The desired state of the update button</param>
+                 /// <param name="remoteVersion">The remote version (used when state is UpdateAvailable)</param>
+        private void SetUpdateButtonState(UpdateButtonState state, string remoteVersion = null)
+        {
+            btnUpdate?.DoAction(() =>
+            {
+                switch (state)
+                {
+                    case UpdateButtonState.Hidden:
+                        btnUpdate.Visible = false;
+                        btnUpdate.Enabled = true; // Reset enabled state for next time
+                        break;
+                    case UpdateButtonState.UpdateAvailable:
+                        btnUpdate.Visible = true;
+                        btnUpdate.Enabled = true;
+                        btnUpdate.Text = string.IsNullOrEmpty(remoteVersion)
+                            ? "Update Available!"
+                            : $"Update to v{remoteVersion}";
+                        break;
+                    case UpdateButtonState.Updating:
+                        btnUpdate.Visible = true;
+                        btnUpdate.Enabled = false;
+                        btnUpdate.Text = "Updating...";
+                        break;
+                }
+            });
+        }
+
+        public async Task SetUpdateButtonStateAsync(UpdateButtonState state, string remoteVersion = null)
+        {
+            SetUpdateButtonState(state, remoteVersion);
         }
 
         /// <summary>

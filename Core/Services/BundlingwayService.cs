@@ -59,6 +59,10 @@ namespace Bundlingway.Core.Services
                 var release = System.Text.Json.JsonSerializer.Deserialize<GitHubReleaseInfo>(jsonContent);
                 var config = _configService.Configuration;
                 config.Bundlingway.RemoteVersion = release?.TagName ?? "unknown";
+
+                // If the tagname starts with v, trim that out.
+                if (config.Bundlingway.RemoteVersion.StartsWith('v')) config.Bundlingway.RemoteVersion = config.Bundlingway.RemoteVersion.Substring(1);
+
                 config.Bundlingway.RemoteLink = release?.Assets?.FirstOrDefault(a => a.Name != null && a.Name.EndsWith(".zip"))?.BrowserDownloadUrl ?? string.Empty;
 
                 // Determine status
