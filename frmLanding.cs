@@ -687,7 +687,7 @@ namespace Bundlingway
         {
             btnUpdate.Text = "Updating...";
             btnUpdate.Enabled = false;
-            _bundlingwayService.UpdateAsync().Wait();
+            _ = _bundlingwayService.UpdateAsync();
         }
 
         private void btnShortcuts_Click(object sender, EventArgs e)

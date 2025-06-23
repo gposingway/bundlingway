@@ -134,6 +134,7 @@ namespace Bundlingway.Core.Services
                 }
 
                 // Unzip the downloaded file to the temp folder
+                await _notifications.AnnounceAsync("Unzipping Bundlingway...");
                 using (var archive = ZipFile.OpenRead(filePath))
                 {
                     foreach (var entry in archive.Entries)
