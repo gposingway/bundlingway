@@ -53,10 +53,7 @@ namespace Bundlingway.Core.Services
             {
                 Log.Information("BundlingwayService.GetRemoteInfo: Getting remote Bundlingway information.");
                 // Download the remote configuration
-                var headers = new Dictionary<string, string>
-                {
-                    ["Accept"] = "application/vnd.github.v3+json"
-                };
+                var headers = new Dictionary<string, string> { ["Accept"] = "application/vnd.github.v3+json" };
                 var jsonContent = await _httpClient.GetStringAsync(Constants.Urls.BundlingwayPackageLatestTag, headers);
                 // Deserialize the GitHub release/tag API response
                 var release = System.Text.Json.JsonSerializer.Deserialize<GitHubReleaseInfo>(jsonContent);

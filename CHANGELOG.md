@@ -5,6 +5,27 @@ All notable changes to Bundlingway will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.0.2] - 2025-06-23
+
+### Added
+- Support for operations requiring elevated (administrator) privileges, including a new elevation service and handler for secure execution of system-level tasks.
+- Enhanced HTTP client functionality to allow custom headers for network requests.
+- Centralized user notifications through a new notification service, improving feedback and error messaging.
+- Status check method for Bundlingway updates.
+
+### Changed
+- Migrated from static UI notification methods to a service-based approach for user announcements and progress reporting.
+- Updated application startup to handle elevated operations and protocol invocations more robustly.
+- Consolidated Bundlingway status checks for efficiency.
+
+### Removed
+- Unused files and legacy service locator code.
+- Excessive and redundant comments for improved code readability.
+
+### Fixed
+- Improved error handling and user feedback during elevated and protocol-based operations.
+- Updated version numbers and application manifest to run without requiring administrator privileges by default.
+
 ## [0.1.0.1] - 2025-06-22
 
 ### New Features
