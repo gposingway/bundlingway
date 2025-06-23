@@ -11,9 +11,17 @@ namespace Bundlingway.Core.Services
     /// </summary>
     public class HttpClientService : IHttpClientService, IDisposable
     {
-        private readonly HttpClient _httpClient; public HttpClientService()
+        private readonly HttpClient _httpClient;        public HttpClientService()
         {
-            _httpClient = new HttpClient();
+            _httpClient = new HttpClient(new HttpClientHandler()
+            {
+                // Configure to prevent potential threading issues
+                UseCookies = false,
+                UseDefaultCredentials = false
+            });
+
+            // Set timeouts to prevent hanging
+            _httpClient.Timeout = TimeSpan.FromMinutes(10); // 10 minute total timeout
 
             // Set a standard user-agent to avoid API rejections
             // GitHub API specifically requires a proper User-Agent header
@@ -47,80 +55,165 @@ namespace Bundlingway.Core.Services
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
             return await response.Content.ReadAsStreamAsync();
-        }
-
-        public async Task DownloadFileAsync(string url, string localPath, IProgressReporter? progressReporter = null, System.Threading.CancellationToken cancellationToken = default)
+        }        public async Task DownloadFileAsync(string url, string localPath, IProgressReporter? progressReporter = null, System.Threading.CancellationToken cancellationToken = default)
         {
-            using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            LogToConsole($"Starting download from {url} to {localPath}");
+
+            // Create a timeout cancellation token to prevent hanging
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+            using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
+            LogToConsole("Creating request...");
+
+            // Create request with timeout handling
+            using var request = new HttpRequestMessage(HttpMethod.Get, url);
+            
+            LogToConsole("Sending request with ResponseHeadersRead...");
+
+            // Use ResponseHeadersRead to enable true streaming/chunked downloads
+            // This avoids loading the entire file into memory and prevents locking
+            // Use ConfigureAwait(false) to prevent potential deadlocks
+            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, combinedCts.Token).ConfigureAwait(false);
+            
+            LogToConsole("Response received, checking status...");
+            
             response.EnsureSuccessStatusCode();
 
             var totalBytes = response.Content.Headers.ContentLength ?? -1;
-            bool progressStarted = false;
+            bool isSmallFile = totalBytes > 0 && totalBytes < 1024 * 1024; // Less than 1MB
+            
+            LogToConsole($"File size: {(totalBytes > 0 ? $"{totalBytes} bytes" : "unknown")} (small file: {isSmallFile})");            bool progressStarted = false;
             if (progressReporter != null && totalBytes > 0)
             {
-                await progressReporter.StartProgressAsync(totalBytes, $"Downloading {Path.GetFileName(localPath)}");
-                progressStarted = true;
+                try
+                {
+                    LogToConsole($"Starting progress reporting for {totalBytes} bytes");
+                    await progressReporter.StartProgressAsync(totalBytes, $"Downloading {Path.GetFileName(localPath)}").ConfigureAwait(false);
+                    progressStarted = true;
+                    LogToConsole("Progress reporting started successfully");
+                }
+                catch (Exception ex)
+                {
+                    LogToConsole($"Failed to start progress reporting: {ex.Message}");
+                    // Continue without progress reporting
+                    progressStarted = false;
+                }
             }
 
-            using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+            // Ensure directory exists
+            var directory = Path.GetDirectoryName(localPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            LogToConsole("Getting content stream...");
+
+            // Get the content stream with ConfigureAwait(false)
+            using var contentStream = await response.Content.ReadAsStreamAsync(combinedCts.Token).ConfigureAwait(false);
+            
+            LogToConsole("Creating file stream...");
+            
+            using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.Read, 8192, FileOptions.SequentialScan);
 
             var buffer = new byte[8192];
             var totalRead = 0L;
             int bytesRead;
 
-            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+            LogToConsole("Starting data transfer...");
+
+            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, combinedCts.Token).ConfigureAwait(false)) > 0)
             {
-                await fileStream.WriteAsync(buffer, 0, bytesRead, cancellationToken);
+                await fileStream.WriteAsync(buffer, 0, bytesRead, combinedCts.Token).ConfigureAwait(false);
                 totalRead += bytesRead;
 
-                if (progressReporter != null && totalBytes > 0)
+                if (progressReporter != null)
                 {
-                    await progressReporter.UpdateProgressAsync(totalRead);
+                    if (totalBytes > 0)
+                    {
+                        await progressReporter.UpdateProgressAsync(totalRead).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        // For unknown file size, show bytes downloaded
+                        await progressReporter.UpdateProgressAsync(0, $"Downloaded {totalRead:N0} bytes").ConfigureAwait(false);
+                    }
                 }
             }
+
+            await fileStream.FlushAsync(combinedCts.Token).ConfigureAwait(false);
+
             if (progressReporter != null && progressStarted)
             {
-                await progressReporter.StopProgressAsync();
+                await progressReporter.StopProgressAsync().ConfigureAwait(false);
             }
-        }
 
-        public async Task DownloadFileAsync(string url, string localPath, Dictionary<string, string> headers, IProgressReporter? progressReporter = null, System.Threading.CancellationToken cancellationToken = default)
+            LogToConsole($"Download completed successfully: {localPath}");
+        }        public async Task DownloadFileAsync(string url, string localPath, Dictionary<string, string> headers, IProgressReporter? progressReporter = null, System.Threading.CancellationToken cancellationToken = default)
         {
+            LogToConsole($"Starting download with headers from {url} to {localPath}");
+
+            // Create a timeout cancellation token to prevent hanging
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+            using var combinedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
             using var request = CreateRequestWithHeaders(HttpMethod.Get, url, headers);
-            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
-            response.EnsureSuccessStatusCode();
+            
+            LogToConsole("Sending request with headers and ResponseHeadersRead...");
 
-            var totalBytes = response.Content.Headers.ContentLength ?? -1;
+            // Use ResponseHeadersRead to enable true streaming/chunked downloads
+            using var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, combinedCts.Token).ConfigureAwait(false);
+            response.EnsureSuccessStatusCode();            var totalBytes = response.Content.Headers.ContentLength ?? -1;
+            bool isSmallFile = totalBytes > 0 && totalBytes < 1024 * 1024; // Less than 1MB
+            
+            LogToConsole($"File size: {(totalBytes > 0 ? $"{totalBytes} bytes" : "unknown")} (small file: {isSmallFile})");
+
             bool progressStarted = false;
             if (progressReporter != null && totalBytes > 0)
             {
-                await progressReporter.StartProgressAsync(totalBytes, $"Downloading {Path.GetFileName(localPath)}");
+                await progressReporter.StartProgressAsync(totalBytes, $"Downloading {Path.GetFileName(localPath)}"). ConfigureAwait(false);
                 progressStarted = true;
             }
 
-            using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
-            using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.None, 8192, true);
+            // Ensure directory exists
+            var directory = Path.GetDirectoryName(localPath);
+            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+            {
+                Directory.CreateDirectory(directory);
+            }
+
+            using var contentStream = await response.Content.ReadAsStreamAsync(combinedCts.Token).ConfigureAwait(false);
+            using var fileStream = new FileStream(localPath, FileMode.Create, FileAccess.Write, FileShare.Read, 8192, FileOptions.SequentialScan);
 
             var buffer = new byte[8192];
             var totalRead = 0L;
             int bytesRead;
 
-            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, cancellationToken)) > 0)
+            while ((bytesRead = await contentStream.ReadAsync(buffer, 0, buffer.Length, combinedCts.Token).ConfigureAwait(false)) > 0)
             {
-                await fileStream.WriteAsync(buffer, 0, bytesRead, cancellationToken);
+                await fileStream.WriteAsync(buffer, 0, bytesRead, combinedCts.Token).ConfigureAwait(false);
                 totalRead += bytesRead;
 
-                if (progressReporter != null && totalBytes > 0)
+                if (progressReporter != null)
                 {
-                    await progressReporter.UpdateProgressAsync(totalRead);
+                    if (totalBytes > 0)
+                    {
+                        await progressReporter.UpdateProgressAsync(totalRead).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        // For unknown file size, show bytes downloaded
+                        await progressReporter.UpdateProgressAsync(0, $"Downloaded {totalRead:N0} bytes").ConfigureAwait(false);
+                    }
                 }
             }
 
-            if (progressReporter != null && progressStarted)
+            await fileStream.FlushAsync(combinedCts.Token).ConfigureAwait(false);            if (progressReporter != null && progressStarted)
             {
-                await progressReporter.StopProgressAsync();
+                await progressReporter.StopProgressAsync().ConfigureAwait(false);
             }
+
+            LogToConsole($"Download with headers completed successfully: {localPath}");
         }
         public async Task<HttpResponseMessage> GetAsync(string url) => await _httpClient.GetAsync(url);
 
@@ -165,6 +258,22 @@ namespace Bundlingway.Core.Services
         public void Dispose()
         {
             _httpClient?.Dispose();
+        }
+
+        /// <summary>
+        /// Safely logs to console if available, ignoring any exceptions.
+        /// </summary>
+        /// <param name="message">The message to log</param>
+        private static void LogToConsole(string message)
+        {
+            try
+            {
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] [HTTP] {message}");
+            }
+            catch
+            {
+                // Console might not be available, ignore silently
+            }
         }
     }
 }
